@@ -1,4 +1,4 @@
-#ESCI-JS
+# ESCI-JS
 
 This is a JavaScript implementation of Geoff Cummings and Robert Calin-Jageman's ESCI software as provided with the book: Introduction to the New Statistics.
 https://thenewstatistics.com/

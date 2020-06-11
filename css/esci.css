@@ -1,0 +1,482 @@
+/*
+Program       esci.css
+Author        Gordon Moore
+Date          15 May 2020
+Description   CSS for ESCI
+
+Version history
+0.1.0      Initial version
+0.2.0      Refactored version
+...
+0.2.8      2020-05-20 Add svg code for mu line and small adjustments
+0.2.9      2020-05-20 Added dialog box for version styling
+0.2.10     2020-05-23 Slight adjustment for capture the next mean section
+
+0.3.0
+0.3.1      2020-05-29 Allow full browser size to be used for display  
+0.3.2      nothing
+0.3.3      2020-06-05 Needed to fix the vertical height of the left side panels 
+0.3.4      2020-06-08 Minor changes to layout
+0.3.5
+*/
+
+/*default fon size*/
+:root {
+  --fontsize: 1.3rem;
+}
+
+html {
+  width: 100%;
+  height: 100%;
+  font-size: 62.5%;
+}
+
+body {
+
+  background-color: lightyellow;
+  font-family: Verdana, sans-serif;
+  font-size: var(--fontsize);
+  color: blue;
+  height: calc(100% - 2rem);
+  /* height: 99%; */
+  overflow-x: hidden; 
+}
+
+label {
+  font: normal var(--fontsize) Verdana !important;
+  user-select: none;
+}
+
+select {
+  font-size: var(--fontsize) !important;
+}
+
+option {
+  font-size: var(--fontsize) !important;
+}
+
+input[type=text] {
+  padding:5px; 
+  border: 1px solid #ccc; 
+  border-radius: 5px;
+  width: 4rem;
+  height: 1.2rem;
+  font-size: var(--fontsize);
+}
+
+span {
+  user-select: none;
+}
+
+#dialogversion {
+  background-color: pink;
+  margin-left: 5px;
+  position: absolute;
+  top: 2rem;
+  left: 2rem;
+}
+
+.greek {
+  font-size: var(--fontsize);
+}
+
+.italic {
+  font-style: italic;
+  font-size: var(--fontsize);
+}
+
+
+/*-------------------------------------------------The main screen left and right split------------------------------------------------------*/
+
+#main {
+  display: grid;
+  grid-template-columns: 40rem auto;
+  grid-column-gap: 8px;
+  height: 100%;
+} 
+
+/*-------------------------------------------------The left hand control side---------------------------------------------------------------*/
+
+#control {
+  border: 1px solid black; 
+}
+
+/*----------------------------------------------------header section------------------------------------------------------------------*/
+#header {
+  border: 1px solid black;
+  display: grid;
+  grid-template-columns: 5rem 12rem auto;
+}
+
+#logoimg {
+  max-width: 4rem;
+  max-height: 4rem;
+}
+
+#mainheading {
+  font-size: 2.5rem;
+} 
+
+#subheading {
+  padding: 0.3rem;
+  font-size: 2.2rem;
+}
+
+
+/*-----------------------------------------------1. Population section--------------------------------------------------------*/
+
+#distribution {
+  border: 1px solid black;
+  background-color: lemonchiffon;
+  padding: 0.3rem;
+}
+
+#musliderdiv {
+  display: grid;
+  grid-template-columns: 1rem 2fr 1fr;
+}
+
+#muvalue {
+  user-select: none;
+}
+
+#muvaluetext {
+  background-color: lemonchiffon;
+}
+
+#sigmasliderdiv {
+  display: grid;
+  grid-template-columns: 1rem 2fr 1fr;
+}
+
+#sigmavalue {
+  user-select: none;
+}
+
+#sigmavaluetext {
+  background-color: lemonchiffon;
+}
+
+#shape {
+  padding-top: 0.5rem;
+  display: grid;
+  grid-template-columns: 10rem 12rem auto;
+}
+
+/*--------------------------------2. Click to display Population, SD Lines, Fill random--------------------------------------*/
+
+#displayoptions {
+  background-color: lemonchiffon;
+  border: 1px solid black;
+  padding: 0.3rem;
+}
+
+/*--------------------------------3. Run and controls section------------------------------------------------------------------*/
+
+#runcontrols {
+  border: 1px solid black;
+  background-color: white; /* aliceblue; */
+  padding: 0.3rem;
+  padding-bottom: 1.0rem;
+}
+
+#runstop {
+  display: grid;
+  grid-template-columns: 1fr 2fr 2fr 3fr;
+  grid-column-gap: 1rem;
+  padding-top: 0.2rem;
+  padding-left: 0.2rem;
+}
+
+.runbuttons {
+  height: 3.5rem;
+  padding: 0.1rem;
+  background-color: rgb(148, 243, 148);
+  border: 1px solid grey;
+  border-radius: 0.7rem;
+  vertical-align: middle;
+}
+
+.runbuttons:hover {
+  background-color: yellow;
+}
+
+.runbuttons:active {
+  background-color: orange;
+  user-select: none;
+}
+
+#clearsample {
+  background-color: lemonchiffon;
+  display: flex;  /*to centre text vertically and horizontally*/
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+#clearsample:hover {
+  background-color: yellow;
+}
+
+#clearsample:active {
+  background-color: orange;
+  user-select: none;
+}
+
+#takesample {
+  display: flex;  /*to centre text vertically and horizontally*/
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+#runfreely {
+  display: flex;  /*to centre text vertically and horizontally*/
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+#speed {  /*reverse the slider so that min speed on left i.e. slower*/
+  direction: rtl
+}
+
+/*---------------------------------------------------4. Samples section------------------------------------------------------*/
+#samplessection {
+  border: 1px solid black;
+  background-color: skyblue; 
+  padding: 0.3rem;
+}
+
+#samples {
+  display: grid;
+  grid-template-columns: 10rem 3rem 7rem;
+}
+
+#latestsamples {
+  display: grid;
+  grid-template-columns: 8rem 8rem;
+  padding-top: 0.1rem;
+  padding-bottom: 0.2rem;
+}
+
+#samplesselected {
+  width: 5.0rem;
+}
+
+#nosamplesx {
+  color: firebrick;
+}
+
+#samplemean {
+  color: firebrick;
+}
+
+#samplesd {
+  color: firebrick;
+}
+
+#latestmoes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+#popnmoe {
+  color: firebrick;
+}
+
+#samplemoe {
+  color: firebrick;
+}
+
+#datapointssection {
+  margin-top: 0.4rem;
+}
+
+/*--------------------------------------------------5. Mean heap section------------------------------------------------------*/
+#heapsection {
+  border: 1px solid black;
+  background-color: palegreen;
+  padding: 0.3rem;
+}
+
+#xbarhp {
+  color: firebrick;  
+}
+
+#sehp {
+  color: firebrick;
+}
+
+
+/*----------------------------------------------6. CI Section------------------------------------------------------------------*/
+
+#CIsection {
+  border: 1px solid black;
+  background-color: lemonchiffon;
+  padding: 0.3rem;
+}
+
+#CIcontrol {
+  display: grid;
+  grid-template-columns: 6rem 9rem 7rem auto;
+}
+
+#CIIntervalText {
+  background-color: lemonchiffon;
+}
+
+/*-----------------------------------------------7. Capture of mean section----------------------------------------------------*/
+
+#captureofmean {
+  border: 1px solid black;
+  background-color: lavender;
+  padding: 0.3rem;
+}
+
+#heapstats {
+  display: grid;
+  grid-template-columns: 14rem 14rem;
+}
+
+#captured {
+  color: firebrick;
+}
+
+#capturedpercent {
+  color: firebrick;
+}
+
+#capturestats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+#nosamplesy {
+  color: firebrick;
+}
+
+/*----------------------------------------------------8. Capture of next mean section--------------------------------------------*/
+#capturesection {
+  border: 1px solid black;
+  background-color: burlywood;
+  padding: 0.3rem;
+}
+
+#capturenextmeangrid {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+}
+
+#nocapturingnextmean {
+  color: firebrick;
+}
+
+#pccapturingnextmean {
+  color: firebrick;
+}
+
+/*---------------------------------------------------Filler-------------------------------------------------------------------*/
+
+#filler {
+  border: 1px solid black;
+}
+
+
+
+/*--------------------------------------------------display section------------------------------------------------------------*/
+#displaysection {
+  background-color: white;
+  display: grid;
+  grid-template-rows: 25% auto;
+  border: 1px solid blue;
+  height: 100%;
+}
+
+#displaypdf {
+  width: 100%;
+}
+
+#displaysample {
+  height: 100%;
+}
+
+
+/*--------------------------------------------------------svg codes ---------------------------------------------------------*/
+/* Note that some are embedded in drawing codes as putting say a stroke colour here overrides anything in code*/
+
+.axisline {
+  stroke: blue;
+  stroke-width: 1px;
+}
+
+.popnbubble {
+  stroke: lightblue;
+  stroke-width: 1;
+  fill: white;
+}
+
+.pdf {
+  fill: none;
+  stroke: blue;
+  stroke-width: 2px;
+}
+
+.meanlines {
+  stroke: lightgray;
+  stroke-width: 2px;
+}
+
+.sdlines {
+  stroke: lightgray;
+  stroke-width: 1px;
+}
+
+.muline {
+  stroke: darkgray;
+  stroke-width: 2px;
+}
+
+.samplepoint {
+  stroke: blue;
+  stroke-width: 1px;
+  fill: yellow;
+}
+
+.smean {
+  stroke: blue;
+  stroke-width: 1px;
+  /* fill: lawngreen;*/      /*need to set at program level */
+}
+
+.smeanmoe {
+  stroke: blue;
+  stroke-width: 1px;
+  /* fill: lawngreen;*/      /*need to set at program level */
+}
+
+
+.pmoe {
+  /* stroke: lawngreen; */   /* the problem is that css has higher precedence than coded */
+  stroke-width: 3px;
+}
+
+.smoe {
+  /* stroke: springgreen;  /* change this after testing */
+  stroke-width: 3px;  
+}
+
+.mutext {
+  font-size: 1.0rem;
+  fill: black;
+  stroke: black;
+  stroke-width: 1;
+}
+
+/*-----------------------------------------------------------------------------------------------------------------------------*/
+
+#test {
+  margin-top: 0.8rem;
+  width: 5rem;
+  height: 3rem;
+}

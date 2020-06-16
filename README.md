@@ -1,6 +1,7 @@
 # ESCI-JS
 
-This is a JavaScript implementation of Geoff Cumming and Robert Calin-Jageman's ESCI software as provided with the book: Introduction to the New Statistics.
+This is a JavaScript implementation of Geoff Cumming and Robert Calin-Jageman's ESCI software as provided with the book: Introduction to The New Statistics: Estimation, Open Science, and Beyond.
+
 https://thenewstatistics.com/
 
 It is still in development. It could be better refactored, but hey, we do the best we can with the time available!

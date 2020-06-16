@@ -3,6 +3,7 @@ Program       esci.js
 Author        Gordon Moore
 Date          15 May 2020
 Description   The JavaScript code for ESCI
+Licence       GNU General Public LIcence Version 3, 29 June 2007
 
 Version history
 */

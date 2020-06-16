@@ -18,7 +18,8 @@ Version history
 0.3.2     nothing
 0.3.3     2020-06-06 Made changes to layout, css and js to allow left panels to flow properly (I hope)
 0.3.4     2020-06-08 Minor changes to wording and layout
-0.3.5
+0.3.5     2020-06-16 Added additional values to the N drop down, removed the option that was for adding any CI%, but added additional CIs to drop down
+0.3.6
 -->
 
 <!DOCTYPE html>
@@ -127,10 +128,22 @@ Version history
                 <option value=1>1</option>
                 <option value=2>2</option>
                 <option value=3>3</option>
+                <option value=1>4</option>
                 <option value=5>5</option>
+                <option value=1>6</option>
+                <option value=1>7</option>
+                <option value=1>8</option>
+                <option value=1>9</option>
                 <option value=10>10</option>
+                <option value=1>12</option>
+                <option value=1>15</option>
                 <option value=20 selected=selected>20</option>  
+                <option value=1>25</option>
+                <option value=1>30</option>
+                <option value=1>40</option>
                 <option value=50>50</option>
+                <option value=1>60</option>
+                <option value=1>80</option>
                 <option value=100>100</option>                
               </select>
             </div>
@@ -174,11 +187,13 @@ Version history
                 <option value=0.2>80%</option>
                 <option value=0.1>90%</option>
                 <option value=0.05 selected>95%</option>
+                <option value=0.02>98%</option>
                 <option value=0.01>99%</option>
+                <option value=0.002>99.8%</option>
                 <option value=0.001>99.9%</option>
                 <option value=0>Custom</option>
               </select>
-              <input type=text id=CIIntervalText>
+              <input type=text id=CIIntervalText hidden> <!--not used-->
             </div>
             <div id=CIcontrol>
               <div><input type=checkbox id=showmoe name=showmoe value=showmoe><label for=showmoe>CIs </label></div>

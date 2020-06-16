@@ -39,7 +39,8 @@ Start using version history now to record changes and fixes
                       Re-factored the display of axes as a function - can now display of no pdf
                       Raised bottom axis, extended mu line and added mu text below axis
 0.3.4     2020-06-08  Added SE lines according to population sigma, no heap se. Changes to wording on UI to match original ESCI
-0.3.5                      
+0.3.5     2020-06-16  Added extra values for N in dropdown, removed unprogrammed option for any CI% in UI, but added dditional CIs to dropdown
+0.3.6                  
 
 */
 //#endregion
@@ -50,7 +51,7 @@ Start using version history now to record changes and fixes
 $(function() {
   console.log('jQuery here!');  //just to make sure everything is working
 
-  let version = '0.3.4';
+  let version = '0.3.5';
 
   //dialog box to display version
   $('#dialogversion').hide();

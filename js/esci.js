@@ -40,7 +40,7 @@ Start using version history now to record changes and fixes
                       Raised bottom axis, extended mu line and added mu text below axis
 0.3.4     2020-06-08  Added SE lines according to population sigma, no heap se. Changes to wording on UI to match original ESCI
 0.3.5     2020-06-16  Added extra values for N in dropdown, removed unprogrammed option for any CI% in UI, but added dditional CIs to dropdown
-0.3.6                  
+0.3.6     2020-06-17  Issue #3 para 3 Changed the version number div to appear on mouseover.             
 
 */
 //#endregion
@@ -57,13 +57,15 @@ $(function() {
   $('#dialogversion').hide();
   $('#dialogversion').html(`Version : ${version}`);
   
-  $('#logoimg').on('click', function() {
-    $('#dialogversion').toggle(500);
+
+  $('#logoimg').on('mouseenter', function() {
+    $('#dialogversion').show(500);
   })
 
-  $('#dialogversion').on('click', function() {
-    $('#dialogversion').toggle(500);
+  $('#dialogversion').on('mouseleave', function() {
+    $('#dialogversion').hide(500);
   })
+
 
   //#region for variable definitions (just allows code folding)
   let $muslider;                //muslider

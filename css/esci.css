@@ -19,7 +19,7 @@ Version history
 0.3.3      2020-06-05 Needed to fix the vertical height of the left side panels 
 0.3.4      2020-06-08 Minor changes to layout
 0.3.5
-0.3.6
+0.3.6      2020-06-17 Issue #3 para 3 adjusted poition of version dialog box a lttle.
 */
 
 /*default fon size*/
@@ -74,8 +74,8 @@ span {
   background-color: pink;
   margin-left: 5px;
   position: absolute;
-  top: 2rem;
-  left: 2rem;
+  top: 1.0rem;
+  left: 0.5rem;
 }
 
 .greek {

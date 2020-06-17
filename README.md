@@ -11,9 +11,9 @@ It uses D3 for some aspects, jQuery, jStat and at times just plain old JavaScrip
 ![The ESCI-JS web paget](images/ESCIView.png?raw=true "ESCI Web page")
 
 
-## Current version 0.3.5   
+## Current version 0.3.6   
 
-You can see which version by clicking on the logo and then clicking again.
+You can see which version by hovering on the logo.
 
 
 

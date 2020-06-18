@@ -41,6 +41,8 @@ Start using version history now to record changes and fixes
 0.3.4     2020-06-08  Added SE lines according to population sigma, no heap se. Changes to wording on UI to match original ESCI
 0.3.5     2020-06-16  Added extra values for N in dropdown, removed unprogrammed option for any CI% in UI, but added dditional CIs to dropdown
 0.3.6     2020-06-17  Issue #3 para 3 Changed the version number div to appear on mouseover.             
+0.3.7     2020-06-18  Reinstituted on('click', ) so tablets can dismiss the version number
+
 
 */
 //#endregion
@@ -51,7 +53,7 @@ Start using version history now to record changes and fixes
 $(function() {
   console.log('jQuery here!');  //just to make sure everything is working
 
-  let version = '0.3.5';
+  let version = '0.3.6';
 
   //dialog box to display version
   $('#dialogversion').hide();
@@ -63,6 +65,10 @@ $(function() {
   })
 
   $('#dialogversion').on('mouseleave', function() {
+    $('#dialogversion').hide(500);
+  })
+
+  $('#logoimg').on('click', function() {
     $('#dialogversion').hide(500);
   })
 

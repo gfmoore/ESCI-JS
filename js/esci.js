@@ -42,7 +42,7 @@ Start using version history now to record changes and fixes
 0.3.5     2020-06-16  Added extra values for N in dropdown, removed unprogrammed option for any CI% in UI, but added dditional CIs to dropdown
 0.3.6     2020-06-17  Issue #3 para 3 Changed the version number div to appear on mouseover.             
 0.3.7     2020-06-18  Reinstituted on('click', ) so tablets can dismiss the version number
-
+0.3.8
 
 */
 //#endregion
@@ -53,7 +53,7 @@ Start using version history now to record changes and fixes
 $(function() {
   console.log('jQuery here!');  //just to make sure everything is working
 
-  let version = '0.3.6';
+  let version = '0.3.7';
 
   //dialog box to display version
   $('#dialogversion').hide();
@@ -64,13 +64,19 @@ $(function() {
     $('#dialogversion').show(500);
   })
 
-  $('#dialogversion').on('mouseleave', function() {
+  $('#dialogversion').on('mouseleave click touch', function() {
+    event.stopPropagation();
+    event.preventDefault();
     $('#dialogversion').hide(500);
   })
 
-  $('#logoimg').on('click', function() {
-    $('#dialogversion').hide(500);
-  })
+  // $('#logoimg').on('touch', function() {
+  //   $('#dialogversion').hide(500);
+  // })
+
+  // $('#dialogversion').on('click', function() {
+  //   $('#dialogversion').hide(500);
+  // })
 
 
   //#region for variable definitions (just allows code folding)

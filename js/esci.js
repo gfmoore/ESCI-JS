@@ -42,7 +42,8 @@ Start using version history now to record changes and fixes
 0.3.5     2020-06-16  Added extra values for N in dropdown, removed unprogrammed option for any CI% in UI, but added dditional CIs to dropdown
 0.3.6     2020-06-17  Issue #3 para 3 Changed the version number div to appear on mouseover.             
 0.3.7     2020-06-18  Reinstituted on('click', ) so tablets can dismiss the version number
-0.3.8
+0.3.8     2020-06-18  Sort out issues of means being too extreme <0 >99 and causing indexing issue. Temporary fix.
+0.3.9
 
 */
 //#endregion
@@ -53,7 +54,7 @@ Start using version history now to record changes and fixes
 $(function() {
   console.log('jQuery here!');  //just to make sure everything is working
 
-  let version = '0.3.7';
+  let version = '0.3.8';
 
   //dialog box to display version
   $('#dialogversion').hide();
@@ -69,14 +70,6 @@ $(function() {
     event.preventDefault();
     $('#dialogversion').hide(500);
   })
-
-  // $('#logoimg').on('touch', function() {
-  //   $('#dialogversion').hide(500);
-  // })
-
-  // $('#dialogversion').on('click', function() {
-  //   $('#dialogversion').hide(500);
-  // })
 
 
   //#region for variable definitions (just allows code folding)
@@ -650,7 +643,11 @@ $(function() {
           if (showMeanHeap) {  //if the mean heap is visible
             //get an index into the heapbins
             xxbar = $(this).attr('xbar');
-
+/***************/
+            //have to limit size of xxbar, but is this right, should I just ignore them?
+            if (xxbar < 0) xxbar = 0;
+            if (xxbar > 100) xxbar = 99;
+/****************/
             heapIndex = parseInt(xxbar/100 * heap.length);
             heapIndexFreq = heap[heapIndex].f;
 

@@ -1,15 +1,8 @@
-// resets
-s { text-decoration:none; } //strike-through
-
-// colors redefine
-s { color: blue }
-
-
 # ESCI-JS
 
 This is a JavaScript implementation of the ESCI software (Exploratory Software for Confidence Intervals) that accompanies: 
 
-### ~~Introduction to The New Statistics: Estimation, Open Science, and Beyond.~~ 
+### _Introduction to The New Statistics: Estimation, Open Science, and Beyond._
 by Geoff Cumming and Robert Calin-Jageman
 
 https://thenewstatistics.com/

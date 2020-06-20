@@ -20,7 +20,8 @@ Version history
 0.3.4      2020-06-08 Minor changes to layout
 0.3.5
 0.3.6      2020-06-17 Issue #3 para 3 adjusted poition of version dialog box a lttle.
-0.3.8
+0.3.10     2020-06-20 Add tooltips styling
+0.3.11
 
 */
 
@@ -164,7 +165,7 @@ span {
 #shape {
   padding-top: 0.5rem;
   display: grid;
-  grid-template-columns: 10rem 12rem auto;
+  grid-template-columns: 5rem 10rem 12rem auto;
 }
 
 /*--------------------------------2. Click to display Population, SD Lines, Fill random--------------------------------------*/
@@ -483,4 +484,27 @@ span {
   margin-top: 0.8rem;
   width: 5rem;
   height: 3rem;
+}
+
+#tooltip {
+  position: absolute;
+  border: 1px solid darkgray;
+  border-radius: 0.5rem;
+  padding: 0.2rem;
+  max-width: 15rem;
+  font-size: 1.0rem;
+  background-color: lightgray;
+  color: blue;
+}
+
+/*get the triangle*/
+#tooltip::after {
+  content: " ";
+  position: absolute;
+  bottom: 100%;  /* At the top of the tooltip */
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: transparent transparent darkgray transparent;
 }

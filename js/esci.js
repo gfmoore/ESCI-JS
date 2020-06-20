@@ -45,7 +45,8 @@ Start using version history now to record changes and fixes
 0.3.8     2020-06-18  Sort out issues of means being too extreme <0 >99 and causing indexing issue. Temporary fix.
 0.3.9     2020-06-20  Extreme means now do not join heap, but values do get added to stats
                       Looked at what is stored for a sample mean in relation to ssd. Currently NaN, but changed to 0, not sure if makes a difference, but at least consistent.
-0.9.10     
+0.3.10    2020-06-20  Started preliminary work on tooltips
+0.3.11
 
 */
 //#endregion
@@ -56,7 +57,7 @@ Start using version history now to record changes and fixes
 $(function() {
   console.log('jQuery here!');  //just to make sure everything is working
 
-  let version = '0.3.9';
+  let version = '0.3.10';
 
   //dialog box to display version
   $('#dialogversion').hide();
@@ -1606,6 +1607,85 @@ $(function() {
   //   }
 
   // })
+
+/*---------------------------------------------------Tooltips-----------------------------------*/
+  //tooltips
+  //add a data-tooltip attribute to all tooltippable elements and then figure out which one was hovered over?
+  //It's a first go and I don't like it!!! Still go the text at any rate.
+
+  let tooltipText;
+  let position;
+  let el;
+
+  $('[data-tooltip]').on({ 
+    mouseenter: function(e) {
+
+      // e.preventDefault();
+      // e.stopPropagation();
+      $('#tooltip').hide();
+      position = $(this).position();
+
+      tooltipText = '';
+      if ($(this).text().includes('1. The Population'))           tooltipText = 'Choose the parameters of the population and its shape.';
+      if ($(this).text().includes('μ'))                           tooltipText = 'Population mean.  Use slider, or type in value.  Min 0, max 100.';
+      if ($(this).text().includes('σ'))                           tooltipText = 'Standard deviation of the population.  Use slider or type in value.  Min 1, max 50.';
+      if ($(this).text().includes('Shape'))                       tooltipText = 'Click to choose the shape of the population distribution: Normal, rectangular, or skewed to the right. For the skewed population, the degree of skew is controlled by the spinner at the right. Min = 0.1 (minimal skew), max = 1 (strong skew). The skewed distribution is a lognormal distribution, with the number displayed being the SD of the underlying normal distribution.';
+      if ($(this).text().includes('Skew'))                        tooltipText = 'Use the spinner to set the degree of right skew, when Skew is chosen as the shape of the population distribution. Min 0.1, max 1.';
+      if ($(this).text() === 'SD Lines')                          tooltipText = 'Display verticals to mark the mean, and s units either side of the mean.  These lines mark z=0, z=-1, z=1, etc.';
+      if ($(this).text() === 'Fill Random')                       tooltipText = 'Click to fill under the population curve.  A large number of data circles are placed randomly in the area. \nA new randomisation is made each time Fill Random is clicked on.';
+      if ($(this).text().includes('Controls'))                    tooltipText = "Click the three buttons to control sampling.";
+      //I don't like tooltips appearing on buttons, must be a better way - hover for a second or two?
+      // if ($(this).text().includes('Clear'))                       tooltipText = "'Clear' clears all samples.";
+      // if ($(this).text().includes('Take Sample'))                 tooltipText = "Click to take another random, independent sample from the population.";
+      // if ($(this).text().includes('Run Stop'))                    tooltipText = "Click to start and stop a sequence of samples.";
+      if ($(this).text().includes('Samples'))                     tooltipText = 'Choose sample size, see information about the latest sample, and see the number of samples in the current set of samples.';
+      if ($(this).text() === 'N')                                 tooltipText = 'Sample size.  Min 1, max 100.';
+      if ($(this).text().includes('Number of samples'))           tooltipText = "Number of samples in the current set of samples. A new set is started after 'Clear', or whenever a major parameter (e.g., m, s, N), or display setting is changed.";
+      if ($(this).text().includes('Mean'))                        tooltipText = 'The mean of the latest sample.';
+      if ($(this).text().includes('SD'))                          tooltipText = 'The standard deviation of the latest sample.';
+      if ($(this).text().includes('MoE (population)'))            tooltipText = 'Margin of error (MoE) of the population CI around the mean of the latest sample. The MoE is the length of either arm of the latest CI, so is half the total length of this CI.';
+      if ($(this).text().includes('MoE (sample)'))                tooltipText = 'Margin of error (MoE) of the sample CI around the mean of the latest sample. The MoE is the length of either arm of the latest CI, so is half the total length of this CI.';
+      if ($(this).text().includes('Data points'))                 tooltipText = 'Click to display data points (ooo) of the latest sample.';
+      if ($(this).text().includes('Sample means'))                tooltipText = 'Display sample means as green dots.';
+      if ($(this).text().includes('Dropping means'))              tooltipText = 'Click to display means as they drop. When mean heap is displayed, unclick here to see just the means in the mean heap.';
+      if ($(this).text().includes('5. Mean Heap'))                tooltipText = 'The mean heap is a pile of the sample means in the current set of samples. Only the most recent ??? means are displayed.';
+      if ($(this).text().includes('Mean heap'))                   tooltipText = 'Click to show the mean heap, a dot plot of sample means. Only the most recent ??? means in the current set of samples are displayed.';
+      if ($(this).text().includes('Sampling distribution curve')) tooltipText = 'When the mean heap is displayed: The sampling distribution curve is the shape of the mean heap expected if we took an infinite number of samples, and the population is normal.  The sampling distribution curve is a normal distribution.  It is scaled vertically to match the number of samples in the current set of samples. When the population is rectangular, the displayed normal sampling distribution curve is usually a good fit to the mean heap for a large number of samples, because of the central limit theorem. For a skewed population the fit is sometimes not so close, especially for small samples and a highly skewed population.';
+      if ($(this).text().includes('SE lines'))                    tooltipText = 'When the mean heap is displayed: Display verticals to mark m , and SE units either side of m.  These lines mark z=0, z=-1, z=1, etc, for the sampling distribution curve.';
+      if ($(this).text().includes('MoE around μ'))                tooltipText = 'This interval marks the central C% area under the sampling distribution curve.  It is marked by a green bar along the X axis, with green verticals to mark its ends. When s is assumed known, this interval gives the width of every CI.';
+      if ($(this).text().includes('6. Confidence Intervals'))     tooltipText = 'CIs can be displayed on every mean in the dance of the means, to give the dance of the confidence intervals';
+      if ($(this).text().includes('CI%'))                         tooltipText = 'Confidence level (%) for CIs displayed on the sample means.  Use spinner or type in a value.  Min 0, max 99.9';
+      if ($(this).text().includes('CIs'))                         tooltipText = 'Display a CI on every mean in the dance of the means, to see the dance of the confidence intervals';
+      if ($(this).text().includes('Known'))                       tooltipText = 'The population sd is known.';
+      if ($(this).text().includes('Unknown'))                     tooltipText = 'The population sd is unknown.';
+      if ($(this).text().includes('7. Capture of μ'))             tooltipText = 'When the mean heap is not displayed: Explore capture of μ by CIs. Click both checkboxes to mark the population mean μ, and see red when a CI does not capture μ.';
+      if ($(this).text().includes('μ line'))                      tooltipText = 'A vertical line to mark the population mean in the lower figure';
+      if ($(this).text().includes('Capture of μ'))                tooltipText = 'When the mean heap is not displayed: Click to indicate capture by the CIs of μ.  Red indicates non-capture.';
+      if ($(this).text().includes('Heap mean'))                   tooltipText = 'The mean of the heap at after each sample';
+      if ($(this).text().includes('Heap se'))                     tooltipText = 'The standard error of the heap after each sample';
+      if ($(this).text().includes('Number capturing μ'))          tooltipText = 'Number of samples in the current set of samples for which the CI captures μ';
+      if ($(this).text().includes('Samples taken'))               tooltipText = 'Total number of sample taken (re-displayed from section 4)';
+      if ($(this).text().includes('Percent capturing μ'))         tooltipText = 'Percent of samples in the current set of samples for which the CI captures μ.  This proportion is expected in the long run to equal % confidence (C).  ';
+      if ($(this).text().includes('8. Capture of next mean'))     tooltipText = 'NOT IMPLEMENTED YET!! When the mean heap is not displayed: Explore capture by CIs of the next mean, which is the mean just above a CI in the dance. When the checkbox is clicked on, then cases where the next mean falls outside the CI are indicated by a pink diagonal line joining the closer limit of the CI to that next mean just above.';
+      if ($(this).text().includes('Number capturing next mean'))  tooltipText = 'Number of samples in the current set of samples for which the CI captures the next mean, which is the mean just above it in the dance.';
+      if ($(this).text().includes('Percent capturing next mean')) tooltipText = 'When the mean heap is not displayed: Click to show a pink diagonal line joining the  closer limit of the CI to the next mean, which is the mean just above, in all cases in which the CI does not capture that next mean. In the long run, we expect about 83% of 95% CIs to capture the next mean.';
+      // if ($(this).text().includes('')) tooltipText = '';
+      // if ($(this).text().includes('')) tooltipText = '';
+
+
+      $('#tooltip').css( { left: position.left + 20, top: position.top +20 } )
+      $('#tooltip').text(tooltipText).show(500);
+    },
+    mouseleave: function() {
+      $('#tooltip').hide();
+    },
+    click: function() {
+      $('#tooltip').hide();
+    },
+    touch: function() {
+      $('#tooltip').hide();
+    }
+  })
 
 
 }) //end of jQuery

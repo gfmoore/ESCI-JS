@@ -20,8 +20,8 @@ Version history
 0.3.4     2020-06-08 Minor changes to wording and layout
 0.3.5     2020-06-16 Added additional values to the N drop down, removed the option that was for adding any CI%, but added additional CIs to drop down
 0.3.6     2020-06-17 Issue #1 Added missing CI value 50% 68%, added in correct values for N
-0.3.8
-
+0.3.10    2020-06-20 Added data-tooltip attribute for working with tooltips
+0.3.11
 -->
 
 <!DOCTYPE html>
@@ -47,6 +47,9 @@ Version history
     <script src=https://cdn.jsdelivr.net/npm/jstat@latest/dist/jstat.min.js defer></script>
 
     <script src=https://d3js.org/d3.v5.min.js defer></script>
+
+    <!--for tooltips-->
+    <!-- <script src=https://cdn.jsdelivr.net/npm/tooltipster@4.2.8/dist/js/tooltipster.bundle.min.js defer></script> -->
     
     <script src=./js/esci.js defer></script>
 
@@ -64,27 +67,28 @@ Version history
           <div id=header>
             <div id=logo><img id=logoimg src=./images/logo.png></div>
             <div id=mainheading>ESCI-JS</div>
-            <div id=subheading>CI Jumping</div>
+            <div id=subheading title='https://NewStatistics.com'>CI Jumping</div>
           </div>
 
           <!-------------------------------------------Section 1 The Population---------------------------------------------------->
           <div id=distribution>
-            <div>1. The Population</div>
+            <div data-tooltip>1. The Population</div>
             <div id=musliderdiv>
-              <div><span class=greek>&mu;</span></div>
+              <div data-tooltip><span class=greek >&mu;</span></div>
               <input type="range" min="20" max="80" value="50" class="slider" id=muslider>
               <div id=muvalue><input id=muvaluetext type=text size=3 value=50></div>
             </div>
             <div id=sigmasliderdiv>
-              <div><span class=greek>&sigma;</span></div>
+              <div data-tooltip><span class=greek>&sigma;</span></div>
               <input type="range" min="5" max="50" value="20" class="slider" id="sigmaslider">
               <div id=sigmavalue><input id=sigmavaluetext type=text size=3 value=20></div>
             </div>
 
             <div id=shape>
+              <div data-tooltip><span>Shape</span></div>
               <div><input type=radio id=normal  name=shape value=normal checked=checked><label for=normal>Normal</label></div>
               <div><input type=radio id=rectangular name=shape value=rectangular><label for=rectangular>Rectangular</label><br></div>
-              <div>
+              <div data-tooltip>
                 <input type=radio id=skew name=shape value=skew><label for=skew>Skew</label>
                 <select id=skewvalue> 
                   <option value=0.0>0.0</option>
@@ -107,17 +111,17 @@ Version history
           <div id=displayoptions>
             <div>2. Click to display</div>
             <input type=checkbox id=popn name=popn value=popn><label for=popn>Population</label>
-            <input type=checkbox id=sdlines name=sdlines value=sdlines><label for=sdlines>SD Lines</label>
-            <input type=checkbox id=fillpopn name=fillpopn value=fillpopn><label for=fillpopn>Fill Random</label>
+            <input type=checkbox id=sdlines name=sdlines value=sdlines><label for=sdlines data-tooltip>SD Lines</label>
+            <input type=checkbox id=fillpopn name=fillpopn value=fillpopn><label for=fillpopn data-tooltip>Fill Random</label>
           </div>
 
           <!------------------------------------------Section 3 Controls Clear, Take Sample, Run Freely-------------------------------------------------------->
           <div id=runcontrols>
-            <div>3. Controls</div>
+            <div data-tooltip>3. Controls</div>
             <div id=runstop> 
-              <div id=clearsample class=runbuttons>Clear </div>
-              <div id=takesample  class=runbuttons>Take Sample</div>
-              <div id=runfreely   class=runbuttons>Run Stop</div>
+              <div id=clearsample class=runbuttons data-tooltip>Clear </div>
+              <div id=takesample  class=runbuttons data-tooltip>Take Sample</div>
+              <div id=runfreely   class=runbuttons data-tooltip>Run Stop</div>
               <input type="range" min="0" max="500" value="100" class="sliderspeed" id=speed>
             </div>
           </div>
@@ -125,8 +129,8 @@ Version history
           <!-------------------------------------------Section 4 Samples--------------------------------------------------------->
           <div id=samplessection>
             <div id=samples>
-              <div id=samplelabel>4. Samples: </div>
-              <div><span class=italic>N</span></div>
+              <div id=samplelabel data-tooltip>4. Samples: </div>
+              <div data-tooltip><span class=italic>N</span></div>
               <select id=samplesselected>
                 <option value=1>1</option>
                 <option value=2>2</option>
@@ -153,39 +157,39 @@ Version history
 
 
             <div id=latestsamplelabel></div>
-            <div id=nosamples>Number of samples : <span id=nosamplesx>0</span></div>  
+            <div id=nosamples data-tooltip><span>Number of samples : </span><span id=nosamplesx>0</span></div>  
 
             <div id=latestsamples>
-              <div><span>Mean </span><span class=italic>M</span> : <span id=samplemean>0</span></div>
-              <div><span>SD </span><span class=italic>s</span> : <span id=samplesd>0</span></div>
+              <div data-tooltip><span>Mean </span><span class=italic>M</span> : <span id=samplemean>0</span></div>
+              <div data-tooltip><span>SD </span><span class=italic>s</span> : <span id=samplesd>0</span></div>
             </div>
 
             <div id=latestmoes>
-              <div id=moep>MoE (population) : <span id=popnmoe>0</span></div>
-              <div id=moes>MoE (sample) : <span id=samplemoe>0</span></div>
+              <div id=moep data-tooltip><span>MoE (population) : </span><span id=popnmoe>0</span></div>
+              <div id=moes data-tooltip><span>MoE (sample) : </span><span id=samplemoe>0</span></div>
             </div>
 
             <!-----------------------Data points and dropping sample means------------->
             <div id=datapointssection>
-              <input type=checkbox id=datapoints name=datapoints value=datapoints><label for=datapoints>Data points)</label>
-              <input type=checkbox id=samplemeans name=samplemeans value=samplemeans><label for=samplemeans>Sample Means</label>
-              <input type=checkbox id=droppingmeans name=droppingmeans value=droppingmeans><label for=droppingmeans>Dropping Means</label>
+              <input type=checkbox id=datapoints name=datapoints value=datapoints><label for=datapoints data-tooltip><span>Data points</span></label>
+              <input type=checkbox id=samplemeans name=samplemeans value=samplemeans><label for=samplemeans data-tooltip><span>Sample means</span></label>
+              <input type=checkbox id=droppingmeans name=droppingmeans value=droppingmeans><label for=droppingmeans data-tooltip><span>Dropping means</span></label>
             </div>
           </div>  
 
           <!-----------------------------------------5. Mean Heap Section---------------------------------------------------------------->
-          <div id=heapsection>
-            5. Mean Heap
-            <div><input type=checkbox id=meanheap    name=meanheap    value=meanheap    ><label for=meanheap>Mean heap</label></div>
-            <div><input type=checkbox id=samplecurve name=samplecurve value=samplecurve ><label for=samplecurve>Sampling distribution curve</label></div>
-            <div><input type=checkbox id=samplelines name=samplelines value=samplelines ><label for=samplelines>SE lines</label></div>
-            <div><input type=checkbox id=plusminusmoe name=plusminusmoe value=plusminusmoe><label for=plusminusmoe>&plusmn; MoE around <span class=greek>&mu;</span></div>
+          <div id=heapsection data-tooltip>
+            <span>5. Mean Heap</span>
+            <div><input type=checkbox id=meanheap    name=meanheap    value=meanheap    ><label for=meanheap data-tooltip><span>Mean heap</span></label></div>
+            <div><input type=checkbox id=samplecurve name=samplecurve value=samplecurve ><label for=samplecurve data-tooltip><span>Sampling distribution curve</span></label></div>
+            <div><input type=checkbox id=samplelines name=samplelines value=samplelines ><label for=samplelines data-tooltip><span>SE lines</span></label></div>
+            <div><input type=checkbox id=plusminusmoe name=plusminusmoe value=plusminusmoe><label for=plusminusmoe data-tooltip=""><span>&plusmn; MoE around </span><span class=greek>&mu;</span></div>
           </div>
 
           <!----------------------------------------6. Confidence Intervals----------------------------------------------------------->
-          <div id=CIsection>
-            6. Confidence Intervals
-            <div>CI%  C
+          <div id=CIsection data-tooltip>
+            <span>6. Confidence Intervals</span>
+            <div data-tooltip><span>CI%  C</span>
               <select id=CI>
                 <option value=0.5>50%</option>
                 <option value=0.32>68%</option>
@@ -196,40 +200,38 @@ Version history
                 <option value=0.01>99%</option>
                 <option value=0.002>99.8%</option>
                 <option value=0.001>99.9%</option>
-                <!-- <option value=0>Custom</option> -->
               </select>
-              <input type=text id=CIIntervalText hidden> <!--not used-->
             </div>
             <div id=CIcontrol>
-              <div><input type=checkbox id=showmoe name=showmoe value=showmoe><label for=showmoe>CIs </label></div>
+              <div><input type=checkbox id=showmoe name=showmoe value=showmoe><label for=showmoe data-tooltip><span>CIs </span></label></div>
               <div id=knownunknown>Assume <span class=greek>&sigma;</span> is </div>
-              <div><input type=radio id=moepopn   name=moe value=moepopn checked=checked><label for=moepopn >Known </label></div>
-              <div><input type=radio id=moesample name=moe value=moesample><label for=moesample>Unknown</label></div>
+              <div><input type=radio id=moepopn   name=moe value=moepopn checked=checked><label for=moepopn data-tooltip><span>Known </span></label></div>
+              <div><input type=radio id=moesample name=moe value=moesample><label for=moesample data-tooltip><span>Unknown</span></label></div>
             </div>
           </div>
 
           <!---------------------------------------7. Capture of mean-------------------------------------------------->
           <div id=captureofmean>
-            <div>7. Capture of <span class=greek>&mu;</span></div>
-            <div><input type=checkbox id=capturemuline name=capturemuline value=capturemuline><label for=capturemuline><span class=greek>&mu;</span> line</label></div>
-            <div><input type=checkbox id=captureofmu name=captureofmu value=captureofmu><label for=captureofmu>Capture of <span class=greek>&mu;</span></label></div>
+            <div data-tooltip>7. Capture of <span class=greek>&mu;</span></div>
+            <div><input type=checkbox id=capturemuline name=capturemuline value=capturemuline><label for=capturemuline data-tooltip><span class=greek>&mu;</span> line</label></div>
+            <div><input type=checkbox id=captureofmu name=captureofmu value=captureofmu><label for=captureofmu data-tooltip>Capture of <span class=greek>&mu;</span></label></div>
             <div id=heapstats>
-              <div>Heap mean : <span id=xbarhp>0.0</span></div>
-              <div>Heap se : <span id=sehp>0.0</span></div>
+              <div data-tooltip>Heap mean : <span id=xbarhp>0.0</span></div>
+              <div data-tooltip>Heap se : <span id=sehp>0.0</span></div>
             </div>
             <div id=capturestats>
-              <div>Number capturing <span class=greek>&mu;</span> : <span id=captured>0</span></div>
-              <div>Samples taken : <span id=nosamplesy>0</span></div>
+              <div data-tooltip>Number capturing <span class=greek>&mu;</span> : <span id=captured>0</span></div>
+              <div data-tooltip>Samples taken : <span id=nosamplesy>0</span></div>
             </div>
-            <div>Percent capturing <span class=greek>&mu;</span> : <span id=capturedpercent>0.0<span>%</span></div>
+            <div data-tooltip>Percent capturing <span class=greek>&mu;</span> : <span id=capturedpercent>0.0<span>%</span></div>
           </div>
 
           <!---------------------------------------8. Capture of next mean--------------------------------------------->
           <div id=capturesection> 
-            <div><label for=capturenextmean>8. Capture of next mean</label><input type=checkbox id=capturenextmean name=capturenextmean value=capturenextmean></div>
+            <div><label for=capturenextmean data-tooltip>8. Capture of next mean</label><input type=checkbox id=capturenextmean name=capturenextmean value=capturenextmean></div>
             <div id=capturenextmeangrid>
-              <div id=numbercapturingnextmean>Number capturing next mean : </div><div id=nocapturingnextmean>0</div>
-              <div id=percentcapturingnextmean>Percent capturing next mean :</div><div id=pccapturingnextmean>0</div>
+              <div id=numbercapturingnextmean data-tooltip><span>Number capturing next mean : </span></div><div id=nocapturingnextmean>0</div>
+              <div id=percentcapturingnextmean data-tooltip><span>Percent capturing next mean :</span></div><div id=pccapturingnextmean>0</div>
             </div>
           </div>
 
@@ -254,5 +256,7 @@ Version history
     <!-- a version dialog box - fired by clicking on logo -->
     <dialog id="dialogversion" open>    
     </dialog> 
+
+    <div id=tooltip hidden></div>
   </body>
 </html>

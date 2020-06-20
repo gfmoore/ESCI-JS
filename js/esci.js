@@ -43,7 +43,9 @@ Start using version history now to record changes and fixes
 0.3.6     2020-06-17  Issue #3 para 3 Changed the version number div to appear on mouseover.             
 0.3.7     2020-06-18  Reinstituted on('click', ) so tablets can dismiss the version number
 0.3.8     2020-06-18  Sort out issues of means being too extreme <0 >99 and causing indexing issue. Temporary fix.
-0.3.9
+0.3.9     2020-06-20  Extreme means now do not join heap, but values do get added to stats
+                      Looked at what is stored for a sample mean in relation to ssd. Currently NaN, but changed to 0, not sure if makes a difference, but at least consistent.
+0.9.10     
 
 */
 //#endregion
@@ -54,7 +56,7 @@ Start using version history now to record changes and fixes
 $(function() {
   console.log('jQuery here!');  //just to make sure everything is working
 
-  let version = '0.3.8';
+  let version = '0.3.9';
 
   //dialog box to display version
   $('#dialogversion').hide();
@@ -638,28 +640,37 @@ $(function() {
 
           ypos = parseInt($(this).attr('cy')) + 1; //move it 1 pixel at a time
 
-          //So look at the sample mean. Compare it with the height of the heap  frequency at that point
           letDrop = false;
-          if (showMeanHeap) {  //if the mean heap is visible
+          if (showMeanHeap) {  //if the mean heap is visible look at the sample mean. Compare it with the height of the heap  frequency at that point
+
             //get an index into the heapbins
             xxbar = $(this).attr('xbar');
-/***************/
-            //have to limit size of xxbar, but is this right, should I just ignore them?
-            if (xxbar < 0) xxbar = 0;
-            if (xxbar > 100) xxbar = 99;
-/****************/
-            heapIndex = parseInt(xxbar/100 * heap.length);
-            heapIndexFreq = heap[heapIndex].f;
 
-            //this should be the height or position of top of bar at heapIndex
-            barHeight = heightS - dropLimit - (heapIndexFreq * 2 * sampleMeanSize);
-
-            //if height of samplemean is less than height of bar at that position let it drop otherwise disappear it
-            if (ypos < barHeight ) {
-              letDrop = true;
+            //if xbar outside viewable area 0-100 then cannot add to heap display
+            if ((xxbar < 0 || xxbar >= 100)) {
+              //well even though we cannot see it, need to keep it dropping, so treat it as though no heap visible
+              if (ypos <= heightS - dropLimit - sampleMeanSize) {
+                letDrop = true;
+              }
+              else {
+                letDrop = false;
+              }              
             }
             else {
-              letDrop = false;
+              //the sample mean is inside the viewable area so check against the heap height
+              heapIndex = parseInt(xxbar/100 * heap.length);
+              heapIndexFreq = heap[heapIndex].f;
+
+              //this should be the height or position of top of bar at heapIndex
+              barHeight = heightS - dropLimit - (heapIndexFreq * 2 * sampleMeanSize);
+
+              //if height of samplemean is less than height of bar at that position let it drop otherwise disappear it
+              if (ypos < barHeight ) {
+                letDrop = true;
+              }
+              else {
+                letDrop = false;
+              }
             }
           }
           else {  //else no heap showing
@@ -847,14 +858,22 @@ $(function() {
     xbar  = jStat.mean(samples);
     ssd   = jStat.stdev(samples, true);  //true is supposed to give the sample sd
 
-    pci = jStat.normalci( xbar, alpha, sigma, n ); //e.g. for 95% CI alpha = 0.05
-    sci = jStat.tci( xbar, alpha, ssd, n);
-    //sci = jStat.tci( xbar, alpha, samples );  //TODO use this?? or the other version - look the same
 
 
-    //for display - length of each wing, i.e. the margin of error
-    pmoe  = pci[1] - xbar;
-    smoe  = sci[1] - xbar;
+    //for display - calc length of each wing, i.e. the margin of error
+    if (isNaN(ssd)) {  //if the ssd cannot be calculated, i.e. sample size N is 1
+      ssd = 0;
+      pci = jStat.normalci( xbar, alpha, sigma, n ); //e.g. for 95% CI alpha = 0.05
+      sci = [0, 0];
+      pmoe  = pci[1] - xbar;
+      smoe  = 0;
+    }
+    else {
+      pci = jStat.normalci( xbar, alpha, sigma, n ); //e.g. for 95% CI alpha = 0.05
+      sci = jStat.tci( xbar, alpha, ssd, n);
+      pmoe  = pci[1] - xbar;
+      smoe  = sci[1] - xbar;
+    }
 
     //display stats
     $N.text(N);
@@ -945,26 +964,32 @@ $(function() {
 
 
   /*------------------------------------------do the heap------------------------------------------*/
-
   //when sample mean gets far enough, add to the heap display   -- from takeSample()
   function addToHeap(xbar) {
+    let increaseFrequency = true;
 
-    xint = parseInt( Math.trunc(xbar/100 * heap.length )); //truncate is just to slightly shift the heap left
-    //just a fix if x<0 or x > heap.length
-    if (xint < 0) xint = 0;
-    if (xint >= heap.length) xint = heap.length - 1
-    heap[xint].f += 1;
-
-    //now draw a bubble at co-ords xint and heap(xint) with an adjustement  remember x() is our scaling function from D3.dropLimit changes based on vertical height of browser (viewport) - not particularly great.
-    svgS.append('circle').attr('class', 'heap').attr('cx', (heap[xint].x * 2* sampleMeanSize) + (sampleMeanSize  + 2) ).attr('cy', heightS - (heap[xint].f * sampleMeanSize * 2) - dropLimit + 3).attr('r', sampleMeanSize).attr('stroke', 'blue').attr('stroke-width', 1).attr('fill', 'lawngreen').attr('visibility', 'hidden');
-
-    if (showMeanHeap) {
-      d3.selectAll('.heap').attr('visibility', 'visible');
+    
+    //if samplemean is too small or too large don't do anything. 
+    if (xbar < 0 || xbar >= 100) {
+      //don't do anything to visible part of heap
     }
     else {
-      d3.selectAll('.heap').attr('visibility', 'hidden');
+      //increase the heap frequency
+      xint = parseInt( Math.trunc(xbar/100 * heap.length )); //truncate is just to slightly shift the heap left
+      heap[xint].f += 1;
+
+      //now draw a bubble at co-ords xint and heap(xint) with an adjustement  remember x() is our scaling function from D3.dropLimit changes based on vertical height of browser (viewport) - not particularly great.
+      svgS.append('circle').attr('class', 'heap').attr('cx', (heap[xint].x * 2* sampleMeanSize) + (sampleMeanSize  + 2) ).attr('cy', heightS - (heap[xint].f * sampleMeanSize * 2) - dropLimit + 3).attr('r', sampleMeanSize).attr('stroke', 'blue').attr('stroke-width', 1).attr('fill', 'lawngreen').attr('visibility', 'hidden');
+
+      if (showMeanHeap) {
+        d3.selectAll('.heap').attr('visibility', 'visible');
+      }
+      else {
+        d3.selectAll('.heap').attr('visibility', 'hidden');
+      }
     }
 
+    //must calculate heap stats even with non visible mean
     calculateHeapStatistics(xbar);  //this could be a slow downer! //should do it continuously?
 
     drawSELines() //now fixed to population sd.
@@ -972,6 +997,8 @@ $(function() {
     drawSECurve() // this will be dynamic as well
 
     if (plusminusmoe) drawPlusMinusMoe();
+
+
   }
 
 
@@ -1007,10 +1034,10 @@ $(function() {
 
     heapN    = 0;
 
-    //create a frequency distribution where the number of buckets is dependent on the width of the area and the size of the sample mean
+    //create a frequency distribution where the number of buckets is dependent on the width of the display area and the size of the sample mean
     heap = [];
     noOfBuckets = parseInt(xmax / (2 * sampleMeanSize));
-    for (let xx = 0; xx <= noOfBuckets; xx += 1) {  //101 buckets
+    for (let xx = 0; xx <= noOfBuckets; xx += 1) {  
       heap.push({x: xx, f: 0})
     }
 

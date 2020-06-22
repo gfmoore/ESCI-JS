@@ -53,7 +53,7 @@ Start using version history now to record changes and fixes
 0.3.11    2020-06-21  Try to sort out skew distribution and touch/mouse to draw. Added a tooltips on off button
                       Can draw, adjust and fill, but haven't got a random sample yet from skew or custom, nor do stats
                       Also changed the auto scale. This means manually scaling the pdf[] values - probably better anyway.
-0.3.12
+0.3.12    2020-06-22  When popuation curve checked off unset fill random as well
 */
 
 'use strict';
@@ -61,7 +61,7 @@ Start using version history now to record changes and fixes
 $(function() {
   console.log('jQuery here!');  //just to make sure everything is working
 
-  let version = '0.3.11';
+  let version = '0.3.12';
 
   //dialog box to display version
   $('#dialogversion').hide();
@@ -264,9 +264,9 @@ $(function() {
   initialise();
 
   //#region Set some checkboxes for when testing.
-    $showPopulationCurve.prop('checked', true);
-    showPopulationCurve = $showPopulationCurve.is(':checked');
-    if (showPopulationCurve) drawPopulationCurve(); else removePopulationCurve();
+    // $showPopulationCurve.prop('checked', true);
+    // showPopulationCurve = $showPopulationCurve.is(':checked');
+    // if (showPopulationCurve) drawPopulationCurve(); else removePopulationCurve();
     // $showSDLines.prop('checked', true);
     // $fillPopulation.prop('checked', true);
     // $showSampleMeans.prop('checked', true);
@@ -1455,7 +1455,15 @@ $(function() {
   //show population pdf curve
   $showPopulationCurve.on('change', function() {
     showPopulationCurve = $showPopulationCurve.is(':checked');
-    if (showPopulationCurve) drawPopulationCurve(); else removePopulationCurve();
+    if (showPopulationCurve) {
+      drawPopulationCurve();
+    } 
+    else {
+      removePopulationCurve();
+      removePopnBubbles();
+      $fillPopulation.prop('checked', false);
+      fillPopulation = false;
+    }
   })
 
   //show mu and sd lines

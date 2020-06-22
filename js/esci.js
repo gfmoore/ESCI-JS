@@ -557,6 +557,7 @@ $(function() {
   $('#displaypdf')
   //#region draw the custom curve
     .mousedown(function(e) {
+      if (!showPopulationCurve) return;  //can only draw custom curve if popuation checked
       custompdf = [];
       d3.selectAll('.pdf').remove();
       if (event.which === 1) { //left click

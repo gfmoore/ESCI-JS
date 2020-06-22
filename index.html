@@ -21,7 +21,8 @@ Version history
 0.3.5     2020-06-16 Added additional values to the N drop down, removed the option that was for adding any CI%, but added additional CIs to drop down
 0.3.6     2020-06-17 Issue #1 Added missing CI value 50% 68%, added in correct values for N
 0.3.10    2020-06-20 Added data-tooltip attribute for working with tooltips
-0.3.11
+0.3.11    2020-06-21 Custom draw and skew. Also added a tooltips on off button
+0.3.12
 -->
 
 <!DOCTYPE html>
@@ -68,6 +69,7 @@ Version history
             <div id=logo><img id=logoimg src=./images/logo.png></div>
             <div id=mainheading>ESCI-JS</div>
             <div id=subheading title='https://NewStatistics.com'>CI Jumping</div>
+            <div id=tooltipsonoff title='Tooltips on/off'>?</div>
           </div>
 
           <!-------------------------------------------Section 1 The Population---------------------------------------------------->
@@ -91,6 +93,16 @@ Version history
               <div data-tooltip>
                 <input type=radio id=skew name=shape value=skew><label for=skew>Skew</label>
                 <select id=skewvalue> 
+                  <option value=-1.0>-1.0</option>
+                  <option value=-0.9>-0.9</option>
+                  <option value=-0.8>-0.8</option>
+                  <option value=-0.7>-0.7</option>
+                  <option value=-0.6>-0.6</option>
+                  <option value=-0.5>-0.5</option>
+                  <option value=-0.4>-0.4</option>
+                  <option value=-0.3>-0.3</option>
+                  <option value=-0.2>-0.2</option>
+                  <option value=-0.1>-0.1</option>                  
                   <option value=0.0>0.0</option>
                   <option value=0.1 selected=selected>0.1</option>
                   <option value=0.2>0.2</option>
@@ -104,6 +116,7 @@ Version history
                   <option value=1.0>1.0</option>                
                 </select>
               </div>
+              <div><input type=radio id=custom name=shape value=custom><label for=custom>Custom</label><br></div>
             </div>
           </div>
 

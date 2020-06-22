@@ -46,18 +46,22 @@ Start using version history now to record changes and fixes
 0.3.9     2020-06-20  Extreme means now do not join heap, but values do get added to stats
                       Looked at what is stored for a sample mean in relation to ssd. Currently NaN, but changed to 0, not sure if makes a difference, but at least consistent.
 0.3.10    2020-06-20  Started preliminary work on tooltips
-0.3.11
 
 */
 //#endregion
-
+/*
+0.3.11    2020-06-21  Try to sort out skew distribution and touch/mouse to draw. Added a tooltips on off button
+                      Can draw, adjust and fill, but haven't got a random sample yet from skew or custom, nor do stats
+                      Also changed the auto scale. This means manually scaling the pdf[] values - probably better anyway.
+0.3.12
+*/
 
 'use strict';
 //$(window).load(function () { //doesn't work anyway need to wait for everything to load, not just jquery, though I didn't experience any problems?
 $(function() {
   console.log('jQuery here!');  //just to make sure everything is working
 
-  let version = '0.3.10';
+  let version = '0.3.11';
 
   //dialog box to display version
   $('#dialogversion').hide();
@@ -90,8 +94,10 @@ $(function() {
   let rectangular;
   let $skew;                    //skew ditribution selected or not
   let skew;
-  let $skewAmount;              //amount of skew 0.1 to 1.0 in steps dropdown list
-  let skewAmount;               //amount of skew 0.1 to 1.0 in steps
+  let $skewAmount;              //amount of skew dropdown list
+  let skewAmount;               //amount of skew -1.0 to 1.0 in steps
+  let $custom;                  //custom distribution selected or not
+  let custom;             
 
   let $showPopulationCurve;     //Show population curve true or false
   let showPopulationCurve;
@@ -244,7 +250,13 @@ $(function() {
   let letDrop;                  //to control whether the samplemean can drop or be removed (and added to the heap)
   let hght = 0;                 //height of plus minus moe bars
 
+  let tooltipText;              //text for the tooltip
+  let $tooltipsonoff;           //tooltips on off button
+  let tooltipsonoff = false;    //flag for tool tips
 
+  let position;                 //hold the position of the cursor
+
+  let custompdf = [];           //hold the values of the custom curve
   //#endregion
 
 
@@ -252,8 +264,11 @@ $(function() {
   initialise();
 
   //#region Set some checkboxes for when testing.
-    //$showSDLines.prop('checked', true);
-    //$fillPopulation.prop('checked', true);
+    $showPopulationCurve.prop('checked', true);
+    showPopulationCurve = $showPopulationCurve.is(':checked');
+    if (showPopulationCurve) drawPopulationCurve(); else removePopulationCurve();
+    // $showSDLines.prop('checked', true);
+    // $fillPopulation.prop('checked', true);
     // $showSampleMeans.prop('checked', true);
     // showSampleMeans = true;
     // $dropSampleMeans.prop('checked', true);
@@ -397,6 +412,11 @@ $(function() {
     plusminusmoe = false;
     d3.selectAll('.plusminusmoe').remove();
     hght = 0;
+
+    pdf = [];
+    custompdf = [];
+
+
   }
   
 
@@ -405,10 +425,12 @@ $(function() {
   function drawPopulationCurve() {
 
     d3.selectAll('.pdf').remove();
+    removePopnBubbles();
     if (showPopulationCurve) {
       if (normal)       drawNormalCurve();
       if (rectangular)  drawRectangularCurve();
       if (skew)         drawSkewCurve();
+      if (custom)       drawCustomCurve();
     }
 
     //now re-draw the mean and sd lines
@@ -432,6 +454,11 @@ $(function() {
       pdf.push({ x: x, y: jStat.normal.pdf(x, mu, sigma) })
     }
 
+    //scale it to fit in with drawing area
+    pdf.forEach(function(v) {
+      v.y = v.y * 8000;
+    })
+
     drawPDF();
   }
 
@@ -440,37 +467,146 @@ $(function() {
     let l, h;
     l = mu-sigma;
     h = mu+sigma;
+
     for (let x = 0; x < 100; x += 1) {
       if (x <= l || x >= h) {
-        pdf.push({ x: x, y: 0.0001 });  //just to get the scale right :)
+        pdf.push({ x: x, y: 1 });  //just to get the scale right :)
       }
       else {
-        pdf.push({ x: x, y: 0.01 });
+        pdf.push({ x: x, y: 160 });
       }
     }
     //get straight vertical lines
-    pdf[l+1] = { x: l, y: 0.01 };
-    pdf[h-1] = { x: h, y: 0.01 };
+    pdf[l+1] = { x: l, y: 160 };
+    pdf[h-1] = { x: h, y: 160 };
   
     drawPDF();
   }
 
   function drawSkewCurve() {
-
     pdf = [];
-    for (let x = 0; x < 200; x += 1) {
-      pdf.push({ x: x, y: jStat.normal.pdf(x, mu, sigma) })
+    skewAmount = parseFloat($skewAmount.val());
+
+    //Approximation to Skew Normal due to Samir K. Ashour, Mahmood A. Abdel-hameed https://www.sciencedirect.com/science/article/pii/S209012321000069X 
+    let k = Math.abs(skewAmount) * 20;
+    let rt2pi = Math.sqrt(2*Math.PI);
+    let rt2divpi = Math.sqrt(2/Math.PI);
+
+    for (let xx = -3; xx < 3; xx += 0.01) {
+      let x = xx;
+      if (x < -3/k) {
+        pdf.push({ x: x, y: 0 })
+      }
+      if (x >= -3/k && x < -1/k) {
+        pdf.push({ x: x, y: 1/(8 *rt2pi) * Math.exp(-(x*x)/2) * (9*k*x + 3*k*k*x*x + k*k*k*x*x*x/3 + 9) });
+      }
+      if (x >= -1/k && x < 1/k ) {
+        pdf.push({ x: x, y: 1/(4 *rt2pi) * Math.exp(-(x*x)/2) * (3*k*x - k*k*k*x*x*x/3 + 4) });
+      }
+      if (x >= 1/k && x < 3/k) {
+        pdf.push({ x: x, y: 1/(8 *rt2pi) * Math.exp(-(x*x)/2) * (9*k*x - 3*k*k*x*x + k*k*k*x*x*x/3 + 7) });
+      }
+      if (x >= 3/k) {
+        pdf.push({ x: x, y: rt2divpi *Math.exp(-(x*x/2)) });
+      }
     }
+
+    //now scale the distribution and centre on mu 
+    pdf.forEach( function(v) { 
+      v.x = v.x*sigma + mu;
+      if (skewAmount < 0) v.x = 100 - v.x;  //if negative skew then reflect values
+
+      if (skewAmount !== 0) {  //when skewed the distribution doesn't look right under the mean so tweak
+        if (skewAmount > 0) v.x = v.x - 10;
+        if (skewAmount < 0) v.x = v.x + 10;
+      }
+
+      if (v.x < 0) v.x = 0; //just stop curve going too far left
+
+      if (skewAmount === 0) {
+        v.y = v.y * 8000/sigma;  //just to make the normal look better!
+      }
+      else if ( Math.abs(skewAmount) === 0.1) {
+        v.y = v.y * 6000/sigma;
+      } 
+      else {
+        v.y = v.y * 5400/sigma;     
+      }  
+      if (skewAmount !== 0) v.y = v.y + 5;  //just lift it a bit when not normal.
+    })
 
     drawPDF();
   }
 
+  function drawCustomCurve() {
+    pdf = [];
+
+    let maxy = d3.max(custompdf, function(d) { return d.y});
+    //scale the raw drawing (which is in pixels)
+    custompdf.forEach( function(v) {
+      pdf.push({ x: v.x * 100/width, y: heightP - v.y });
+    })
+
+    drawPDF();
+  }
+
+
+
+  //if mousedown on displaypdf area and custom selected allow draw
+  let oldxm, oldym, xm, ym, mdown = false;
+  $('#displaypdf')
+  //#region draw the custom curve
+    .mousedown(function(e) {
+      custompdf = [];
+      d3.selectAll('.pdf').remove();
+      if (event.which === 1) { //left click
+        mdown = true;
+        oldxm = e.pageX - $(this).offset().left;
+        oldym = e.pageY - $(this).offset().top;
+        custompdf.push( {x: oldxm, y: oldym} ); //get first point
+      }
+      if (e.which === 3) { //right click}
+        e.preventDefault();
+        e.stopPropagation();
+        d3.selectAll('.custompdf').remove();
+        custompdf = []
+      }
+    })
+    .mouseup(function() {
+      mdown = false;
+      d3.selectAll('.custompdf').remove();
+      drawCustomCurve();  //now draw it and get values from it
+    })
+
+  $('#displaypdf').mousemove(function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (custom && mdown) {
+      xm = e.pageX - $(this).offset().left;
+      if (xm < oldxm) xm = oldxm; //can't go backwards
+      ym = e.pageY - $(this).offset().top;
+      //draw lines between the points, but not let x go backwards
+      svgP.append('line').attr('class', 'custompdf')
+        .attr('x1', oldxm).attr('y1', oldym).attr('x2', xm).attr('y2', ym)
+        .attr('stroke', 'red').attr('stroke-width', 2);
+
+      if (xm >= oldxm) oldxm = xm;  //can't go backwards
+      oldym = ym;
+      custompdf.push( {x: oldxm, y: oldym} )
+    }
+  })
+
+  //stop right click contextmenu firing wehn drawing custom pdf
+  $('#displaypdf').bind("contextmenu",function(e){
+    return false;
+  });
+  //#endregion
+
+
   function drawPDF() {
-
-    //regenerate yp for new pdf   //the 0.005 is just to drop the max value so the curve fits
-    yp = d3.scaleLinear().domain([ 0, d3.max(pdf, function(d) { return d.y}) + 0.005 ]).range([heightP, 10]);
-
-    //drawAxes();
+    //changed to so that pdf is prescaled and shows the correct changes with change of sd
+    //yp = d3.scaleLinear().domain([ 0, d3.max(pdf, function(d) { return d.y}) + 0.005 ]).range([heightP, 10]);
+    yp = d3.scaleLinear().domain([ 0, heightP ]).range([heightP, 10]);
 
     //create a generator
     line = d3.line()
@@ -481,6 +617,9 @@ $(function() {
     svgP.append('path')
       .attr('class', 'pdf')
       .attr('d', line(pdf))
+
+    //draw popn bubbles if fill selected
+    if (fillPopulation) showPopnBubbles();
   }
 
   //draw the mean and sd lines
@@ -527,30 +666,74 @@ $(function() {
 
       if (normal) {
         //get  random array of bubbles  use the noraml pdf for the curve to generate
-        for (let x = 0; x < 5000; x += 1) {
+        for (let x = 0; x < 8000; x += 1) {
           bubbleX = jStat.normal.sample(mu, sigma);
           bubbleY = jStat.normal.pdf(bubbleX, mu, sigma);
           bubbleY = randbetween(0,  bubbleY - 0.001);   //TODO can't quite get the scale factor right - I guess it depends on sigma
           popnBubbles.push({ x: bubbleX, y: bubbleY })
         }
 
+        //now scale popnBubbles 
+        popnBubbles.forEach( function(v) {
+          v.y = v.y * 8000;
+        })
+
         popnBubbles.forEach( b => {
           svgP.append('circle').attr('class', 'popnbubble').attr('cx', x(b.x)).attr('cy', yp(b.y) ).attr('r', sampleMeanSize);
         })
       }
+
       if (rectangular) {
-        for (let x = (mu - sigma)+1; x < (mu + sigma)-1; x += 0.05) { //800 values
+        for (let x = (mu - sigma)+1; x < (mu + sigma)-1; x += 0.02) { 
           bubbleY = randbetween(0,  0.0095);   //TODO can't quite get the scale factor right - I guess it depends on sigma
           popnBubbles.push({ x: x, y: bubbleY })
         }
+
+        //now scale
+        popnBubbles.forEach(function(v) {
+          v.x = v.x + 0.05;
+          v.y = v.y * 16300;
+        })
 
         popnBubbles.forEach( b => {
           svgP.append('circle').attr('class', 'popnbubble').attr('cx', x(b.x)).attr('cy', yp(b.y) ).attr('r', sampleMeanSize);
         })
         
       }
+
       if (skew) {
-        //TODO
+        pdf.forEach( function(v, i) {
+          if (v.y > 17) {
+            //do a number of random bubbles
+            for (let j = 0; j < v.y/10; j += 1) { 
+              bubbleY = randbetween(15, v.y - 8); 
+              popnBubbles.push({ x: v.x + 0.1, y: bubbleY })
+            }
+          }
+        })
+
+        popnBubbles.forEach( b => {
+          svgP.append('circle').attr('class', 'popnbubble').attr('cx', x(b.x)).attr('cy', yp(b.y) ).attr('r', sampleMeanSize);
+        })
+
+      }
+
+      if (custom) {
+        //TODO not a bad first stab, probably do better
+        pdf.forEach( function(v, i) {
+          if (v.y > 17) {
+            //do a number of random bubbles
+            for (let j = 0; j < v.y/10; j += 1) { 
+              bubbleY = randbetween(15, v.y - 8); 
+              popnBubbles.push({ x: v.x + 0.1, y: bubbleY })
+            }
+          }
+        })
+
+        popnBubbles.forEach( b => {
+          svgP.append('circle').attr('class', 'popnbubble').attr('cx', x(b.x)).attr('cy', yp(b.y) ).attr('r', sampleMeanSize);
+        })
+
       }
     }
   }
@@ -600,15 +783,20 @@ $(function() {
     }
 
     if (skew) {
-      //get skew value
-      skewAmount = parseFloat($skewAmount.val());
       for (let i = 0; i < n; i += 1) {
         //TODO
         //some random value in the skew distribution
-        //samples.push( jStat.normal.sample(mu, sigma) );
         samples.push(mu);  //for now
       }
 
+    }
+
+    if (custom) {
+      for (let i = 0; i < n; i += 1) {
+        //TODO
+        //some random value in the skew distribution
+        samples.push(mu);  //for now
+      }
     }
 
     //calculate the statistics e.g. sample mean, sample sd, popn moe, sample moe
@@ -1215,6 +1403,7 @@ $(function() {
     normal = $normal.is(':checked');
     rectangular = false;
     skew = false;
+    custom = false;
 
     //reset percentages captures
     clearAll();
@@ -1226,6 +1415,7 @@ $(function() {
     rectangular = $rectangular.is(':checked');
     normal = false;
     skew = false;
+    custom = false;
 
     //reset percentages captures
     clearAll();
@@ -1237,6 +1427,18 @@ $(function() {
     skew = $skew.is(':checked');
     normal = false;
     rectangular = false;
+    custom = false;
+
+    clearAll();    
+    drawPopulationCurve();
+  })
+
+  //custom
+  $custom.on('change', function() {
+    custom = $custom.is(':checked');
+    normal = false;
+    rectangular = false;
+    skew = false;
 
     clearAll();    
     drawPopulationCurve();
@@ -1244,7 +1446,7 @@ $(function() {
 
   //skew amount
   $skewAmount.on('change', function() {
-    showSkewCurve = $skewAmount.val();
+    skewAmount = parseFloat($skewAmount.val());
 
     clearAll();
     drawPopulationCurve();
@@ -1484,7 +1686,8 @@ $(function() {
     $normal               = $('#normal');
     $rectangular          = $('#rectangular');
     $skew                 = $('#skew');
-    $skewAmount           = $('#skewvalue  option:selected');
+    $skewAmount           = $('#skewvalue');
+    $custom               = $('#custom');
 
     $showPopulationCurve  = $('#popn');
     $showSDLines          = $('#sdlines');
@@ -1530,6 +1733,8 @@ $(function() {
     $showCaptureMuLine    = $('#capturemuline');
 
     $captureNextMean      = $('#capturenextmean');
+
+    $tooltipsonoff        = $('#tooltipsonoff');
   }
 
   //get the value or status of all ui interface elements (how many of these do I need at this place?)
@@ -1541,6 +1746,7 @@ $(function() {
     rectangular           = $rectangular.is(':checked');
     skew                  = $skew.is(':checked');
     skewAmount            = $skewAmount.text();
+    custom                = $custom.is(':checked');
 
     speed                 = parseInt($speed.val());
 
@@ -1580,6 +1786,8 @@ $(function() {
 
     captureNextMean      = $captureNextMean.is('checked');
 
+    //tooltipsonoff        = $tooltipsonoff.is('checked');
+
   }
 
 
@@ -1613,9 +1821,16 @@ $(function() {
   //add a data-tooltip attribute to all tooltippable elements and then figure out which one was hovered over?
   //It's a first go and I don't like it!!! Still go the text at any rate.
 
-  let tooltipText;
-  let position;
-  let el;
+  $tooltipsonoff.on('click', function() {
+    if (tooltipsonoff) {
+      tooltipsonoff = false;
+      $tooltipsonoff.css('background-color', 'lightgrey');
+    }
+    else {
+      tooltipsonoff = true;
+      $tooltipsonoff.css('background-color', 'lightgreen');
+    }
+  })
 
   $('[data-tooltip]').on({ 
     mouseenter: function(e) {
@@ -1625,56 +1840,58 @@ $(function() {
       $('#tooltip').hide();
       position = $(this).position();
 
-      tooltipText = '';
-      if ($(this).text().includes('1. The Population'))           tooltipText = 'Choose the parameters of the population and its shape.';
-      if ($(this).text().includes('μ'))                           tooltipText = 'Population mean.  Use slider, or type in value.  Min 0, max 100.';
-      if ($(this).text().includes('σ'))                           tooltipText = 'Standard deviation of the population.  Use slider or type in value.  Min 1, max 50.';
-      if ($(this).text().includes('Shape'))                       tooltipText = 'Click to choose the shape of the population distribution: Normal, rectangular, or skewed to the right. For the skewed population, the degree of skew is controlled by the spinner at the right. Min = 0.1 (minimal skew), max = 1 (strong skew). The skewed distribution is a lognormal distribution, with the number displayed being the SD of the underlying normal distribution.';
-      if ($(this).text().includes('Skew'))                        tooltipText = 'Use the spinner to set the degree of right skew, when Skew is chosen as the shape of the population distribution. Min 0.1, max 1.';
-      if ($(this).text() === 'SD Lines')                          tooltipText = 'Display verticals to mark the mean, and s units either side of the mean.  These lines mark z=0, z=-1, z=1, etc.';
-      if ($(this).text() === 'Fill Random')                       tooltipText = 'Click to fill under the population curve.  A large number of data circles are placed randomly in the area. \nA new randomisation is made each time Fill Random is clicked on.';
-      if ($(this).text().includes('Controls'))                    tooltipText = "Click the three buttons to control sampling.";
-      //I don't like tooltips appearing on buttons, must be a better way - hover for a second or two?
-      // if ($(this).text().includes('Clear'))                       tooltipText = "'Clear' clears all samples.";
-      // if ($(this).text().includes('Take Sample'))                 tooltipText = "Click to take another random, independent sample from the population.";
-      // if ($(this).text().includes('Run Stop'))                    tooltipText = "Click to start and stop a sequence of samples.";
-      if ($(this).text().includes('Samples'))                     tooltipText = 'Choose sample size, see information about the latest sample, and see the number of samples in the current set of samples.';
-      if ($(this).text() === 'N')                                 tooltipText = 'Sample size.  Min 1, max 100.';
-      if ($(this).text().includes('Number of samples'))           tooltipText = "Number of samples in the current set of samples. A new set is started after 'Clear', or whenever a major parameter (e.g., m, s, N), or display setting is changed.";
-      if ($(this).text().includes('Mean'))                        tooltipText = 'The mean of the latest sample.';
-      if ($(this).text().includes('SD'))                          tooltipText = 'The standard deviation of the latest sample.';
-      if ($(this).text().includes('MoE (population)'))            tooltipText = 'Margin of error (MoE) of the population CI around the mean of the latest sample. The MoE is the length of either arm of the latest CI, so is half the total length of this CI.';
-      if ($(this).text().includes('MoE (sample)'))                tooltipText = 'Margin of error (MoE) of the sample CI around the mean of the latest sample. The MoE is the length of either arm of the latest CI, so is half the total length of this CI.';
-      if ($(this).text().includes('Data points'))                 tooltipText = 'Click to display data points (ooo) of the latest sample.';
-      if ($(this).text().includes('Sample means'))                tooltipText = 'Display sample means as green dots.';
-      if ($(this).text().includes('Dropping means'))              tooltipText = 'Click to display means as they drop. When mean heap is displayed, unclick here to see just the means in the mean heap.';
-      if ($(this).text().includes('5. Mean Heap'))                tooltipText = 'The mean heap is a pile of the sample means in the current set of samples. Only the most recent ??? means are displayed.';
-      if ($(this).text().includes('Mean heap'))                   tooltipText = 'Click to show the mean heap, a dot plot of sample means. Only the most recent ??? means in the current set of samples are displayed.';
-      if ($(this).text().includes('Sampling distribution curve')) tooltipText = 'When the mean heap is displayed: The sampling distribution curve is the shape of the mean heap expected if we took an infinite number of samples, and the population is normal.  The sampling distribution curve is a normal distribution.  It is scaled vertically to match the number of samples in the current set of samples. When the population is rectangular, the displayed normal sampling distribution curve is usually a good fit to the mean heap for a large number of samples, because of the central limit theorem. For a skewed population the fit is sometimes not so close, especially for small samples and a highly skewed population.';
-      if ($(this).text().includes('SE lines'))                    tooltipText = 'When the mean heap is displayed: Display verticals to mark m , and SE units either side of m.  These lines mark z=0, z=-1, z=1, etc, for the sampling distribution curve.';
-      if ($(this).text().includes('MoE around μ'))                tooltipText = 'This interval marks the central C% area under the sampling distribution curve.  It is marked by a green bar along the X axis, with green verticals to mark its ends. When s is assumed known, this interval gives the width of every CI.';
-      if ($(this).text().includes('6. Confidence Intervals'))     tooltipText = 'CIs can be displayed on every mean in the dance of the means, to give the dance of the confidence intervals';
-      if ($(this).text().includes('CI%'))                         tooltipText = 'Confidence level (%) for CIs displayed on the sample means.  Use spinner or type in a value.  Min 0, max 99.9';
-      if ($(this).text().includes('CIs'))                         tooltipText = 'Display a CI on every mean in the dance of the means, to see the dance of the confidence intervals';
-      if ($(this).text().includes('Known'))                       tooltipText = 'The population sd is known.';
-      if ($(this).text().includes('Unknown'))                     tooltipText = 'The population sd is unknown.';
-      if ($(this).text().includes('7. Capture of μ'))             tooltipText = 'When the mean heap is not displayed: Explore capture of μ by CIs. Click both checkboxes to mark the population mean μ, and see red when a CI does not capture μ.';
-      if ($(this).text().includes('μ line'))                      tooltipText = 'A vertical line to mark the population mean in the lower figure';
-      if ($(this).text().includes('Capture of μ'))                tooltipText = 'When the mean heap is not displayed: Click to indicate capture by the CIs of μ.  Red indicates non-capture.';
-      if ($(this).text().includes('Heap mean'))                   tooltipText = 'The mean of the heap at after each sample';
-      if ($(this).text().includes('Heap se'))                     tooltipText = 'The standard error of the heap after each sample';
-      if ($(this).text().includes('Number capturing μ'))          tooltipText = 'Number of samples in the current set of samples for which the CI captures μ';
-      if ($(this).text().includes('Samples taken'))               tooltipText = 'Total number of sample taken (re-displayed from section 4)';
-      if ($(this).text().includes('Percent capturing μ'))         tooltipText = 'Percent of samples in the current set of samples for which the CI captures μ.  This proportion is expected in the long run to equal % confidence (C).  ';
-      if ($(this).text().includes('8. Capture of next mean'))     tooltipText = 'NOT IMPLEMENTED YET!! When the mean heap is not displayed: Explore capture by CIs of the next mean, which is the mean just above a CI in the dance. When the checkbox is clicked on, then cases where the next mean falls outside the CI are indicated by a pink diagonal line joining the closer limit of the CI to that next mean just above.';
-      if ($(this).text().includes('Number capturing next mean'))  tooltipText = 'Number of samples in the current set of samples for which the CI captures the next mean, which is the mean just above it in the dance.';
-      if ($(this).text().includes('Percent capturing next mean')) tooltipText = 'When the mean heap is not displayed: Click to show a pink diagonal line joining the  closer limit of the CI to the next mean, which is the mean just above, in all cases in which the CI does not capture that next mean. In the long run, we expect about 83% of 95% CIs to capture the next mean.';
-      // if ($(this).text().includes('')) tooltipText = '';
-      // if ($(this).text().includes('')) tooltipText = '';
+      if (tooltipsonoff) {  //if tooltips allowed
+        tooltipText = '';
+        if ($(this).text().includes('1. The Population'))           tooltipText = 'Choose the parameters of the population and its shape.';
+        if ($(this).text().includes('μ'))                           tooltipText = 'Population mean.  Use slider, or type in value.  Min 0, max 100.';
+        if ($(this).text().includes('σ'))                           tooltipText = 'Standard deviation of the population.  Use slider or type in value.  Min 1, max 50.';
+        if ($(this).text().includes('Shape'))                       tooltipText = 'Click to choose the shape of the population distribution: Normal, rectangular, or skewed to the right. For the skewed population, the degree of skew is controlled by the spinner at the right. Min = 0.1 (minimal skew), max = 1 (strong skew). The skewed distribution is a lognormal distribution, with the number displayed being the SD of the underlying normal distribution.';
+        if ($(this).text().includes('Skew'))                        tooltipText = 'Use the spinner to set the degree of right skew, when Skew is chosen as the shape of the population distribution. Min 0.1, max 1.';
+        if ($(this).text().includes('Custom'))                      tooltipText = 'Draw your own distribution.';
+        if ($(this).text() === 'SD Lines')                          tooltipText = 'Display verticals to mark the mean, and s units either side of the mean.  These lines mark z=0, z=-1, z=1, etc.';
+        if ($(this).text() === 'Fill Random')                       tooltipText = 'Click to fill under the population curve.  A large number of data circles are placed randomly in the area. \nA new randomisation is made each time Fill Random is clicked on.';
+        if ($(this).text().includes('Controls'))                    tooltipText = "Click the three buttons to control sampling.";
+        //I don't like tooltips appearing on buttons, must be a better way - hover for a second or two?
+        // if ($(this).text().includes('Clear'))                       tooltipText = "'Clear' clears all samples.";
+        // if ($(this).text().includes('Take Sample'))                 tooltipText = "Click to take another random, independent sample from the population.";
+        // if ($(this).text().includes('Run Stop'))                    tooltipText = "Click to start and stop a sequence of samples.";
+        if ($(this).text().includes('Samples'))                     tooltipText = 'Choose sample size, see information about the latest sample, and see the number of samples in the current set of samples.';
+        if ($(this).text() === 'N')                                 tooltipText = 'Sample size.  Min 1, max 100.';
+        if ($(this).text().includes('Number of samples'))           tooltipText = "Number of samples in the current set of samples. A new set is started after 'Clear', or whenever a major parameter (e.g., m, s, N), or display setting is changed.";
+        if ($(this).text().includes('Mean'))                        tooltipText = 'The mean of the latest sample.';
+        if ($(this).text().includes('SD'))                          tooltipText = 'The standard deviation of the latest sample.';
+        if ($(this).text().includes('MoE (population)'))            tooltipText = 'Margin of error (MoE) of the population CI around the mean of the latest sample. The MoE is the length of either arm of the latest CI, so is half the total length of this CI.';
+        if ($(this).text().includes('MoE (sample)'))                tooltipText = 'Margin of error (MoE) of the sample CI around the mean of the latest sample. The MoE is the length of either arm of the latest CI, so is half the total length of this CI.';
+        if ($(this).text().includes('Data points'))                 tooltipText = 'Click to display data points (ooo) of the latest sample.';
+        if ($(this).text().includes('Sample means'))                tooltipText = 'Display sample means as green dots.';
+        if ($(this).text().includes('Dropping means'))              tooltipText = 'Click to display means as they drop. When mean heap is displayed, unclick here to see just the means in the mean heap.';
+        if ($(this).text().includes('5. Mean Heap'))                tooltipText = 'The mean heap is a pile of the sample means in the current set of samples. Only the most recent ??? means are displayed.';
+        if ($(this).text().includes('Mean heap'))                   tooltipText = 'Click to show the mean heap, a dot plot of sample means. Only the most recent ??? means in the current set of samples are displayed.';
+        if ($(this).text().includes('Sampling distribution curve')) tooltipText = 'When the mean heap is displayed: The sampling distribution curve is the shape of the mean heap expected if we took an infinite number of samples, and the population is normal.  The sampling distribution curve is a normal distribution.  It is scaled vertically to match the number of samples in the current set of samples. When the population is rectangular, the displayed normal sampling distribution curve is usually a good fit to the mean heap for a large number of samples, because of the central limit theorem. For a skewed population the fit is sometimes not so close, especially for small samples and a highly skewed population.';
+        if ($(this).text().includes('SE lines'))                    tooltipText = 'When the mean heap is displayed: Display verticals to mark m , and SE units either side of m.  These lines mark z=0, z=-1, z=1, etc, for the sampling distribution curve.';
+        if ($(this).text().includes('MoE around μ'))                tooltipText = 'This interval marks the central C% area under the sampling distribution curve.  It is marked by a green bar along the X axis, with green verticals to mark its ends. When s is assumed known, this interval gives the width of every CI.';
+        if ($(this).text().includes('6. Confidence Intervals'))     tooltipText = 'CIs can be displayed on every mean in the dance of the means, to give the dance of the confidence intervals';
+        if ($(this).text().includes('CI%'))                         tooltipText = 'Confidence level (%) for CIs displayed on the sample means.  Use spinner or type in a value.  Min 0, max 99.9';
+        if ($(this).text().includes('CIs'))                         tooltipText = 'Display a CI on every mean in the dance of the means, to see the dance of the confidence intervals';
+        if ($(this).text().includes('Known'))                       tooltipText = 'The population sd is known.';
+        if ($(this).text().includes('Unknown'))                     tooltipText = 'The population sd is unknown.';
+        if ($(this).text().includes('7. Capture of μ'))             tooltipText = 'When the mean heap is not displayed: Explore capture of μ by CIs. Click both checkboxes to mark the population mean μ, and see red when a CI does not capture μ.';
+        if ($(this).text().includes('μ line'))                      tooltipText = 'A vertical line to mark the population mean in the lower figure';
+        if ($(this).text().includes('Capture of μ'))                tooltipText = 'When the mean heap is not displayed: Click to indicate capture by the CIs of μ.  Red indicates non-capture.';
+        if ($(this).text().includes('Heap mean'))                   tooltipText = 'The mean of the heap at after each sample';
+        if ($(this).text().includes('Heap se'))                     tooltipText = 'The standard error of the heap after each sample';
+        if ($(this).text().includes('Number capturing μ'))          tooltipText = 'Number of samples in the current set of samples for which the CI captures μ';
+        if ($(this).text().includes('Samples taken'))               tooltipText = 'Total number of sample taken (re-displayed from section 4)';
+        if ($(this).text().includes('Percent capturing μ'))         tooltipText = 'Percent of samples in the current set of samples for which the CI captures μ.  This proportion is expected in the long run to equal % confidence (C).  ';
+        if ($(this).text().includes('8. Capture of next mean'))     tooltipText = 'NOT IMPLEMENTED YET!! When the mean heap is not displayed: Explore capture by CIs of the next mean, which is the mean just above a CI in the dance. When the checkbox is clicked on, then cases where the next mean falls outside the CI are indicated by a pink diagonal line joining the closer limit of the CI to that next mean just above.';
+        if ($(this).text().includes('Number capturing next mean'))  tooltipText = 'Number of samples in the current set of samples for which the CI captures the next mean, which is the mean just above it in the dance.';
+        if ($(this).text().includes('Percent capturing next mean')) tooltipText = 'When the mean heap is not displayed: Click to show a pink diagonal line joining the  closer limit of the CI to the next mean, which is the mean just above, in all cases in which the CI does not capture that next mean. In the long run, we expect about 83% of 95% CIs to capture the next mean.';
+        // if ($(this).text().includes('')) tooltipText = '';
+        // if ($(this).text().includes('')) tooltipText = '';
 
-
-      $('#tooltip').css( { left: position.left + 20, top: position.top +20 } )
-      $('#tooltip').text(tooltipText).show(500);
+        $('#tooltip').css( { left: position.left + 20, top: position.top +20 } )
+        $('#tooltip').text(tooltipText).show(500);
+      }
     },
     mouseleave: function() {
       $('#tooltip').hide();

@@ -54,6 +54,7 @@ Start using version history now to record changes and fixes
                       Can draw, adjust and fill, but haven't got a random sample yet from skew or custom, nor do stats
                       Also changed the auto scale. This means manually scaling the pdf[] values - probably better anyway.
 0.3.12    2020-06-22  When popuation curve checked off unset fill random as well
+0.3.13    2020-06-22  Not allow custom draw when population unchecked
 */
 
 'use strict';
@@ -61,7 +62,7 @@ Start using version history now to record changes and fixes
 $(function() {
   console.log('jQuery here!');  //just to make sure everything is working
 
-  let version = '0.3.12';
+  let version = '0.3.13';
 
   //dialog box to display version
   $('#dialogversion').hide();

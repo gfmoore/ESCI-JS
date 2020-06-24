@@ -57,7 +57,9 @@ Start using version history now to record changes and fixes
 0.3.13    2020-06-22  Not allow custom draw when population unchecked
 0.3.14    2020-06-24  Redo and Improve filling the population bubbles. Populationbubbles now used to determine random sampling.
                       Also allow dropping means - todo calculate statistics properly.
-0.3.15    
+0.3.15    2020-06-24  Turned off hover on logo for version number - not working properly
+                      Going to try lognormal
+0.3.16   
 */
 
 'use strict';
@@ -65,22 +67,33 @@ Start using version history now to record changes and fixes
 $(function() {
   console.log('jQuery here!');  //just to make sure everything is working
 
-  let version = '0.3.14';
+  let version = '0.3.15';
 
   //dialog box to display version
   $('#dialogversion').hide();
   $('#dialogversion').html(`Version : ${version}`);
   
+  //need to relook at this
+  // $('#logoimg').on('mouseenter', function() {
+  //   $('#dialogversion').show(500);
+  // })
 
-  $('#logoimg').on('mouseenter', function() {
+  // $('#dialogversion').on('mouseleave click touch', function() {
+  //   event.stopPropagation();
+  //   event.preventDefault();
+  //   $('#dialogversion').hide(500);
+  // })
+
+  $('#logoimg').on('click', function() {
     $('#dialogversion').show(500);
   })
 
-  $('#dialogversion').on('mouseleave click touch', function() {
+  $('#dialogversion').on('click', function() {
     event.stopPropagation();
     event.preventDefault();
     $('#dialogversion').hide(500);
   })
+
 
 
   //#region for variable definitions (just allows code folding)
@@ -279,18 +292,18 @@ $(function() {
     //$showSDLines.prop('checked', true);
     //showSDlines = true;
     
-    $fillPopulation.prop('checked', true);    
-    fillPopulation = true;
-    if (fillPopulation) fillPopnBubbles();
+    // $fillPopulation.prop('checked', true);    
+    // fillPopulation = true;
+    // if (fillPopulation) fillPopnBubbles();
 
-    $showSamplePoints.prop('checked', true);
-    showSamplePoints = true;
+    // $showSamplePoints.prop('checked', true);
+    // showSamplePoints = true;
 
-    $showSampleMeans.prop('checked', true);
-    showSampleMeans = true;
+    // $showSampleMeans.prop('checked', true);
+    // showSampleMeans = true;
     
-    $dropSampleMeans.prop('checked', true);
-    dropSampleMeans = true;
+    // $dropSampleMeans.prop('checked', true);
+    // dropSampleMeans = true;
     
     // $showMeanHeap.prop('checked', true);
     // showMeanHeap = true;
@@ -485,13 +498,11 @@ $(function() {
       pdf.push({ x: x, y: jStat.normal.pdf(x, mu, sigma) })
     }
 
+    let mn = d3.max(pdf, function(d) { return  d.y } );
+
     //scale it to fit in with drawing area
     pdf.forEach(function(v) {
-      //v.y = v.y * 8000;    //might need to scale this improperly according to sigma otherwise looks to low
-      if (sigma >= 5  && sigma < 10)   v.y *= 3000;
-      if (sigma >= 10 && sigma < 30)   v.y *= 6000;
-      if (sigma >= 30 && sigma < 40)   v.y *= 8000;
-      if (sigma >= 40 && sigma <= 50)  v.y *= 10000;              
+      v.y = v.y  * (sigma * 160 + 2000); //linear equation            
     })
 
     drawPDF();
@@ -520,59 +531,96 @@ $(function() {
     skewAmount = parseFloat($skewAmount.val());
 
     //Approximation to Skew Normal due to Samir K. Ashour, Mahmood A. Abdel-hameed https://www.sciencedirect.com/science/article/pii/S209012321000069X 
-    let k = Math.abs(skewAmount) * 20;
-    let rt2pi = Math.sqrt(2*Math.PI);
-    let rt2divpi = Math.sqrt(2/Math.PI);
+    // let k = Math.abs(skewAmount) * 20;
+    // let rt2pi = Math.sqrt(2*Math.PI);
+    // let rt2divpi = Math.sqrt(2/Math.PI);
 
-    let x, y;
-    for (let xx = -3; xx < 3; xx += 0.01) {
-      x = xx;
-      if (x < -3/k) {
-        y = 0;
-        //pdf.push({ x: x, y: 0 })
-      }
-      if (x >= -3/k && x < -1/k) {
-        y = 1/(8 *rt2pi) * Math.exp(-(x*x)/2) * (9*k*x + 3*k*k*x*x + k*k*k*x*x*x/3 + 9);
-      }
-      if (x >= -1/k && x < 1/k ) {
-        y =  1/(4 *rt2pi) * Math.exp(-(x*x)/2) * (3*k*x - k*k*k*x*x*x/3 + 4);
-      }
-      if (x >= 1/k && x < 3/k) {
-        y = 1/(8 *rt2pi) * Math.exp(-(x*x)/2) * (9*k*x - 3*k*k*x*x + k*k*k*x*x*x/3 + 7);
-      }
-      if (x >= 3/k) {
-        y = rt2divpi *Math.exp(-(x*x/2));
-      }
-      if (y > 0) pdf.push( {x: x, y: y} ); //is this condition correct?
+    // let x, y;
+    // for (let xx = -3; xx < 3; xx += 0.01) {
+    //   x = xx;
+    //   if (x < -3/k) {
+    //     y = 0;
+    //     //pdf.push({ x: x, y: 0 })
+    //   }
+    //   if (x >= -3/k && x < -1/k) {
+    //     y = 1/(8 *rt2pi) * Math.exp(-(x*x)/2) * (9*k*x + 3*k*k*x*x + k*k*k*x*x*x/3 + 9);
+    //   }
+    //   if (x >= -1/k && x < 1/k ) {
+    //     y =  1/(4 *rt2pi) * Math.exp(-(x*x)/2) * (3*k*x - k*k*k*x*x*x/3 + 4);
+    //   }
+    //   if (x >= 1/k && x < 3/k) {
+    //     y = 1/(8 *rt2pi) * Math.exp(-(x*x)/2) * (9*k*x - 3*k*k*x*x + k*k*k*x*x*x/3 + 7);
+    //   }
+    //   if (x >= 3/k) {
+    //     y = rt2divpi *Math.exp(-(x*x/2));
+    //   }
+    //   if (y > 0) pdf.push( {x: x, y: y} ); //is this condition correct?
+    // }
+
+    //scale the pdf
+    // pdf.forEach( v => {
+    //   v.x = v.x*sigma + mu;
+    //   v.y = v.y * 300; //??
+    // })
+
+
+    //let's retry lognormal 
+    let k = Math.abs(skewAmount);
+    //let m = Math.exp(0.5*k*k);
+    //let v = (Math.exp(k*k)-1)*(Math.exp(k*k));
+    for (let x = 0; x < 100; x += 0.1) {
+      //pdf.push({ x: x, y: jStat.normal.pdf(Math.log(x), 0, k) });
+      pdf.push( {x: x, y: jStat.lognormal.pdf(x, mu, k) } );
     }
 
-    //now scale the distribution and centre on mu 
-    pdf.forEach( function(v) { 
-      v.x = v.x*sigma + mu;
-      if (skewAmount < 0) v.x = 100 - v.x;  //if negative skew then reflect values
+    //scale it up
+    // pdf.forEach( v => {
+    //   if (skewAmount < 0) v.x = 100 - v.x;
+    //   v.x = v.x*sigma + mu-22;
+    //   v.y = v.y * 200; //??
+    // })
 
-      if (skewAmount !== 0) {  //when skewed the distribution doesn't look right under the mean so tweak
-        if (skewAmount > 0) v.x = v.x - 10;
-        if (skewAmount < 0) v.x = v.x + 10;
-      }
+    //I calculate the mu and sigma here from the weighted mean of the pdf?
+    //but this changes the mean from 50, 20 and it gets all confused.
+    // let s = 0, n = 0, s2 = 0;
+    // pdf.forEach(v => { 
+    //   s += v.x * v.y;
+    //   s2 += (v.x * v.x) * v.y;
+    //   n += v.y;
+    // })
 
-      if (v.x < 0) v.x = 0; //just stop curve going too far left
+    // mu = s/n;
+    // sigma = Math.sqrt(s2/n - mu*mu);
+    // setMuSigmaSlider(mu, sigma);
 
-      if (skewAmount === 0) {
-        v.y = v.y * 8000/sigma;  //just to make the normal look better!
-      }
-      else if ( Math.abs(skewAmount) === 0.1) {
-        v.y = v.y * 6000/sigma;
-      } 
-      else {
-        v.y = v.y * 5400/sigma;     
-      }  
-      if (skewAmount !== 0) v.y = v.y + 5;  //just lift it a bit when not normal.
 
-    })
+    //now re-scale the distribution and centre on mu 
+    //pdf.forEach( v => { 
+      //if (skewAmount < 0) v.x = 100 - v.x;  //if negative skew then reflect values
+
+      // if (skewAmount !== 0) {  //when skewed the distribution doesn't look right under the mean so tweak
+      //   if (skewAmount > 0) v.x = v.x - 10;
+      //   if (skewAmount < 0) v.x = v.x + 10;
+      // }
+
+      // if (v.x < 0) v.x = 0; //just stop curve going too far left
+
+      // if (skewAmount === 0) {
+      //   v.y = v.y * 8000/sigma;  //just to make the normal look better!
+      // }
+      // else if ( Math.abs(skewAmount) === 0.1) {
+      //   v.y = v.y * 6000/sigma;
+      // } 
+      // else {
+      //   v.y = v.y * 5400/sigma;     
+      // }  
+      // if (skewAmount !== 0) v.y = v.y + 5;  //just lift it a bit when not normal.
+
+    //})
 
     drawPDF();
   }
+
 
   function drawCustomCurve() {
  
@@ -587,6 +635,19 @@ $(function() {
     else {
       pdf = [];
     }
+
+        
+    //I calculate the mu and sigma here from the weighted mean of the pdf?
+    // let s = 0, n = 0, s2 = 0;
+    // pdf.forEach(v => { 
+    //   s += v.x * v.y;
+    //   s2 += (v.x * v.x) * v.y;
+    //   n += v.y;
+    // })
+
+    // mu = s/n;
+    // sigma = Math.sqrt(s2/n - mu*mu);
+    // setMuSigmaSlider(mu, sigma);
 
     drawPDF();
   }
@@ -618,6 +679,7 @@ $(function() {
         d3.selectAll('.custompdf').remove();
         custompdf = [];
         oldpdf = [];
+        removePopnBubbles();
       }
     })
     .mouseup(function() {
@@ -660,6 +722,14 @@ $(function() {
   });
   //#endregion
 
+
+  function setMuSigmaSlider(mu, sigma) {
+    $mu.val(mu.toFixed(0));
+    $muslider.val(mu.toFixed(0));
+
+    $sigma.val(sigma.toFixed(0));
+    $sigmaslider.val(sigma.toFixed(0));
+  }
 
   function drawPDF() {
     //changed to so that pdf is prescaled and shows the correct changes with change of sd
@@ -735,8 +805,6 @@ $(function() {
     let drawit; //shall I draw it?
       
     popnBubbles = [];
-
-    svgP.append('circle').attr('class', 'popnbubble').attr('cx', x(0) ).attr('cy', yp(0) ).attr('r', sampleMeanSize);
 
     fillPopulation = $fillPopulation.is(':checked');
     if (fillPopulation) {
@@ -1108,10 +1176,11 @@ $(function() {
   //calculate statistics in samples[]
   function sampleStatistics() {
     //get stats from jStat
+    //this should be okay for all types of distribution
     xbar  = jStat.mean(samples);
     ssd   = jStat.stdev(samples, true);  //true is supposed to give the sample sd
 
-
+    //the mu and sigma are calculated when I create the pdf array.
 
     //for display - calc length of each wing, i.e. the margin of error
     if (isNaN(ssd)) {  //if the ssd cannot be calculated, i.e. sample size N is 1
@@ -1862,7 +1931,6 @@ $(function() {
 
   }
 
-
   //not convinced this is the right way.
   $(window).bind('resize', function(e){
     window.resizeEvt;
@@ -1879,14 +1947,6 @@ $(function() {
     console.log(s);
   }
 
-
-  // $('#test').on('click', function() {
-  //   l('here');
-  //   for (let zz = 0; zz <heap.length; zz += 1) {
-  //     svgS.append('circle').attr('class', 'heap').attr('cx', (heap[zz].x * 2 * sampleMeanSize) + (sampleMeanSize + 2) ).attr('cy', heightS -dropLimit - sampleMeanSize).attr('r', sampleMeanSize).attr('stroke', 'blue').attr('stroke-width', 1).attr('fill', 'white').attr('visibility', 'visible');
-  //   }
-
-  // })
 
 /*---------------------------------------------------Tooltips-----------------------------------*/
   //tooltips

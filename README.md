@@ -7,6 +7,12 @@ by Geoff Cumming and Robert Calin-Jageman
 
 https://thenewstatistics.com/
 
+
+## Current version 0.3.15  
+
+You can see which version by hovering on the logo.
+
+
 It is still in development. It could be better refactored, but hey, we do the best we can with the time available!
 
 It uses D3 for some aspects, jQuery, jStat and at times just plain old JavaScript which reaches the parts other libraries cannot ;)
@@ -14,9 +20,7 @@ It uses D3 for some aspects, jQuery, jStat and at times just plain old JavaScrip
 ![The ESCI-JS web paget](images/ESCIView.png?raw=true "ESCI Web page")
 
 
-## Current version 0.3.13   
 
-You can see which version by hovering on the logo.
 
 
 

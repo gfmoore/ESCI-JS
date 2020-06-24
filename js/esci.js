@@ -55,6 +55,9 @@ Start using version history now to record changes and fixes
                       Also changed the auto scale. This means manually scaling the pdf[] values - probably better anyway.
 0.3.12    2020-06-22  When popuation curve checked off unset fill random as well
 0.3.13    2020-06-22  Not allow custom draw when population unchecked
+0.3.14    2020-06-24  Redo and Improve filling the population bubbles. Populationbubbles now used to determine random sampling.
+                      Also allow dropping means - todo calculate statistics properly.
+0.3.15    
 */
 
 'use strict';
@@ -62,7 +65,7 @@ Start using version history now to record changes and fixes
 $(function() {
   console.log('jQuery here!');  //just to make sure everything is working
 
-  let version = '0.3.13';
+  let version = '0.3.14';
 
   //dialog box to display version
   $('#dialogversion').hide();
@@ -194,7 +197,8 @@ $(function() {
 
 
   let margin;                   //margins for viewport
-  let width;                    //width of viewport after margins applied
+  let width = 0;                //width of viewport after margins applied
+  //let oldwidth = 0;             //width before resize;
   let heightP;                  //height of displayPDF viewport after margins applied
   let heightS;                  //height of displaysample viewport after margins applied
 
@@ -206,6 +210,7 @@ $(function() {
   let svgS;                     //the d3 reference to displaysample
 
   let pdf = []                  //array that holds the data for the pdf
+  let oldpdf = [];
 
   let line                      //the actual line generated for the pdf
 
@@ -258,27 +263,41 @@ $(function() {
   let position;                 //hold the position of the cursor
 
   let custompdf = [];           //hold the values of the custom curve
+
+  let doOnce = true;
+
   //#endregion
 
-
-
+  
   initialise();
 
   //#region Set some checkboxes for when testing.
-    // $showPopulationCurve.prop('checked', true);
-    // showPopulationCurve = $showPopulationCurve.is(':checked');
-    // if (showPopulationCurve) drawPopulationCurve(); else removePopulationCurve();
-    // $showSDLines.prop('checked', true);
-    // $fillPopulation.prop('checked', true);
-    // $showSampleMeans.prop('checked', true);
-    // showSampleMeans = true;
-    // $dropSampleMeans.prop('checked', true);
-    // dropSampleMeans = true;
+    $showPopulationCurve.prop('checked', true);
+    showPopulationCurve = $showPopulationCurve.is(':checked');
+    if (showPopulationCurve) drawPopulationCurve(); else removePopulationCurve();
+
+    //$showSDLines.prop('checked', true);
+    //showSDlines = true;
+    
+    $fillPopulation.prop('checked', true);    
+    fillPopulation = true;
+    if (fillPopulation) fillPopnBubbles();
+
+    $showSamplePoints.prop('checked', true);
+    showSamplePoints = true;
+
+    $showSampleMeans.prop('checked', true);
+    showSampleMeans = true;
+    
+    $dropSampleMeans.prop('checked', true);
+    dropSampleMeans = true;
+    
     // $showMeanHeap.prop('checked', true);
     // showMeanHeap = true;
   //#endregion
 
   function initialise() {
+
     $('#mainheading').text('ESCI-JS'); //was D3
     getInterfaceElements()     //get the jquery references to items on the user interface
     getInterfaceValues();      //get current values of all checkboxes, radio-buttons and text-boxes etc.
@@ -307,6 +326,7 @@ $(function() {
     // set the dimensions and margins of the pdf graph area
     //xmax  = $('#displaypdf').width();       //width of viewing window for displayPDF and displaysample
     //try this work around. It looks like $().width is not working properly on narrowing the browser, async problem?
+    //oldwidth = width;
     xmax = window.innerWidth - $('#control').width() - 28;
 
     let sectionwidth = $('#displaysection').css('max-width');
@@ -323,6 +343,13 @@ $(function() {
     width = xmax - margin.left - margin.right;
     heightP = ymaxP - margin.top - margin.bottom;
     heightS = ymaxS - margin.top - margin.bottom;
+
+
+    //set the oldwidth to be the width when first loaded, after wards it remebers width after a resize
+    // if (doOnce) {
+    //   oldwidth = width;
+    //   doOnce = false;
+    // }
 
     //set a reference to the displaypdf area
     d3.selectAll('svg > *').remove();  //remove all elements under svgP
@@ -344,7 +371,7 @@ $(function() {
 
     //check the draw population radiobutton
     if (showPopulationCurve) drawPopulationCurve(); else removePopulationCurve();
-    if (fillPopulation) showPopnBubbles();
+    if (fillPopulation) fillPopnBubbles();
  
     drawAxes();
     clearAll();
@@ -414,10 +441,7 @@ $(function() {
     d3.selectAll('.plusminusmoe').remove();
     hght = 0;
 
-    pdf = [];
-    custompdf = [];
-
-
+    //pdf = [];
   }
   
 
@@ -425,8 +449,11 @@ $(function() {
   //draw the population curve
   function drawPopulationCurve() {
 
+    //problem is that pdfs are not to same scale, the area is 0 to 100, 0 to 200 high say
+
     d3.selectAll('.pdf').remove();
     removePopnBubbles();
+    
     if (showPopulationCurve) {
       if (normal)       drawNormalCurve();
       if (rectangular)  drawRectangularCurve();
@@ -443,44 +470,48 @@ $(function() {
   //remove the population curve
   function removePopulationCurve() {
     //removing population curve and remove sd lines as well and turn off the sd line checkboxove
-    d3.selectAll('.pdf').remove();
+    removePDF();
     removeSDLines();
     $showSDLines.prop('checked', false);
   }
 
   //create my probability density function pdf
+  //how many points for the curve? As this will be used in creating bubbles and random samples except for normal where we have functions 
   function drawNormalCurve() {
     pdf = [];
-    for (let x = 0; x < 200; x += 1) {
+
+    //for (let x = mu-5*sigma; x < mu+5*sigma; x += 0.1) {
+   for (let x = 0; x < 100; x += 0.1) {
       pdf.push({ x: x, y: jStat.normal.pdf(x, mu, sigma) })
     }
 
     //scale it to fit in with drawing area
     pdf.forEach(function(v) {
-      v.y = v.y * 8000;
+      //v.y = v.y * 8000;    //might need to scale this improperly according to sigma otherwise looks to low
+      if (sigma >= 5  && sigma < 10)   v.y *= 3000;
+      if (sigma >= 10 && sigma < 30)   v.y *= 6000;
+      if (sigma >= 30 && sigma < 40)   v.y *= 8000;
+      if (sigma >= 40 && sigma <= 50)  v.y *= 10000;              
     })
 
     drawPDF();
   }
 
   function drawRectangularCurve() {
+
+    //actually I only need 6 points in the pdf!! but its so fast...
     pdf = [];
     let l, h;
     l = mu-sigma;
     h = mu+sigma;
 
-    for (let x = 0; x < 100; x += 1) {
-      if (x <= l || x >= h) {
-        pdf.push({ x: x, y: 1 });  //just to get the scale right :)
-      }
-      else {
-        pdf.push({ x: x, y: 160 });
-      }
-    }
-    //get straight vertical lines
-    pdf[l+1] = { x: l, y: 160 };
-    pdf[h-1] = { x: h, y: 160 };
-  
+    pdf.push( {x: 0, y: 0} ); 
+    pdf.push( {x: l, y: 0} );
+    pdf.push( {x: l, y: 160} );
+    pdf.push( {x: h, y: 160} );
+    pdf.push( {x: h, y: 0} );
+    pdf.push( {x:100, y: 0} );
+
     drawPDF();
   }
 
@@ -493,23 +524,26 @@ $(function() {
     let rt2pi = Math.sqrt(2*Math.PI);
     let rt2divpi = Math.sqrt(2/Math.PI);
 
+    let x, y;
     for (let xx = -3; xx < 3; xx += 0.01) {
-      let x = xx;
+      x = xx;
       if (x < -3/k) {
-        pdf.push({ x: x, y: 0 })
+        y = 0;
+        //pdf.push({ x: x, y: 0 })
       }
       if (x >= -3/k && x < -1/k) {
-        pdf.push({ x: x, y: 1/(8 *rt2pi) * Math.exp(-(x*x)/2) * (9*k*x + 3*k*k*x*x + k*k*k*x*x*x/3 + 9) });
+        y = 1/(8 *rt2pi) * Math.exp(-(x*x)/2) * (9*k*x + 3*k*k*x*x + k*k*k*x*x*x/3 + 9);
       }
       if (x >= -1/k && x < 1/k ) {
-        pdf.push({ x: x, y: 1/(4 *rt2pi) * Math.exp(-(x*x)/2) * (3*k*x - k*k*k*x*x*x/3 + 4) });
+        y =  1/(4 *rt2pi) * Math.exp(-(x*x)/2) * (3*k*x - k*k*k*x*x*x/3 + 4);
       }
       if (x >= 1/k && x < 3/k) {
-        pdf.push({ x: x, y: 1/(8 *rt2pi) * Math.exp(-(x*x)/2) * (9*k*x - 3*k*k*x*x + k*k*k*x*x*x/3 + 7) });
+        y = 1/(8 *rt2pi) * Math.exp(-(x*x)/2) * (9*k*x - 3*k*k*x*x + k*k*k*x*x*x/3 + 7);
       }
       if (x >= 3/k) {
-        pdf.push({ x: x, y: rt2divpi *Math.exp(-(x*x/2)) });
+        y = rt2divpi *Math.exp(-(x*x/2));
       }
+      if (y > 0) pdf.push( {x: x, y: y} ); //is this condition correct?
     }
 
     //now scale the distribution and centre on mu 
@@ -534,55 +568,77 @@ $(function() {
         v.y = v.y * 5400/sigma;     
       }  
       if (skewAmount !== 0) v.y = v.y + 5;  //just lift it a bit when not normal.
+
     })
 
     drawPDF();
   }
 
   function drawCustomCurve() {
-    pdf = [];
-
-    let maxy = d3.max(custompdf, function(d) { return d.y});
-    //scale the raw drawing (which is in pixels)
-    custompdf.forEach( function(v) {
-      pdf.push({ x: v.x * 100/width, y: heightP - v.y });
-    })
+ 
+    //is there still a custompdf
+    if (custompdf.length !== 0) {
+      pdf = [];
+      oldpdf.forEach( function(v) {
+        pdf.push({ x: v.x, y: v.y }); 
+      })
+      
+    }
+    else {
+      pdf = [];
+    }
 
     drawPDF();
   }
-
-
-
   //if mousedown on displaypdf area and custom selected allow draw
   let oldxm, oldym, xm, ym, mdown = false;
   $('#displaypdf')
   //#region draw the custom curve
     .mousedown(function(e) {
       if (!showPopulationCurve) return;  //can only draw custom curve if popuation checked
+      if (!custom) return;               //and when custom selected
       custompdf = [];
+      oldpdf = [];
       d3.selectAll('.pdf').remove();
       if (event.which === 1) { //left click
         mdown = true;
         oldxm = e.pageX - $(this).offset().left;
         oldym = e.pageY - $(this).offset().top;
-        custompdf.push( {x: oldxm, y: oldym} ); //get first point
+
+        custompdf.push({ x:oldxm , y: heightP }) //starting point
+        custompdf.push( {x: oldxm, y: oldym} ); //get first mouse point
+
+        svgP.append('line').attr('class', 'custompdf')  //draw the first vertical line
+        .attr('x1', oldxm).attr('y1', heightS).attr('x2', oldxm).attr('y2', oldym)
+        .attr('stroke', 'red').attr('stroke-width', 2);
       }
       if (e.which === 3) { //right click}
         e.preventDefault();
         e.stopPropagation();
         d3.selectAll('.custompdf').remove();
-        custompdf = []
+        custompdf = [];
+        oldpdf = [];
       }
     })
     .mouseup(function() {
+      if (!custom) return;
       mdown = false;
+      custompdf.push({ x:oldxm , y:heightP }) //ending point
       d3.selectAll('.custompdf').remove();
+      //need to scale the custompdf which is in pixels say, 0->width, heightP->0 to the pdf which is say 0->100 and 0->200
+      //note might not be that many pixels in custom - will this be a problem?
+      //note there are margins to take into account
+      custompdf.forEach( function(v) {
+        pdf.push({ x: v.x * 100 / width - 0.8, y: heightP - v.y + 5}); 
+        oldpdf.push({ x: v.x * 100 / width - 0.8, y: heightP - v.y + 5}); //make a backup for redraw purposes
+      })
       drawCustomCurve();  //now draw it and get values from it
     })
 
   $('#displaypdf').mousemove(function(e) {
     e.preventDefault();
     e.stopPropagation();
+    if (!custom) return;
     if (custom && mdown) {
       xm = e.pageX - $(this).offset().left;
       if (xm < oldxm) xm = oldxm; //can't go backwards
@@ -621,7 +677,11 @@ $(function() {
       .attr('d', line(pdf))
 
     //draw popn bubbles if fill selected
-    if (fillPopulation) showPopnBubbles();
+    if (fillPopulation) fillPopnBubbles();
+  }
+
+  function removePDF() {
+    d3.selectAll('.pdf').remove();
   }
 
   //draw the mean and sd lines
@@ -658,83 +718,86 @@ $(function() {
     d3.selectAll('.mutext').remove();
   }
 
+ 
+  function fillPopnBubbles() {
+    //fill the distribution curve with sample bubbles
+    //create a random array of points where bubbles will go for each pdf. 
+    //These will be used to get random points for samples
+    // do a loop, for each loop select a randomx (between -inf and +inf!!!), at randomx look for the two x values in the pdf closest that bound the randomx. 
+    //Work out average height, then create a random point between the bootom and this value. Add to randompdf array.
+  
+    let ah;   
 
-  //fill the distribution curve with sample bubbles
-  function showPopnBubbles() {
-    //generate a scaling for bubbles
+    let minxpdf, maxxpdf;
+    let r = sampleMeanSize;
+    let minx, maxx, miny, maxy;
+
+    let drawit; //shall I draw it?
+      
     popnBubbles = [];
+
+    svgP.append('circle').attr('class', 'popnbubble').attr('cx', x(0) ).attr('cy', yp(0) ).attr('r', sampleMeanSize);
+
     fillPopulation = $fillPopulation.is(':checked');
     if (fillPopulation) {
 
-      if (normal) {
-        //get  random array of bubbles  use the noraml pdf for the curve to generate
-        for (let x = 0; x < 8000; x += 1) {
-          bubbleX = jStat.normal.sample(mu, sigma);
-          bubbleY = jStat.normal.pdf(bubbleX, mu, sigma);
-          bubbleY = randbetween(0,  bubbleY - 0.001);   //TODO can't quite get the scale factor right - I guess it depends on sigma
-          popnBubbles.push({ x: bubbleX, y: bubbleY })
-        }
+      minxpdf = d3.min(pdf, function(d) { return d.x });
+      maxxpdf = d3.max(pdf, function(d) { return d.x });
 
-        //now scale popnBubbles 
-        popnBubbles.forEach( function(v) {
-          v.y = v.y * 8000;
-        })
+      //create array of bubbles, not all may be drawn, but array will be used for random sampling (except for normal)
+      for (let b = 0; b < width * 50; b += 1) {   //this many bubbles, depends on display width width * 1
 
-        popnBubbles.forEach( b => {
-          svgP.append('circle').attr('class', 'popnbubble').attr('cx', x(b.x)).attr('cy', yp(b.y) ).attr('r', sampleMeanSize);
-        })
-      }
+        //now need to get a random x between min and max x of pdf
+        bubbleX = randbetween(minxpdf, maxxpdf);
 
-      if (rectangular) {
-        for (let x = (mu - sigma)+1; x < (mu + sigma)-1; x += 0.02) { 
-          bubbleY = randbetween(0,  0.0095);   //TODO can't quite get the scale factor right - I guess it depends on sigma
-          popnBubbles.push({ x: x, y: bubbleY })
-        }
-
-        //now scale
-        popnBubbles.forEach(function(v) {
-          v.x = v.x + 0.05;
-          v.y = v.y * 16300;
-        })
-
-        popnBubbles.forEach( b => {
-          svgP.append('circle').attr('class', 'popnbubble').attr('cx', x(b.x)).attr('cy', yp(b.y) ).attr('r', sampleMeanSize);
-        })
-        
-      }
-
-      if (skew) {
-        pdf.forEach( function(v, i) {
-          if (v.y > 17) {
-            //do a number of random bubbles
-            for (let j = 0; j < v.y/10; j += 1) { 
-              bubbleY = randbetween(15, v.y - 8); 
-              popnBubbles.push({ x: v.x + 0.1, y: bubbleY })
+        //scan through pdf looking for nearest x coordinate  
+        ah = 0;
+        for (let v = 0; v < pdf.length; v += 1) {  
+          if (pdf[v].x > bubbleX) { //found one
+            if (v !== 0) { 
+              //linear interpolation
+              minx = pdf[v-1].x;
+              maxx = pdf[v].x;
+              miny = pdf[v-1].y;
+              maxy = pdf[v].y;
+              ah = miny + (bubbleX - minx)/(maxx-minx) * (maxy - miny);
+              break;
             }
           }
-        })
+        }  //end of scan
 
-        popnBubbles.forEach( b => {
-          svgP.append('circle').attr('class', 'popnbubble').attr('cx', x(b.x)).attr('cy', yp(b.y) ).attr('r', sampleMeanSize);
-        })
+        //bubbleY = randbetween(0, ah);  //NO this isn't right!!!!!!!!!!!!!!!!
+        //pick a random n bewtween 0 and the max height. If it is < ah then we have a bubble - its a probability!
+        bubbleY = randbetween(0, heightP);
+        if (bubbleY < ah) {
+          popnBubbles.push({ x: bubbleX, y: bubbleY });
 
-      }
+          //work out some limits as to whether to draw a bubble.
+          //r may not be the best unit as not to same scale!
+          drawit = true;
 
-      if (custom) {
-        //TODO not a bad first stab, probably do better
-        pdf.forEach( function(v, i) {
-          if (v.y > 17) {
-            //do a number of random bubbles
-            for (let j = 0; j < v.y/10; j += 1) { 
-              bubbleY = randbetween(15, v.y - 8); 
-              popnBubbles.push({ x: v.x + 0.1, y: bubbleY })
-            }
+          //rectangular need to be narrower area for visibility
+          //need to get minx and max x
+
+          let w = 4 * 100/width;
+          if (normal || skew || custom) {
+            if (bubbleY < 10)   drawit = false;
+            if (bubbleY > ah - 7)  drawit = false;
+            if (bubbleX < minxpdf + w ) drawit = false;
+            if (bubbleX > maxxpdf - w ) drawit = false;
           }
-        })
+          if (rectangular) {
+            if (bubbleY < 7)   drawit = false;
+            if (bubbleY > 154)   drawit = false;
+            if (bubbleX < mu - sigma + w) drawit = false;
+            if (bubbleX > mu + sigma - w) drawit = false;
+          }
 
-        popnBubbles.forEach( b => {
-          svgP.append('circle').attr('class', 'popnbubble').attr('cx', x(b.x)).attr('cy', yp(b.y) ).attr('r', sampleMeanSize);
-        })
+          if (drawit) {
+            svgP.append('circle').attr('class', 'popnbubble').attr('cx', x(bubbleX)).attr('cy', yp(bubbleY) ).attr('r', sampleMeanSize);
+          }
+
+        }
 
       }
     }
@@ -747,13 +810,12 @@ $(function() {
   
   //random float between a, b
   function randbetween(a, b) {
+    if (b < a) return a;
     return (Math.random() * (b - a) + a);
   }
 
 
   //------------------------------------------------Get Samples--------------------------------------*/
-
-
 
   //take a sample from the population
   function takeSample() {
@@ -773,7 +835,7 @@ $(function() {
     if (normal) {
       //draw n samples
       for (let i = 0; i < n; i += 1) {
-        jStat.normal.sample( mu, sigma )
+        //jStat.normal.sample( mu, sigma )
         samples.push( jStat.normal.sample(mu, sigma) );
       }
     }
@@ -786,18 +848,18 @@ $(function() {
 
     if (skew) {
       for (let i = 0; i < n; i += 1) {
-        //TODO
-        //some random value in the skew distribution
-        samples.push(mu);  //for now
+        //go through popnbubbles and pick a random sample. popnBubbles is a random array of datapoints for the distribution
+        let r = parseInt(randbetween(0, popnBubbles.length - 1));
+        samples.push(popnBubbles[r].x); 
       }
 
     }
 
     if (custom) {
       for (let i = 0; i < n; i += 1) {
-        //TODO
-        //some random value in the skew distribution
-        samples.push(mu);  //for now
+        //go through popnbubbles and pick a random sample
+        let r = parseInt(randbetween(0, popnBubbles.length - 1));
+        samples.push(popnBubbles[r].x);  
       }
     }
 
@@ -1396,7 +1458,7 @@ $(function() {
     resetSampleStats();
     resetCaptureStats();
     drawPopulationCurve();  //includes redrawing of mean an sd lines
-    if (fillPopulation) showPopnBubbles();
+    if (fillPopulation) fillPopnBubbles();
 
   }
 
@@ -1478,7 +1540,7 @@ $(function() {
   $fillPopulation.on('change', function() {
     fillPopulation = $fillPopulation.is(':checked');
     if (fillPopulation) {
-      showPopnBubbles();
+      fillPopnBubbles();
     } 
     else {
       removePopnBubbles();

@@ -65,8 +65,10 @@ Start using version history now to record changes and fixes
 0.3.16    2020-06-24  Sort our remembering mu sigma,  adjusted axis and mu line font sizes. 
                       Introduced sampling for custom, something not right about capture rate - Calculated the mean and sd from the popnbubbles array, not the pdf (innacurate). Remember old mean and sigma values when switching distribution
                       Need to clear the heap and graph when changing sigma known/unknown. Reset mean heap when heap checked off.
-                      
-0.3.17    2020-06-25 lognormal
+0.3.17    2020-06-25 lognormal skew (including negative skew) - Can't change mean or sd. Note variable in mean and sd as calculated from bubble array and so random.
+
+0.3.18    
+
 */
 
 'use strict';
@@ -74,7 +76,7 @@ Start using version history now to record changes and fixes
 $(function() {
   console.log('jQuery here!');  //just to make sure everything is working
 
-  let version = '0.3.16';
+  let version = '0.3.17';
 
   //dialog box to display version
   $('#dialogversion').hide();
@@ -299,9 +301,9 @@ $(function() {
   initialise();
 
   //#region TESTING Set some checkboxes for when testing.
-    $showPopulationCurve.prop('checked', true);
-    showPopulationCurve = $showPopulationCurve.is(':checked');
-    if (showPopulationCurve) drawPopulationCurve(); else removePopulationCurve();
+    // $showPopulationCurve.prop('checked', true);
+    // showPopulationCurve = $showPopulationCurve.is(':checked');
+    // if (showPopulationCurve) drawPopulationCurve(); else removePopulationCurve();
 
     //$showSDLines.prop('checked', true);
     //showSDlines = true;
@@ -310,14 +312,14 @@ $(function() {
     //fillPopulation = true;
     //if (fillPopulation) fillPopnBubbles();
 
-    $showSamplePoints.prop('checked', true);
-    showSamplePoints = true;
+    // $showSamplePoints.prop('checked', true);
+    // showSamplePoints = true;
 
-    $showSampleMeans.prop('checked', true);
-    showSampleMeans = true;
+    // $showSampleMeans.prop('checked', true);
+    // showSampleMeans = true;
     
-    $dropSampleMeans.prop('checked', true);
-    dropSampleMeans = true;
+    // $dropSampleMeans.prop('checked', true);
+    // dropSampleMeans = true;
     
     // $showMeanHeap.prop('checked', true);
     // showMeanHeap = true;
@@ -519,7 +521,11 @@ $(function() {
     pdf = [];
 
     //reinstate original mu sigma only if coming from another distribution
-    if (changedDistribution) setMuSigmaSliderVal(normalmu, normalsigma);
+    if (changedDistribution) {
+      setMuSigmaSliderVal(normalmu, normalsigma);
+      mu = normalmu;
+      sigma = normalsigma;
+    }
 
     //for (let x = mu-5*sigma; x < mu+5*sigma; x += 0.1) {
    for (let x = 0; x < 100; x += 0.1) {
@@ -543,7 +549,11 @@ $(function() {
 
     pdf = [];
 
-    if (changedDistribution) setMuSigmaSliderVal(rectmu, rectsigma);
+    if (changedDistribution) {
+      setMuSigmaSliderVal(rectmu, rectsigma);
+      mu = normalmu;
+      sigma = normalsigma;
+    }
 
     //actually I only need 6 points in the pdf!! but its so fast...
     pdf.push( {x: 0, y: 0} ); 
@@ -560,7 +570,11 @@ $(function() {
     pdf = [];
     skewAmount = parseFloat($skewAmount.val());
 
-    if (changedDistribution) setMuSigmaSliderVal(skewmu, skewsigma);
+    if (changedDistribution) {
+      setMuSigmaSliderVal(skewmu, skewsigma);
+      mu = normalmu;
+      sigma = normalsigma;
+    }
 
     //Approximation to Skew Normal due to Samir K. Ashour, Mahmood A. Abdel-hameed https://www.sciencedirect.com/science/article/pii/S209012321000069X 
     // let k = Math.abs(skewAmount) * 20;
@@ -595,68 +609,102 @@ $(function() {
     //   v.y = v.y * 300; //??
     // })
 
-
-    //let's retry lognormal 
+    //lognormal version
     let k = Math.abs(skewAmount);
-    //let m = Math.exp(0.5*k*k);
-    //let v = (Math.exp(k*k)-1)*(Math.exp(k*k));
-    for (let x = 0; x < 100; x += 0.1) {
-      //pdf.push({ x: x, y: jStat.normal.pdf(Math.log(x), 0, k) });
-      pdf.push( {x: x, y: jStat.lognormal.pdf(x, mu, k) } );
+    for (let x = -0.5; x < 5; x += 0.01) {
+      pdf.push( {x: x, y: jStat.lognormal.pdf(x, 0, k) } );
     }
 
     //scale it up
-    // pdf.forEach( v => {
-    //   if (skewAmount < 0) v.x = 100 - v.x;
-    //   v.x = v.x*sigma + mu-22;
-    //   v.y = v.y * 200; //??
-    // })
+    pdf.forEach( v => {
+      if (k === 0.1) {
+        v.x = v.x*198.0 - 149;
+        v.y = v.y * 26;
+      }
+      if (k === 0.2) {
+        v.x = v.x*100.0 - 52;
+        v.y = v.y * 60;
+      }
+      if (k === 0.3) {
+        v.x = v.x*60.0 - 13.0;
+        v.y = v.y * 100;
+      }
+      if (k === 0.4) {
+        v.x = v.x*45.0 + 1.0;
+        v.y = v.y * 140;
+      }
+      if (k === 0.5) {
+        v.x = v.x*34.0 + 12.0;
+        v.y = v.y * 180;
+      }
+      if (k === 0.6) {
+        v.x = v.x*28.0 + 17.0;
+        v.y = v.y * 220;
+      }
+      if (k === 0.7) {
+        v.x = v.x*24.0 + 21.0;
+        v.y = v.y * 245;
+      }
+      if (k === 0.8) {
+        v.x = v.x*22.0 + 23.0;
+        v.y = v.y * 270;
+      }
+      if (k === 0.9) {
+        v.x = v.x*20.0 + 25.0;
+        v.y = v.y * 290;
+      }
+      if (k === 1.0) {
+        v.x = v.x*18.0 +27.0;
+        v.y = v.y * 300;
+      }
 
-    //I calculate the mu and sigma here from the weighted mean of the pdf?
-    //but this changes the mean from 50, 20 and it gets all confused.
-    // let s = 0, n = 0, s2 = 0;
-    // pdf.forEach(v => { 
-    //   s += v.x * v.y;
-    //   s2 += (v.x * v.x) * v.y;
-    //   n += v.y;
-    // })
+      //get the negative version, of course this reverses the array so largest x values at start, need to put back in order otherwise bubble won't work
+      if (skewAmount < 0) {
+        v.x = 100 - v.x;
+      }
+    })
 
-    // mu = s/n;
-    // sigma = Math.sqrt(s2/n - mu*mu);
-    // setMuSigmaSliderVal(mu, sigma);
+    let temp = [];
+    //think I'll remove any negative x values
+    for (let i = pdf.length - 1; i >= 0; i--) {
+      if (pdf[i].x < 2) {   //anything else is too small! If I use 0 it appears on the display
+        pdf.splice(i, 1);
+      }
+      else {
+        if (skewAmount < 0) {  //reverse the array if negative skew
+          temp.push(pdf[i]);
+        } 
+      }
+    }    
 
+    if (skewAmount < 0) pdf = temp; //I think you can do this?
 
-    //now re-scale the distribution and centre on mu 
-    //pdf.forEach( v => { 
-      //if (skewAmount < 0) v.x = 100 - v.x;  //if negative skew then reflect values
+    //need a random array of bubbles for calculating means and sds
+    fillPopnBubbles(); 
 
-      // if (skewAmount !== 0) {  //when skewed the distribution doesn't look right under the mean so tweak
-      //   if (skewAmount > 0) v.x = v.x - 10;
-      //   if (skewAmount < 0) v.x = v.x + 10;
-      // }
+    let s = 0, n = 0, s2 = 0;
+    popnBubbles.forEach( v => {
+      s += v.x;
+      s2 += v.x * v.x;
+      n += 1;
+    })
 
-      // if (v.x < 0) v.x = 0; //just stop curve going too far left
+    mu = s/n;
+    sigma = Math.sqrt(s2/n - mu*mu);
+    setMuSigmaSliderVal(mu, sigma);
 
-      // if (skewAmount === 0) {
-      //   v.y = v.y * 8000/sigma;  //just to make the normal look better!
-      // }
-      // else if ( Math.abs(skewAmount) === 0.1) {
-      //   v.y = v.y * 6000/sigma;
-      // } 
-      // else {
-      //   v.y = v.y * 5400/sigma;     
-      // }  
-      // if (skewAmount !== 0) v.y = v.y + 5;  //just lift it a bit when not normal.
-
-    //})
 
     drawPDF();
   }
 
 
   function drawCustomCurve() {
-   //#region draw the custom curve
-   if (changedDistribution) setMuSigmaSliderVal(custommu, customsigma);
+    //#region draw the custom curve
+    if (changedDistribution) {
+      setMuSigmaSliderVal(custommu, customsigma);
+      mu = normalmu;
+      sigma = normalsigma;
+    }
 
     //is there still a custompdf
     if (custompdf.length !== 0) {

@@ -47,9 +47,7 @@ Start using version history now to record changes and fixes
                       Looked at what is stored for a sample mean in relation to ssd. Currently NaN, but changed to 0, not sure if makes a difference, but at least consistent.
 0.3.10    2020-06-20  Started preliminary work on tooltips
 
-*/
-//#endregion
-/*
+
 0.3.11    2020-06-21  Try to sort out skew distribution and touch/mouse to draw. Added a tooltips on off button
                       Can draw, adjust and fill, but haven't got a random sample yet from skew or custom, nor do stats
                       Also changed the auto scale. This means manually scaling the pdf[] values - probably better anyway.
@@ -59,7 +57,16 @@ Start using version history now to record changes and fixes
                       Also allow dropping means - todo calculate statistics properly.
 0.3.15    2020-06-24  Turned off hover on logo for version number - not working properly
                       Going to try lognormal
-0.3.16   
+
+*/
+//#endregion
+/*
+
+0.3.16    2020-06-24  Sort our remembering mu sigma,  adjusted axis and mu line font sizes. 
+                      Introduced sampling for custom, something not right about capture rate - Calculated the mean and sd from the popnbubbles array, not the pdf (innacurate). Remember old mean and sigma values when switching distribution
+                      Need to clear the heap and graph when changing sigma known/unknown. Reset mean heap when heap checked off.
+                      
+0.3.17    2020-06-25 lognormal
 */
 
 'use strict';
@@ -67,7 +74,7 @@ Start using version history now to record changes and fixes
 $(function() {
   console.log('jQuery here!');  //just to make sure everything is working
 
-  let version = '0.3.15';
+  let version = '0.3.16';
 
   //dialog box to display version
   $('#dialogversion').hide();
@@ -277,14 +284,21 @@ $(function() {
 
   let custompdf = [];           //hold the values of the custom curve
 
-  let doOnce = true;
+  let normalmu, normalsigma;    //hold original mu sigma as other distriubtions may change them
+  let rectmu, rectsigma;
+  let skewmu, skewsigma;
+  let custommu, customsigma;
+
+  let changedDistribution = false; //to indicate if there was a change in distribution
+
+  let xbardata = [];            //temp record of xbars for the heap to check of continuous calculations actually working
 
   //#endregion
 
   
   initialise();
 
-  //#region Set some checkboxes for when testing.
+  //#region TESTING Set some checkboxes for when testing.
     $showPopulationCurve.prop('checked', true);
     showPopulationCurve = $showPopulationCurve.is(':checked');
     if (showPopulationCurve) drawPopulationCurve(); else removePopulationCurve();
@@ -292,18 +306,18 @@ $(function() {
     //$showSDLines.prop('checked', true);
     //showSDlines = true;
     
-    // $fillPopulation.prop('checked', true);    
-    // fillPopulation = true;
-    // if (fillPopulation) fillPopnBubbles();
+    //$fillPopulation.prop('checked', true);    
+    //fillPopulation = true;
+    //if (fillPopulation) fillPopnBubbles();
 
-    // $showSamplePoints.prop('checked', true);
-    // showSamplePoints = true;
+    $showSamplePoints.prop('checked', true);
+    showSamplePoints = true;
 
-    // $showSampleMeans.prop('checked', true);
-    // showSampleMeans = true;
+    $showSampleMeans.prop('checked', true);
+    showSampleMeans = true;
     
-    // $dropSampleMeans.prop('checked', true);
-    // dropSampleMeans = true;
+    $dropSampleMeans.prop('checked', true);
+    dropSampleMeans = true;
     
     // $showMeanHeap.prop('checked', true);
     // showMeanHeap = true;
@@ -325,6 +339,18 @@ $(function() {
     $('#percentcapturingnextmean').hide();
     $('#nocapturingnextmean').hide();
     $('#pccapturingnextmean').hide();
+
+    //set the old values of mu sigma for use when changing from one distribution to another.These will reset the mu sigma to what they were before a switch
+    normalmu    = mu;
+    rectmu      = mu;
+    skewmu      = mu;
+    custommu   = mu;
+
+    normalsigma = sigma;
+    rectsigma   = sigma;
+    skewsigma   = sigma;
+    customsigma = sigma;
+
   }
 
   function setDisplay() {//what to do if browser resize occurs or on start
@@ -413,8 +439,8 @@ $(function() {
     document.getElementsByClassName("tick")[10].children[0].setAttributeNS(null, 'transform', `translate(${-2},0)`);
     document.getElementsByClassName("tick")[21].children[0].setAttributeNS(null, 'transform', `translate(${-2},0)`);
     //move the text 5 pixels left
-    document.getElementsByClassName("tick")[10].children[1].setAttributeNS(null, 'transform', `translate(${-8},0)`);
-    document.getElementsByClassName("tick")[21].children[1].setAttributeNS(null, 'transform', `translate(${-8},0)`);
+    document.getElementsByClassName("tick")[10].children[1].setAttributeNS(null, 'transform', `translate(${-12},0)`);
+    document.getElementsByClassName("tick")[21].children[1].setAttributeNS(null, 'transform', `translate(${-12},0)`);
   }
 
   //clear button
@@ -435,6 +461,7 @@ $(function() {
     d3.selectAll('.smoe').remove();
 
     resetHeap();
+    xbardata = [];
 
     resetCaptureStats();
 
@@ -461,8 +488,6 @@ $(function() {
   /*---------------------------------------------Draw Population---------------------------------------*/
   //draw the population curve
   function drawPopulationCurve() {
-
-    //problem is that pdfs are not to same scale, the area is 0 to 100, 0 to 200 high say
 
     d3.selectAll('.pdf').remove();
     removePopnBubbles();
@@ -493,6 +518,9 @@ $(function() {
   function drawNormalCurve() {
     pdf = [];
 
+    //reinstate original mu sigma only if coming from another distribution
+    if (changedDistribution) setMuSigmaSliderVal(normalmu, normalsigma);
+
     //for (let x = mu-5*sigma; x < mu+5*sigma; x += 0.1) {
    for (let x = 0; x < 100; x += 0.1) {
       pdf.push({ x: x, y: jStat.normal.pdf(x, mu, sigma) })
@@ -509,13 +537,15 @@ $(function() {
   }
 
   function drawRectangularCurve() {
-
-    //actually I only need 6 points in the pdf!! but its so fast...
-    pdf = [];
     let l, h;
     l = mu-sigma;
     h = mu+sigma;
 
+    pdf = [];
+
+    if (changedDistribution) setMuSigmaSliderVal(rectmu, rectsigma);
+
+    //actually I only need 6 points in the pdf!! but its so fast...
     pdf.push( {x: 0, y: 0} ); 
     pdf.push( {x: l, y: 0} );
     pdf.push( {x: l, y: 160} );
@@ -529,6 +559,8 @@ $(function() {
   function drawSkewCurve() {
     pdf = [];
     skewAmount = parseFloat($skewAmount.val());
+
+    if (changedDistribution) setMuSigmaSliderVal(skewmu, skewsigma);
 
     //Approximation to Skew Normal due to Samir K. Ashour, Mahmood A. Abdel-hameed https://www.sciencedirect.com/science/article/pii/S209012321000069X 
     // let k = Math.abs(skewAmount) * 20;
@@ -591,7 +623,7 @@ $(function() {
 
     // mu = s/n;
     // sigma = Math.sqrt(s2/n - mu*mu);
-    // setMuSigmaSlider(mu, sigma);
+    // setMuSigmaSliderVal(mu, sigma);
 
 
     //now re-scale the distribution and centre on mu 
@@ -623,7 +655,9 @@ $(function() {
 
 
   function drawCustomCurve() {
- 
+   //#region draw the custom curve
+   if (changedDistribution) setMuSigmaSliderVal(custommu, customsigma);
+
     //is there still a custompdf
     if (custompdf.length !== 0) {
       pdf = [];
@@ -636,26 +670,34 @@ $(function() {
       pdf = [];
     }
 
-        
-    //I calculate the mu and sigma here from the weighted mean of the pdf?
-    // let s = 0, n = 0, s2 = 0;
+    //I calculate the mu and sigma here from the weighted mean of the pdf? No too inaccurate.  
+    //Use the populatioBubbles array, but possibly also errors (the range of values?)
+
+    let s = 0, n = 0, s2 = 0;
     // pdf.forEach(v => { 
     //   s += v.x * v.y;
     //   s2 += (v.x * v.x) * v.y;
     //   n += v.y;
     // })
 
-    // mu = s/n;
-    // sigma = Math.sqrt(s2/n - mu*mu);
-    // setMuSigmaSlider(mu, sigma);
+    popnBubbles.forEach( v => {
+      s += v.x;
+      s2 += v.x * v.x;
+      n += 1;
+    })
+
+    mu = s/n;
+    sigma = Math.sqrt(s2/n - mu*mu);
+    setMuSigmaSliderVal(mu, sigma);
 
     drawPDF();
   }
   //if mousedown on displaypdf area and custom selected allow draw
   let oldxm, oldym, xm, ym, mdown = false;
   $('#displaypdf')
-  //#region draw the custom curve
     .mousedown(function(e) {
+      //probably best to clear everything
+      clearAll();
       if (!showPopulationCurve) return;  //can only draw custom curve if popuation checked
       if (!custom) return;               //and when custom selected
       custompdf = [];
@@ -694,6 +736,10 @@ $(function() {
         pdf.push({ x: v.x * 100 / width - 0.8, y: heightP - v.y + 5}); 
         oldpdf.push({ x: v.x * 100 / width - 0.8, y: heightP - v.y + 5}); //make a backup for redraw purposes
       })
+      
+      //to do means and mu sigma etc create the bubbles array, but not display it unless fill population enabled
+      fillPopnBubbles();
+
       drawCustomCurve();  //now draw it and get values from it
     })
 
@@ -723,12 +769,14 @@ $(function() {
   //#endregion
 
 
-  function setMuSigmaSlider(mu, sigma) {
-    $mu.val(mu.toFixed(0));
-    $muslider.val(mu.toFixed(0));
+  function setMuSigmaSliderVal(mu, sigma) {
+    $mu.val(mu.toFixed(2));
+    $muslider.val(mu.toFixed(2));
 
-    $sigma.val(sigma.toFixed(0));
-    $sigmaslider.val(sigma.toFixed(0));
+    $sigma.val(sigma.toFixed(2));
+    $sigmaslider.val(sigma.toFixed(2));
+
+    changedDistribution = false; 
   }
 
   function drawPDF() {
@@ -748,6 +796,9 @@ $(function() {
 
     //draw popn bubbles if fill selected
     if (fillPopulation) fillPopnBubbles();
+
+    //just a big fix for when switching distributions especially on custom
+    if (showCaptureMuLine) drawMuLine(); else removeMuLine();
   }
 
   function removePDF() {
@@ -794,7 +845,7 @@ $(function() {
     //create a random array of points where bubbles will go for each pdf. 
     //These will be used to get random points for samples
     // do a loop, for each loop select a randomx (between -inf and +inf!!!), at randomx look for the two x values in the pdf closest that bound the randomx. 
-    //Work out average height, then create a random point between the bootom and this value. Add to randompdf array.
+    //Work out average height, then create a random point between the bottom and this value. Add to randompdf array.
   
     let ah;   
 
@@ -807,7 +858,7 @@ $(function() {
     popnBubbles = [];
 
     fillPopulation = $fillPopulation.is(':checked');
-    if (fillPopulation) {
+//    if (fillPopulation) {
 
       minxpdf = d3.min(pdf, function(d) { return d.x });
       maxxpdf = d3.max(pdf, function(d) { return d.x });
@@ -828,14 +879,13 @@ $(function() {
               maxx = pdf[v].x;
               miny = pdf[v-1].y;
               maxy = pdf[v].y;
-              ah = miny + (bubbleX - minx)/(maxx-minx) * (maxy - miny);
+              ah = miny + (bubbleX - minx)/(maxx-minx) * (maxy - miny); //linear interpolation between two ordinates - best I can do?, splines least squares?
               break;
             }
           }
         }  //end of scan
 
-        //bubbleY = randbetween(0, ah);  //NO this isn't right!!!!!!!!!!!!!!!!
-        //pick a random n bewtween 0 and the max height. If it is < ah then we have a bubble - its a probability!
+        //pick a random n bewtween 0 and the max height. If it is < ah then we have a bubble - its a probability! If the curve is close to the bottom there is less probability of filling it with a bubble, if it is higher then more probability!
         bubbleY = randbetween(0, heightP);
         if (bubbleY < ah) {
           popnBubbles.push({ x: bubbleX, y: bubbleY });
@@ -862,13 +912,13 @@ $(function() {
           }
 
           if (drawit) {
-            svgP.append('circle').attr('class', 'popnbubble').attr('cx', x(bubbleX)).attr('cy', yp(bubbleY) ).attr('r', sampleMeanSize);
+            if (fillPopulation) svgP.append('circle').attr('class', 'popnbubble').attr('cx', x(bubbleX)).attr('cy', yp(bubbleY) ).attr('r', sampleMeanSize);
           }
 
         }
 
       }
-    }
+//    }
   }
 
   //remove population bubbles
@@ -887,8 +937,12 @@ $(function() {
 
   //take a sample from the population
   function takeSample() {
-    let xxbar;
+    //note xbar is calculated in sampleStatistics and used for the sample mean and it's blob
+    //need to use these for when I loop through each dropping mean blob
+    let ixbar;  //integer version of xbar from dropping blob
+    let fxbar;  //floating point version of xbar from dropping blob
     let barHeight;
+
     N += 1; //increase the number of times I take a sample
 
     //make sure I've got correct parameters from distribution
@@ -964,11 +1018,12 @@ $(function() {
           letDrop = false;
           if (showMeanHeap) {  //if the mean heap is visible look at the sample mean. Compare it with the height of the heap  frequency at that point
 
-            //get an index into the heapbins
-            xxbar = $(this).attr('xbar');
+            //get the sample mean from the dropping blob
+            ixbar = parseInt($(this).attr('xbar'));
+            fxbar = parseFloat($(this).attr('xbar'));
 
             //if xbar outside viewable area 0-100 then cannot add to heap display
-            if ((xxbar < 0 || xxbar >= 100)) {
+            if ((ixbar < 0 || ixbar >= 100)) {
               //well even though we cannot see it, need to keep it dropping, so treat it as though no heap visible
               if (ypos <= heightS - dropLimit - sampleMeanSize) {
                 letDrop = true;
@@ -979,7 +1034,7 @@ $(function() {
             }
             else {
               //the sample mean is inside the viewable area so check against the heap height
-              heapIndex = parseInt(xxbar/100 * heap.length);
+              heapIndex = parseInt(ixbar/100 * heap.length);
               heapIndexFreq = heap[heapIndex].f;
 
               //this should be the height or position of top of bar at heapIndex
@@ -1016,7 +1071,7 @@ $(function() {
             d3.select('#pmoe'+meanid).remove();  
             d3.select('#smoe'+meanid).remove();
 
-            if (showMeanHeap) addToHeap(xxbar); 
+            if (showMeanHeap) addToHeap(fxbar); 
             break;  //no point in moving anymore
           }
 
@@ -1062,7 +1117,7 @@ $(function() {
     id += 1;
   }
 
-
+  //decide what to display for dropping means blob and MoEs
   function displaySampleAppearance(id) {
     if (!showSampleMeans) return;  //if checkbox for show sample means not checked don't display
 
@@ -1180,7 +1235,7 @@ $(function() {
     xbar  = jStat.mean(samples);
     ssd   = jStat.stdev(samples, true);  //true is supposed to give the sample sd
 
-    //the mu and sigma are calculated when I create the pdf array.
+    //the mu and sigma for skew and custom are calculated from the popnbubbles array.
 
     //for display - calc length of each wing, i.e. the margin of error
     if (isNaN(ssd)) {  //if the ssd cannot be calculated, i.e. sample size N is 1
@@ -1319,25 +1374,39 @@ $(function() {
     drawSECurve() // this will be dynamic as well
 
     if (plusminusmoe) drawPlusMinusMoe();
-
-
   }
 
-
   //get xbar and sse for heap
-  function calculateHeapStatistics(xbar) {
+  function calculateHeapStatistics(fxbar) {
     //continuously update heap xbar and heap se
     //we will assume that the heapxbar and heapse start at 0 
     heapN += 1;
     m = heapN //for use in formula - a bit shorter
 
-    heapxbar = ( (1 - 1/m) * heapxbar) + (1/m * xbar);
+    heapxbar = ( (1 - 1/m) * heapxbar) + (1/m * fxbar);
   
-    if (m > 1) heapse = Math.sqrt (  ( (1 - 1/(m-1)) * (heapse * heapse) ) + ( (m)/((m-1) * (m-1)) * (xbar - heapxbar) * (xbar - heapxbar)  )  ); 
+    if (m > 1) heapse = Math.sqrt (  ( (1 - 1/(m-1)) * (heapse * heapse) ) + ( (m)/((m-1) * (m-1)) * (fxbar - heapxbar) * (fxbar - heapxbar)  )  ); 
     
     //display values
     $heapxbar.text(heapxbar.toFixed(2));
     $heapse.text(heapse.toFixed(2));
+
+
+
+    //alternative  to calculating heap statistics - seems to compare really well with above. DON'T  delete yet.
+    // xbardata.push(fxbar);
+    // let hpm = 0, hps = 0, hn = 0;
+    // xbardata.forEach( v => {
+    //   hpm += v;
+    //   hn  += 1;
+    // })
+    // hpm = hpm/hn;
+
+    // xbardata.forEach( v => {
+    //   hps += (v - hpm) * (v - hpm);
+    // })
+    // hps = Math.sqrt( hps/(hn-1) );
+
   }  
 
   //create the bins for a histogram to hold frequency data for the heap
@@ -1362,6 +1431,8 @@ $(function() {
     for (let xx = 0; xx <= noOfBuckets; xx += 1) {  
       heap.push({x: xx, f: 0})
     }
+
+    xbardata = [];
 
   }
 
@@ -1485,6 +1556,7 @@ $(function() {
 
     resetHeap();
     resetDisplay();
+    setOldMu();
   })
 
   //mu slider
@@ -1494,6 +1566,7 @@ $(function() {
 
     resetHeap();
     resetDisplay();
+    setOldMu();
   })
 
   //change in sigma textbox
@@ -1502,6 +1575,7 @@ $(function() {
     $("#sigmaslider").val(sigma);
 
     resetDisplay();
+    seOldSigma();
   })
 
   //sigma slider
@@ -1510,7 +1584,23 @@ $(function() {
     $sigma.val(sigma);
 
     resetDisplay();
+    setOldSigma();
   })
+
+  function setOldMu() {
+    if (normal)      normalmu    = mu;
+    if (rectangular) rectmu      = mu;
+    if (skew)        skewmu      = mu;
+    if (custom)      custommu   = mu;
+  }
+
+  function setOldSigma() {
+    if (normal)      normalsigma = sigma;
+    if (rectangular) rectsigma   = sigma;
+    if (skew)        skewsigma   = sigma;
+    if (custom)      customsigma = sigma;
+  }
+
 
   function resetDisplay() {
     //remove sample points from DOM
@@ -1537,6 +1627,7 @@ $(function() {
     rectangular = false;
     skew = false;
     custom = false;
+    changedDistribution = true;
 
     //reset percentages captures
     clearAll();
@@ -1549,7 +1640,7 @@ $(function() {
     normal = false;
     skew = false;
     custom = false;
-
+    changedDistribution = true;
     //reset percentages captures
     clearAll();
     drawPopulationCurve();
@@ -1561,7 +1652,7 @@ $(function() {
     normal = false;
     rectangular = false;
     custom = false;
-
+    changedDistribution = true;
     clearAll();    
     drawPopulationCurve();
   })
@@ -1572,7 +1663,7 @@ $(function() {
     normal = false;
     rectangular = false;
     skew = false;
-
+    changedDistribution = true;
     clearAll();    
     drawPopulationCurve();
   })
@@ -1733,7 +1824,8 @@ $(function() {
     showSmoe = $showSmoe.is(':checked');
     displaySampleAppearanceAll();
     recalculateSamplemeanStatistics();
-
+    //clear the mean heap if displayed  as will not match the CI  ???
+    //resetHeap();
   })
 
   //show moe wings for sample
@@ -1742,7 +1834,8 @@ $(function() {
     showSmoe = $showSmoe.is(':checked');
     displaySampleAppearanceAll();
     recalculateSamplemeanStatistics();
-
+    //clear the mean heap if displayed as will not match the CI  ???
+    //resetHeap();
   })
 
   //show the mean as not captured if known, uknown checked
@@ -1759,6 +1852,9 @@ $(function() {
       d3.selectAll('.heap').attr('visibility', 'visible');
     }
     else {
+      //should clear it all really
+      resetHeap();
+
       d3.selectAll('.heap').attr('visibility', 'hidden');
     }
   })
@@ -1931,7 +2027,7 @@ $(function() {
 
   }
 
-  //not convinced this is the right way.
+  //not convinced this is the right way, but seems okay for now
   $(window).bind('resize', function(e){
     window.resizeEvt;
     $(window).resize(function(){

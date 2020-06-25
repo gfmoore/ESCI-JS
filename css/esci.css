@@ -23,7 +23,8 @@ Version history
 0.3.10     2020-06-20 Add tooltips styling
 0.3.11     2020-06-21 Custome draw and skew. Added a tooltips on off button
 0.3.14     2020-06-24 Minor change to colour of population bubbles
-0.3.16
+0.3.16     2020-06-25 Make axis font and mu line text a little bigger. Slight increase in width of left fram and adjusted space for Mean M in 4. Samples
+0.3.17  
 
 */
 
@@ -97,7 +98,7 @@ span {
 
 #main {
   display: grid;
-  grid-template-columns: 40rem auto;
+  grid-template-columns: 42rem auto;
   grid-column-gap: 8px;
   height: 100%;
 } 
@@ -271,7 +272,7 @@ span {
 
 #latestsamples {
   display: grid;
-  grid-template-columns: 8rem 8rem;
+  grid-template-columns: 12rem 12rem;
   padding-top: 0.1rem;
   padding-bottom: 0.2rem;
 }
@@ -426,6 +427,10 @@ span {
   stroke-width: 1px;
 }
 
+.axis { 
+  font: 14px sans-serif; 
+}
+
 .popnbubble {
   stroke: blue;
   stroke-width: 0.5;
@@ -483,7 +488,7 @@ span {
 }
 
 .mutext {
-  font-size: 1.0rem;
+  font-size: 1.2rem;
   fill: black;
   stroke: black;
   stroke-width: 1;

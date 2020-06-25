@@ -65,10 +65,10 @@ Start using version history now to record changes and fixes
 0.3.16    2020-06-24  Sort our remembering mu sigma,  adjusted axis and mu line font sizes. 
                       Introduced sampling for custom, something not right about capture rate - Calculated the mean and sd from the popnbubbles array, not the pdf (innacurate). Remember old mean and sigma values when switching distribution
                       Need to clear the heap and graph when changing sigma known/unknown. Reset mean heap when heap checked off.
-0.3.17    2020-06-25 lognormal skew (including negative skew) - Can't change mean or sd. Note variable in mean and sd as calculated from bubble array and so random.
+0.3.17    2020-06-25  lognormal skew (including negative skew) - Can't change mean or sd. Note variable in mean and sd as calculated from bubble array and so random.
 
-0.3.18    
-
+0.3.18    2020-06-25  Fixed height plus minus moe line re-instated
+0.3.19
 */
 
 'use strict';
@@ -76,7 +76,7 @@ Start using version history now to record changes and fixes
 $(function() {
   console.log('jQuery here!');  //just to make sure everything is working
 
-  let version = '0.3.17';
+  let version = '0.3.18';
 
   //dialog box to display version
   $('#dialogversion').hide();
@@ -200,6 +200,7 @@ $(function() {
   let $heapse = 0;              //the standard error of the heap span
   let heapse = 0;               //the standard error of the heap
   let heapN = 0;                //count of items in heap;
+  let $noInHeap;                //display the no of items in the heap.
   let heapMax = 0;              //calculate the height of the histogram of the sample mean curve for scaling purposes
   let heapCMax;                 //calculate max of hep curve (pdf)
   let xint;                     //integer version of heap xbar
@@ -301,28 +302,28 @@ $(function() {
   initialise();
 
   //#region TESTING Set some checkboxes for when testing.
-    // $showPopulationCurve.prop('checked', true);
-    // showPopulationCurve = $showPopulationCurve.is(':checked');
-    // if (showPopulationCurve) drawPopulationCurve(); else removePopulationCurve();
+    $showPopulationCurve.prop('checked', true);
+    showPopulationCurve = $showPopulationCurve.is(':checked');
+    if (showPopulationCurve) drawPopulationCurve(); else removePopulationCurve();
 
-    //$showSDLines.prop('checked', true);
-    //showSDlines = true;
+    $showSamplePoints.prop('checked', true);
+    showSamplePoints = true;
+
+    $showSampleMeans.prop('checked', true);
+    showSampleMeans = true;
     
+    $dropSampleMeans.prop('checked', true);
+    dropSampleMeans = true;
+    
+    // $showMeanHeap.prop('checked', true);
+    // showMeanHeap = true;
+
     //$fillPopulation.prop('checked', true);    
     //fillPopulation = true;
     //if (fillPopulation) fillPopnBubbles();
 
-    // $showSamplePoints.prop('checked', true);
-    // showSamplePoints = true;
-
-    // $showSampleMeans.prop('checked', true);
-    // showSampleMeans = true;
-    
-    // $dropSampleMeans.prop('checked', true);
-    // dropSampleMeans = true;
-    
-    // $showMeanHeap.prop('checked', true);
-    // showMeanHeap = true;
+    //$showSDLines.prop('checked', true);
+    //showSDlines = true;
   //#endregion
 
   function initialise() {
@@ -478,10 +479,11 @@ $(function() {
     $('#pccapturingnextmean').hide();
 
     //plusminusmoe lines off
-    $plusminusmoe.prop('checked', false);
-    plusminusmoe = false;
-    d3.selectAll('.plusminusmoe').remove();
-    hght = 0;
+    //$plusminusmoe.prop('checked', false);   //?why do I want to remove plus minus moe lines on clear?
+    //plusminusmoe = false;
+    //d3.selectAll('.plusminusmoe').remove();  
+
+    hght = 0;  //reset the height of the grwoing SE Lines (and if used the growing plus minus moe lines)
 
     //pdf = [];
   }
@@ -1323,18 +1325,27 @@ $(function() {
 
   //display the percentage captured
   function displayCapturedRate() {
-    //given that N is the number of samples
-    $N.text(N);
-    $N2.text(N);
-    //should be able to use showPmoe only
-    if ($showPmoe.is(':checked')) {
-      //should recalculate the number of samples taken
-      $captured.text(capturedP);
-      if (N !== 0) $capturedpercent.text((capturedP/N *100).toFixed(1) + '%');
+
+    //only do this if CI on  Mu line on  capture of mu on
+    if (showMoe || showCaptureMuLine || captureOfMu) {
+      //given that N is the number of samples
+      $N.text(N);
+      $N2.text(N);
+      //should be able to use showPmoe only
+      if ($showPmoe.is(':checked')) {
+        //should recalculate the number of samples taken
+        $captured.text(capturedP);
+        if (N !== 0) $capturedpercent.text((capturedP/N *100).toFixed(1) + '%');
+      }
+      if ($showSmoe.is(':checked')) {
+        $captured.text(capturedS);
+        if (N !== 0) $capturedpercent.text((capturedS/N *100).toFixed(1) + '%');
+      }
     }
-    if ($showSmoe.is(':checked')) {
-      $captured.text(capturedS);
-      if (N !== 0) $capturedpercent.text((capturedS/N *100).toFixed(1) + '%');
+    else {
+      $N2.text(0);
+      $captured.text(0);
+      $capturedpercent.text(0);
     }
   }
 
@@ -1438,7 +1449,7 @@ $(function() {
     //display values
     $heapxbar.text(heapxbar.toFixed(2));
     $heapse.text(heapse.toFixed(2));
-
+    $noInHeap.text(heapN);
 
 
     //alternative  to calculating heap statistics - seems to compare really well with above. DON'T  delete yet.
@@ -1470,8 +1481,10 @@ $(function() {
      
     heapse   = 0; 
     $heapse.text(0);
+    
 
     heapN    = 0;
+    $noInHeap.text(0);
 
     //create a frequency distribution where the number of buckets is dependent on the width of the display area and the size of the sample mean
     heap = [];
@@ -1531,19 +1544,24 @@ $(function() {
     pci = jStat.normalci( mu, alpha, sigma, n );
     d3.selectAll('.plusminusmoe').remove();
     if (plusminusmoe) {
-      //get height of heap
-      hght = 0;
-      for (let h = 0; h < heap.length; h += 1) {
-        if (heap[h].f > hght) hght = heap[h].f;
-      }
-      hght *= 2 * sampleMeanSize;
+      //get height of heap, not wanted now, but leave it in
+      // hght = 0;
+      // for (let h = 0; h < heap.length; h += 1) {
+      //   if (heap[h].f > hght) hght = heap[h].f;
+      // }
+      // hght *= 2 * sampleMeanSize;
       let ya = heightS - dropLimit + 2;
-      let yb = heightS - hght - 50;
+      // let yb = heightS - hght - 50;
 
       //draw bottom bar and moe lines  //note ys() doesn't reverse scale - used heightS - y()
       svgS.append('line').attr('class', 'plusminusmoe').attr('x1', x(pci[0])).attr('y1', ya).attr('x2', x(pci[1])).attr('y2', ya).attr('stroke', 'green').attr('stroke-width', '4').attr('visibility', 'visible');
-      svgS.append('line').attr('class', 'plusminusmoe').attr('x1', x(pci[0])).attr('y1', ya).attr('x2', x(pci[0])).attr('y2', yb ).attr('stroke', 'green').attr('stroke-width', '2').attr('visibility', 'visible');
-      svgS.append('line').attr('class', 'plusminusmoe').attr('x1', x(pci[1])).attr('y1', ya).attr('x2', x(pci[1])).attr('y2', yb ).attr('stroke', 'green').attr('stroke-width', '2').attr('visibility', 'visible');
+      //growing version not wanted
+      // svgS.append('line').attr('class', 'plusminusmoe').attr('x1', x(pci[0])).attr('y1', ya).attr('x2', x(pci[0])).attr('y2', yb ).attr('stroke', 'green').attr('stroke-width', '2').attr('visibility', 'visible');
+      // svgS.append('line').attr('class', 'plusminusmoe').attr('x1', x(pci[1])).attr('y1', ya).attr('x2', x(pci[1])).attr('y2', yb ).attr('stroke', 'green').attr('stroke-width', '2').attr('visibility', 'visible');
+     
+      //fixed height version
+      svgS.append('line').attr('class', 'plusminusmoe').attr('x1', x(pci[0])).attr('y1', ya).attr('x2', x(pci[0])).attr('y2', 25 ).attr('stroke', 'green').attr('stroke-width', '2').attr('visibility', 'visible');
+      svgS.append('line').attr('class', 'plusminusmoe').attr('x1', x(pci[1])).attr('y1', ya).attr('x2', x(pci[1])).attr('y2', 25 ).attr('stroke', 'green').attr('stroke-width', '2').attr('visibility', 'visible');
     }
   }
   
@@ -1798,7 +1816,7 @@ $(function() {
     clearAll();
 
     //redisplay +/- moe if sample size changes
-    drawPlusMinusMoe();
+    if (plusminusmoe) drawPlusMinusMoe();
   })
 
   //show sample points
@@ -1864,6 +1882,7 @@ $(function() {
     showMoe = $showMoe.is(':checked');
 
     displaySampleAppearanceAll();
+    recalculateSamplemeanStatistics(); //which turns on display of captured stats
   })
 
   //show moe wings for population
@@ -1921,14 +1940,20 @@ $(function() {
 
   $plusminusmoe.on('change', function() {
     plusminusmoe = $plusminusmoe.is(':checked');
-    drawPlusMinusMoe();
+    if (plusminusmoe) drawPlusMinusMoe();
   })
 
 
   //show mu line in dropping means area
   $showCaptureMuLine.on('change', function() {
     showCaptureMuLine = $showCaptureMuLine.is(':checked');
-    if (showCaptureMuLine) drawMuLine(); else removeMuLine();
+    if (showCaptureMuLine) {
+      drawMuLine(); 
+    }
+    else {
+      removeMuLine();
+    }
+    recalculateSamplemeanStatistics(); //which turns on or off display of captured stats
   })
 
   //show sample distribution curve
@@ -2014,6 +2039,8 @@ $(function() {
 
     $heapxbar             = $('#xbarhp');
     $heapse               = $('#sehp');
+
+    $noInHeap             = $('#numberinheap');
 
     $showCaptureMuLine    = $('#capturemuline');
 

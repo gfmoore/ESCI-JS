@@ -24,7 +24,7 @@ Version history
 0.3.11     2020-06-21 Custome draw and skew. Added a tooltips on off button
 0.3.14     2020-06-24 Minor change to colour of population bubbles
 0.3.16     2020-06-25 Make axis font and mu line text a little bigger. Slight increase in width of left fram and adjusted space for Mean M in 4. Samples
-0.3.17  
+0.3.19  
 
 */
 
@@ -272,7 +272,7 @@ span {
 
 #latestsamples {
   display: grid;
-  grid-template-columns: 12rem 12rem;
+  grid-template-columns: 18rem 12rem;
   padding-top: 0.1rem;
   padding-bottom: 0.2rem;
 }
@@ -317,11 +317,20 @@ span {
   padding: 0.3rem;
 }
 
+#heapstats {
+  display: grid;
+  grid-template-columns: 20rem 14rem;
+}
+
 #xbarhp {
   color: firebrick;  
 }
 
 #sehp {
+  color: firebrick;
+}
+
+#numberinheap {
   color: firebrick;
 }
 
@@ -351,10 +360,7 @@ span {
   padding: 0.3rem;
 }
 
-#heapstats {
-  display: grid;
-  grid-template-columns: 14rem 14rem;
-}
+
 
 #captured {
   color: firebrick;

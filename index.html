@@ -22,7 +22,7 @@ Version history
 0.3.6     2020-06-17 Issue #1 Added missing CI value 50% 68%, added in correct values for N
 0.3.10    2020-06-20 Added data-tooltip attribute for working with tooltips
 0.3.11    2020-06-21 Custom draw and skew. Also added a tooltips on off button
-0.3.18
+0.3.19    2020-06-25 Added mean heap se, curve se and number in heap in panel 5 
 -->
 
 <!DOCTYPE html>
@@ -173,8 +173,8 @@ Version history
             <div id=nosamples data-tooltip><span>Number of samples : </span><span id=nosamplesx>0</span></div>  
 
             <div id=latestsamples>
-              <div data-tooltip><span>Mean </span><span class=italic>M</span> : <span id=samplemean>0</span></div>
-              <div data-tooltip><span>SD </span><span class=italic>s</span> : <span id=samplesd>0</span></div>
+              <div data-tooltip><span>Latest sample: </span><span class=italic >M</span> : <span id=samplemean>0</span></div>
+              <div data-tooltip><span></span><span class=italic>s</span> : <span id=samplesd>0</span></div>
             </div>
 
             <div id=latestmoes>
@@ -197,12 +197,20 @@ Version history
             <div><input type=checkbox id=samplecurve name=samplecurve value=samplecurve ><label for=samplecurve data-tooltip><span>Sampling distribution curve</span></label></div>
             <div><input type=checkbox id=samplelines name=samplelines value=samplelines ><label for=samplelines data-tooltip><span>SE lines</span></label></div>
             <div><input type=checkbox id=plusminusmoe name=plusminusmoe value=plusminusmoe><label for=plusminusmoe data-tooltip=""><span>&plusmn; MoE around </span><span class=greek>&mu;</span></div>
+            
+            <div id=heapstats>
+              <div data-tooltip>Mean Heap M :  <span id=xbarhp>0.0</span></div>
+              <div data-tooltip>Mean Heap SE : <span id=sehp>0.0</span></div>
+            </div>
+
+            <div data-tooltip><span>Curve SE : </span>                         <span id=curveheapse>0</span></div>
+            <div data-tooltip><span>Number of means in the mean heap : </span> <span id=numberinheap>0</span></div>
           </div>
 
           <!----------------------------------------6. Confidence Intervals----------------------------------------------------------->
           <div id=CIsection data-tooltip>
             <span>6. Confidence Intervals</span>
-            <div data-tooltip><span>CI%  C</span>
+            <div data-tooltip><span>CI%  <span class=italic>C</span></span>
               <select id=CI>
                 <option value=0.5>50%</option>
                 <option value=0.32>68%</option>
@@ -228,10 +236,7 @@ Version history
             <div data-tooltip>7. Capture of <span class=greek>&mu;</span></div>
             <div><input type=checkbox id=capturemuline name=capturemuline value=capturemuline><label for=capturemuline data-tooltip><span class=greek>&mu;</span> line</label></div>
             <div><input type=checkbox id=captureofmu name=captureofmu value=captureofmu><label for=captureofmu data-tooltip>Capture of <span class=greek>&mu;</span></label></div>
-            <div id=heapstats>
-              <div data-tooltip>Heap mean : <span id=xbarhp>0.0</span></div>
-              <div data-tooltip>Heap se : <span id=sehp>0.0</span></div>
-            </div>
+
             <div id=capturestats>
               <div data-tooltip>Number capturing <span class=greek>&mu;</span> : <span id=captured>0</span></div>
               <div data-tooltip>Samples taken : <span id=nosamplesy>0</span></div>

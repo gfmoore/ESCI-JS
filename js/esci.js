@@ -61,14 +61,15 @@ Start using version history now to record changes and fixes
                       Introduced sampling for custom, something not right about capture rate - Calculated the mean and sd from the popnbubbles array, not the pdf (innacurate). Remember old mean and sigma values when switching distribution
                       Need to clear the heap and graph when changing sigma known/unknown. Reset mean heap when heap checked off.
 0.3.17    2020-06-25  lognormal skew (including negative skew) - Can't change mean or sd. Note variable in mean and sd as calculated from bubble array and so random.
-0.3.18    2020-06-25  Fixed height plus minus moe line re-instated                      
-
+0.3.18    2020-06-25  Fixed height plus minus moe line re-instated. 
 */
 //#endregion
 
 /*
 0.3.19    2020-06-25  Sort out heap curve and check when visible or not.
-0.3.20    2020-06-28  Update Curve SE value.
+0.3.20    2020-06-28  Update Curve SE value. Coloured dropping means red if missed popn mean - some slight issues as to where they lie on the heap - discretising a continuous variable!                   
+                      Reviewed distribution filling for skew - half a day and can't get it perfect - it's the steep sides.
+                      Good thing was that I tested the curve filling property of the centre points of my bubbles - looks good.
 0.3.21
 */
 
@@ -305,21 +306,21 @@ $(function() {
   initialise();
 
   //#region TESTING Set some checkboxes for when testing.
-    // $showPopulationCurve.prop('checked', true);
-    // showPopulationCurve = $showPopulationCurve.is(':checked');
-    // if (showPopulationCurve) drawPopulationCurve(); else removePopulationCurve();
+    $showPopulationCurve.prop('checked', true);
+    showPopulationCurve = $showPopulationCurve.is(':checked');
+    if (showPopulationCurve) drawPopulationCurve(); else removePopulationCurve();
 
-    // $showSamplePoints.prop('checked', true);
-    // showSamplePoints = true;
+    $showSamplePoints.prop('checked', true);
+    showSamplePoints = true;
 
-    // $showSampleMeans.prop('checked', true);
-    // showSampleMeans = true;
+    $showSampleMeans.prop('checked', true);
+    showSampleMeans = true;
     
-    // $dropSampleMeans.prop('checked', true);
-    // dropSampleMeans = true;
+    $dropSampleMeans.prop('checked', true);
+    dropSampleMeans = true;
     
-    // $showMeanHeap.prop('checked', true);
-    // showMeanHeap = true;
+    $showMeanHeap.prop('checked', true);
+    showMeanHeap = true;
 
     //$fillPopulation.prop('checked', true);    
     //fillPopulation = true;
@@ -420,6 +421,8 @@ $(function() {
  
     drawAxes();
     clearAll();
+
+    if (plusminusmoe) drawPlusMinusMoe();
 
   }
 
@@ -669,10 +672,12 @@ $(function() {
       }
     })
 
+
+
     let temp = [];
     //think I'll remove any negative x values
     for (let i = pdf.length - 1; i >= 0; i--) {
-      if (pdf[i].x < 2) {   //anything else is too small! If I use 0 it appears on the display
+      if (pdf[i].x < 2 || pdf[i].x > 100) {   //anything else is too small! If I use 0 it appears on the display
         pdf.splice(i, 1);
       }
       else {
@@ -684,9 +689,12 @@ $(function() {
 
     if (skewAmount < 0) pdf = temp; //I think you can do this?
 
+    drawPDF();
+
     //need a random array of bubbles for calculating means and sds
     fillPopnBubbles(); 
 
+    //get  mean and sigma
     let s = 0, n = 0, s2 = 0;
     popnBubbles.forEach( v => {
       s += v.x;
@@ -699,7 +707,7 @@ $(function() {
     setMuSigmaSliderVal(mu, sigma);
 
 
-    drawPDF();
+
   }
 
 
@@ -899,79 +907,102 @@ $(function() {
     //These will be used to get random points for samples
     // do a loop, for each loop select a randomx (between -inf and +inf!!!), at randomx look for the two x values in the pdf closest that bound the randomx. 
     //Work out average height, then create a random point between the bottom and this value. Add to randompdf array.
-  
+    
+    //just count how many bubbles I'm drawing
+    let cnt = 0;
+
     let ah;   
 
     let minxpdf, maxxpdf;
-    let r = sampleMeanSize;
+    let minypdf, maxypdf;
+    //let r = sampleMeanSize;
     let minx, maxx, miny, maxy;
+    let k = Math.abs(skewAmount);
 
     let drawit; //shall I draw it?
       
     popnBubbles = [];
 
     fillPopulation = $fillPopulation.is(':checked');
-//    if (fillPopulation) {
 
-      minxpdf = d3.min(pdf, function(d) { return d.x });
-      maxxpdf = d3.max(pdf, function(d) { return d.x });
+    minxpdf = d3.min(pdf, function(d) { return d.x });
+    maxxpdf = d3.max(pdf, function(d) { return d.x });
+    minypdf = d3.min(pdf, function(d) { return d.y });
+    maxypdf = d3.max(pdf, function(d) { return d.y });
 
-      //create array of bubbles, not all may be drawn, but array will be used for random sampling (except for normal)
-      for (let b = 0; b < width * 50; b += 1) {   //this many bubbles, depends on display width width * 1
+    //create array of bubbles, not all may be drawn, but array will be used for random sampling (except for normal)
+    for (let b = 0; b < width * 50; b += 1) {   //this many bubbles, depends on display width width * 1
 
-        //now need to get a random x between min and max x of pdf
-        bubbleX = randbetween(minxpdf, maxxpdf);
+      //now need to get a random x between min and max x of pdf
+      bubbleX = randbetween(minxpdf, maxxpdf);
 
-        //scan through pdf looking for nearest x coordinate  
-        ah = 0;
-        for (let v = 0; v < pdf.length; v += 1) {  
-          if (pdf[v].x > bubbleX) { //found one
-            if (v !== 0) { 
-              //linear interpolation
-              minx = pdf[v-1].x;
-              maxx = pdf[v].x;
-              miny = pdf[v-1].y;
-              maxy = pdf[v].y;
-              ah = miny + (bubbleX - minx)/(maxx-minx) * (maxy - miny); //linear interpolation between two ordinates - best I can do?, splines least squares?
-              break;
-            }
+      //scan through pdf looking for nearest x coordinate  
+      ah = 0;
+      for (let v = 0; v < pdf.length; v += 1) { 
+        if (pdf[v].x > bubbleX) { //found one
+          if (v !== 0) { 
+            //linear interpolation
+            minx = pdf[v-1].x;
+            maxx = pdf[v].x;
+            miny = pdf[v-1].y;
+            maxy = pdf[v].y;
+            ah = miny + (bubbleX - minx)/(maxx-minx) * (maxy - miny); //linear interpolation between two ordinates - best I can do?, splines least squares?
+            break;
           }
-        }  //end of scan
+        }
+      }  //end of scan
 
-        //pick a random n bewtween 0 and the max height. If it is < ah then we have a bubble - its a probability! If the curve is close to the bottom there is less probability of filling it with a bubble, if it is higher then more probability!
-        bubbleY = randbetween(0, heightP);
-        if (bubbleY < ah) {
-          popnBubbles.push({ x: bubbleX, y: bubbleY });
+      //pick a random n bewtween 0 and the max height. If it is < ah then we have a bubble - its a probability! If the curve is close to the bottom there is less probability of filling it with a bubble, if it is higher then more probability!
+      bubbleY = randbetween(0, heightP);
+      if (bubbleY < ah) {  //less than curve height, should it be <= ?
+        popnBubbles.push({ x: bubbleX, y: bubbleY });
 
-          //work out some limits as to whether to draw a bubble.
-          //r may not be the best unit as not to same scale!
-          drawit = true;
+        //need some tweaks to stop bubbles overflowing boundaries - remember ah is the curve height for bubbleX
+        drawit = true;
 
-          //rectangular need to be narrower area for visibility
-          //need to get minx and max x
+        //let w = sampleMeanSize * 100/width;  //the number of real world pixels value for the radius of the sample 
+        //let xb, xa; //x before, x after  (in skew calc)
+        if (normal) {
+          //if (bubbleY < 2)   drawit = false;
+          if (bubbleY > ah - 7)  drawit = false;
+          if (bubbleX < minxpdf + w ) drawit = false;
+          if (bubbleX > maxxpdf - w ) drawit = false;
+        }
+        if (rectangular) {
+          if (bubbleY < 7)   drawit = false;
+          if (bubbleY > ah - 7)  drawit = false;
+          if (bubbleX < minxpdf + w ) drawit = false;
+          if (bubbleX > maxxpdf - w ) drawit = false;
+        }
+        if (skew) {
+          if (bubbleY + sampleMeanSize + 1 > ah ) drawit = false;
+        }
 
-          let w = 4 * 100/width;
-          if (normal || skew || custom) {
-            if (bubbleY < 10)   drawit = false;
-            if (bubbleY > ah - 7)  drawit = false;
-            if (bubbleX < minxpdf + w ) drawit = false;
-            if (bubbleX > maxxpdf - w ) drawit = false;
-          }
-          if (rectangular) {
-            if (bubbleY < 7)   drawit = false;
-            if (bubbleY > 154)   drawit = false;
-            if (bubbleX < mu - sigma + w) drawit = false;
-            if (bubbleX > mu + sigma - w) drawit = false;
-          }
+        if (rectangular) {
+          if (bubbleY < 7)   drawit = false;
+          if (bubbleY > 154)   drawit = false;
+          if (bubbleX < mu - sigma + w) drawit = false;
+          if (bubbleX > mu + sigma - w) drawit = false;
+        }
 
-          if (drawit) {
-            if (fillPopulation) svgP.append('circle').attr('class', 'popnbubble').attr('cx', x(bubbleX)).attr('cy', yp(bubbleY) ).attr('r', sampleMeanSize);
-          }
-
+        if (drawit) {
+          if (fillPopulation) svgP.append('circle').attr('class', 'popnbubble').attr('cx', x(bubbleX)).attr('cy', yp(bubbleY) ).attr('r', sampleMeanSize);
         }
 
       }
-//    }
+
+    }
+
+  }
+
+  function searchpdf(x) {
+    //search through pdf till find an index close to it i.e. i just > than x
+    for (let i = 0; i < pdf.length; i += 1) {
+      if (pdf[i].x > x) {
+        return i;
+      }
+    }
+    return -1;
   }
 
   //remove population bubbles
@@ -1120,11 +1151,13 @@ $(function() {
             d3.select('#smoe'+meanid).attr('y2', ypos); 
           }
           else {  // gone too far remove it and the moe wings
+            let pmissed = $(this).attr('pmissed');  //for use in colouring the heap, text value 'true' 'false'
+            let smissed = $(this).attr('smissed');
             $(this).remove();
             d3.select('#pmoe'+meanid).remove();  
             d3.select('#smoe'+meanid).remove();
 
-            if (showMeanHeap) addToHeap(fxbar); 
+            if (showMeanHeap) addToHeap(fxbar, pmissed, smissed); 
             break;  //no point in moving anymore
           }
 
@@ -1404,9 +1437,21 @@ $(function() {
 
   /*------------------------------------------do the heap------------------------------------------*/
   //when sample mean gets far enough, add to the heap display   -- from takeSample()
-  function addToHeap(xbar) {
-    let increaseFrequency = true;
+  function addToHeap(xbar, pmissed, smissed) {
+    let hx, hy;
 
+      //if I have to do any adjustment to xint!!
+      //let se = sigma / Math.sqrt(n);
+      // pci = jStat.normalci( mu, alpha, sigma, n );
+      // if (xbar < pci[0]) {
+      //   l(xbar + ' -> less ' + pmissed);
+      // }
+      // if (xbar > pci[1]) {
+      //   l(xbar + ' -> more ' + pmissed);
+      // }
+
+
+    if (!showMeanHeap  && !captureOfMu) return;
     
     //if samplemean is too small or too large don't do anything. 
     if (xbar < 0 || xbar >= 100) {
@@ -1414,28 +1459,76 @@ $(function() {
     }
     else {
       //increase the heap frequency
-      xint = parseInt( Math.trunc(xbar/100 * heap.length )); //truncate is just to slightly shift the heap left
+      
+      //let heapse = sigma/Math.sqrt(n);
+      xint = parseInt( Math.floor(xbar/100 * heap.length ));  //I've tried ceil, floor, trunc using mean or mean + se because I thin there is a slight bias to the right???
+
+      //increase the frequency of the heap for that x value
       heap[xint].f += 1;
 
-      //now draw a bubble at co-ords xint and heap(xint) with an adjustement  remember x() is our scaling function from D3.dropLimit changes based on vertical height of browser (viewport) - not particularly great.
-      svgS.append('circle').attr('class', 'heap').attr('cx', (heap[xint].x * 2* sampleMeanSize) + (sampleMeanSize  + 2) ).attr('cy', heightS - (heap[xint].f * sampleMeanSize * 2) - dropLimit + 3).attr('r', sampleMeanSize).attr('stroke', 'blue').attr('stroke-width', 1).attr('fill', 'lawngreen').attr('visibility', 'hidden');
 
-      if (showMeanHeap) {
-        d3.selectAll('.heap').attr('visibility', 'visible');
+      //now draw a bubble at co-ords xint and heap(xint)
+      //color code the drops and add the pmissed and smissed attributes for recoluring depending on CI selecetd (on change)
+      hx = (heap[xint].x * 2* sampleMeanSize) + (sampleMeanSize  + 2);
+      hy = heightS - (heap[xint].f * sampleMeanSize * 2) - dropLimit + 3;
+      if (showMoe || captureOfMu) {
+        if (showPmoe && pmissed === 'true') {
+          svgS.append('circle').attr('class', 'heap').attr('cx', hx ).attr('cy', hy).attr('r', sampleMeanSize).attr('stroke', 'black').attr('stroke-width', 1).attr('fill', 'red').attr('visibility', 'visible').attr('pmissed', pmissed).attr('smissed', smissed);
+        }
+        if (showPmoe && pmissed === 'false') {
+          svgS.append('circle').attr('class', 'heap').attr('cx', hx ).attr('cy', hy).attr('r', sampleMeanSize).attr('stroke', 'black').attr('stroke-width', 1).attr('fill', '#00DF00').attr('visibility', 'visible').attr('pmissed', pmissed).attr('smissed', smissed);
+        }
+        if (showSmoe && smissed === 'true') {
+          svgS.append('circle').attr('class', 'heap').attr('cx', hx ).attr('cy', hy).attr('r', sampleMeanSize).attr('stroke', 'black').attr('stroke-width', 1).attr('fill', 'red').attr('visibility', 'visible').attr('pmissed', pmissed).attr('smissed', smissed);
+        }
+        if (showSmoe && smissed === 'false') {
+          svgS.append('circle').attr('class', 'heap').attr('cx', hx ).attr('cy', hy).attr('r', sampleMeanSize).attr('stroke', 'black').attr('stroke-width', 1).attr('fill', '#00DF00').attr('visibility', 'visible').attr('pmissed', pmissed).attr('smissed', smissed);
+        }
       }
       else {
-        d3.selectAll('.heap').attr('visibility', 'hidden');
+        svgS.append('circle').attr('class', 'heap').attr('cx', hx ).attr('cy', hy).attr('r', sampleMeanSize).attr('stroke', 'black').attr('stroke-width', 1).attr('fill', '#00DF00').attr('visibility', 'visible').attr('pmissed', pmissed).attr('smissed', smissed);
       }
     }
 
     //must calculate heap stats even with non visible mean
-    calculateHeapStatistics(xbar);  //this could be a slow downer! //should do it continuously?
+    calculateHeapStatistics(xbar);  //this could be a slow downer! //do it continuously not as a recalc?
 
-    drawSELines() //now fixed to population sd.
-
+    drawSELines()       //dynamic and now fixed to population sd.
     drawMeanHeapCurve() // this will be dynamic as well
+  }
 
-    if (plusminusmoe) drawPlusMinusMoe();
+  //recolour heap if CI checked and mu known unknown checked
+  function recolourHeap() {
+    let pmissed, smissed;
+    d3.selectAll('.heap').each( function(h) {
+      pmissed = $(this).attr('pmissed');
+      smissed = $(this).attr('smissed');
+      if (showMoe || captureOfMu) {
+        if (showPmoe) {
+          if (pmissed === 'true') {
+            $(this).attr('fill', 'red');
+          }
+          else {
+            $(this).attr('fill', '#00DF00');
+          }
+
+        }
+        if (showSmoe) {
+          if (smissed === 'true') {
+            $(this).attr('fill', 'red');
+          }
+          else {
+            $(this).attr('fill', '#00DF00');
+          }
+        }
+  
+      }
+
+      else {
+        $(this).attr('fill', '#00DF00');
+      } 
+    })
+
   }
 
   //get xbar and sse for heap
@@ -1620,6 +1713,10 @@ $(function() {
       svgS.append('line').attr('class', 'plusminusmoe').attr('x1', x(pci[0])).attr('y1', ya).attr('x2', x(pci[0])).attr('y2', 25 ).attr('stroke', 'green').attr('stroke-width', '2').attr('visibility', 'visible');
       svgS.append('line').attr('class', 'plusminusmoe').attr('x1', x(pci[1])).attr('y1', ya).attr('x2', x(pci[1])).attr('y2', 25 ).attr('stroke', 'green').attr('stroke-width', '2').attr('visibility', 'visible');
     }
+  }
+
+  function removePlusMinusMoe() {
+    d3.selectAll('.plusminusmoe').remove();
   }
 
   /*-------------------------------------------elements and values---------------------------------*/
@@ -1827,7 +1924,10 @@ $(function() {
     clearAll();
 
     //redisplay +/- moe if sample size changes
-    if (plusminusmoe) drawPlusMinusMoe();
+    if (plusminusmoe) {
+      drawPlusMinusMoe();
+    }
+
   })
 
   //show sample points
@@ -1891,9 +1991,9 @@ $(function() {
   //show/hide the CI Moe bars?
   $showMoe.on('change', function() {
     showMoe = $showMoe.is(':checked');
-
     displaySampleAppearanceAll();
     recalculateSamplemeanStatistics(); //which turns on display of captured stats
+    recolourHeap();
   })
 
   //show moe wings for population
@@ -1904,6 +2004,7 @@ $(function() {
     recalculateSamplemeanStatistics();
     //clear the mean heap if displayed  as will not match the CI  ???
     //resetHeap();
+    recolourHeap();
   })
 
   //show moe wings for sample
@@ -1914,6 +2015,7 @@ $(function() {
     recalculateSamplemeanStatistics();
     //clear the mean heap if displayed as will not match the CI  ???
     //resetHeap();
+    recolourHeap();
   })
 
   //show the mean as not captured if known, uknown checked
@@ -1921,6 +2023,7 @@ $(function() {
     captureOfMu = $captureOfMu.is(':checked');
     displaySampleAppearanceAll();
     recalculateSamplemeanStatistics();
+    recolourHeap();
   })
 
 
@@ -1971,7 +2074,12 @@ $(function() {
 
   $plusminusmoe.on('change', function() {
     plusminusmoe = $plusminusmoe.is(':checked');
-    if (plusminusmoe) drawPlusMinusMoe();
+    if (plusminusmoe) {
+      drawPlusMinusMoe();
+    }
+    else {
+      removePlusMinusMoe();
+    }
   })
 
 

@@ -24,7 +24,9 @@ Version history
 0.3.11     2020-06-21 Custome draw and skew. Added a tooltips on off button
 0.3.14     2020-06-24 Minor change to colour of population bubbles
 0.3.16     2020-06-25 Make axis font and mu line text a little bigger. Slight increase in width of left fram and adjusted space for Mean M in 4. Samples
-0.3.19  
+0.3.18     2020-06-25 Slight tweaks on moving items from panel 7 to panel 5 and adding new spans
+0.3.19     2020-06-26 Adjusted colour of panel 5 and 8 slightly to match ESCI Classic.
+0.3.20     
 
 */
 
@@ -313,7 +315,7 @@ span {
 /*--------------------------------------------------5. Mean heap section------------------------------------------------------*/
 #heapsection {
   border: 1px solid black;
-  background-color: palegreen;
+  background-color: #ccffcc;
   padding: 0.3rem;
 }
 
@@ -382,7 +384,7 @@ span {
 /*----------------------------------------------------8. Capture of next mean section--------------------------------------------*/
 #capturesection {
   border: 1px solid black;
-  background-color: burlywood;
+  background-color: #ffcc99;
   padding: 0.3rem;
 }
 

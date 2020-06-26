@@ -7,6 +7,8 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
 
 Version history
 */
+
+
 //#region version history
 /*
 0.1.0                 Initial version
@@ -26,8 +28,6 @@ Start using version history now to record changes and fixes
 0.2.10    2020-05-20  Just made the display a bit smaller, especially the bottom of the dropping means window and allow vertical resize
 0.2.11    2020-05-22  It was quite a job. Also needed to change plus minus moe if sample size changes. Refactored the display code, it was a mess. Sortd out capture rates again
 0.2.12    2020-05-23  Add rectangle and skew distribution. Also just shifted the tick mark at 100 on the axes slightly left to make it visible
-
-//TODO skew and the "capture of next mean"
 
 0.3.0
 0.3.1     2020-05-29  Resize the display area, change some text sizes and change character names. Try to improve
@@ -57,18 +57,18 @@ Start using version history now to record changes and fixes
                       Also allow dropping means - todo calculate statistics properly.
 0.3.15    2020-06-24  Turned off hover on logo for version number - not working properly
                       Going to try lognormal
-
-*/
-//#endregion
-/*
-
 0.3.16    2020-06-24  Sort our remembering mu sigma,  adjusted axis and mu line font sizes. 
                       Introduced sampling for custom, something not right about capture rate - Calculated the mean and sd from the popnbubbles array, not the pdf (innacurate). Remember old mean and sigma values when switching distribution
                       Need to clear the heap and graph when changing sigma known/unknown. Reset mean heap when heap checked off.
 0.3.17    2020-06-25  lognormal skew (including negative skew) - Can't change mean or sd. Note variable in mean and sd as calculated from bubble array and so random.
+0.3.18    2020-06-25  Fixed height plus minus moe line re-instated                      
 
-0.3.18    2020-06-25  Fixed height plus minus moe line re-instated
-0.3.19
+*/
+//#endregion
+
+/*
+0.3.19    2020-06-25  Sort out heap curve and check when visible or not.
+0.3.20
 */
 
 'use strict';
@@ -76,7 +76,7 @@ Start using version history now to record changes and fixes
 $(function() {
   console.log('jQuery here!');  //just to make sure everything is working
 
-  let version = '0.3.18';
+  let version = '0.3.19';
 
   //dialog box to display version
   $('#dialogversion').hide();
@@ -315,8 +315,8 @@ $(function() {
     $dropSampleMeans.prop('checked', true);
     dropSampleMeans = true;
     
-    // $showMeanHeap.prop('checked', true);
-    // showMeanHeap = true;
+    $showMeanHeap.prop('checked', true);
+    showMeanHeap = true;
 
     //$fillPopulation.prop('checked', true);    
     //fillPopulation = true;
@@ -1430,7 +1430,7 @@ $(function() {
 
     drawSELines() //now fixed to population sd.
 
-    drawSECurve() // this will be dynamic as well
+    drawMeanHeapCurve() // this will be dynamic as well
 
     if (plusminusmoe) drawPlusMinusMoe();
   }
@@ -1474,7 +1474,7 @@ $(function() {
 
     d3.selectAll('.heap').remove();
     d3.selectAll('.selines').remove();
-    d3.selectAll('.heapcurve').remove();
+    removeMeanHeapCurve();
 
     heapxbar = 0;      
     $heapxbar.text(0);
@@ -1497,6 +1497,56 @@ $(function() {
 
   }
 
+
+  //draw a normal curve to the heap
+  function drawMeanHeapCurve() {
+    //only do this if showMeanHeapCurve checked
+    if (!showMeanHeapCurve) return; //simple way of dealing with it.
+
+    d3.selectAll('.heapcurve').remove();
+    //also gets re-created every time a sample is dropped
+
+    //get max of the heap histogram i.e. the max frequency
+    heapMax = Math.max(...heap.map(o => o.f), 0);
+
+    //now create the points, 200 should be enough
+    if (heapN > 1) {
+      heappdf = [];
+      for (let k = 0; k < 200; k++) { 
+         //heappdf.push( {x: k, y: jStat.normal.pdf(k, heapxbar, heapse) } );  
+         heappdf.push( {x: k, y: jStat.normal.pdf( k, mu, sigma/Math.sqrt(n) ) } ); 
+      }
+
+      //get the max of the curve
+      heapCMax = Math.max(...heappdf.map(o => o.y), 0);
+
+      //now scale the heappdf by heapMax/heapCMax   sampleMeanSize is the radius of the bubbles scale by 1.2
+      //heappdf = heappdf.map (o =>  ({ x: o.x, y: o.y * heapMax/heapCMax * sampleMeanSize * 1.2 * 2}) );  
+      heappdf = heappdf.map (o =>  ({ x: o.x, y: o.y * heapMax/heapCMax * sampleMeanSize * 2.0}) );  
+
+      //create a generator
+      lineh = d3.line()
+                .x(function(d, i) { return x(d.x); })
+                .y(function(d, i) { return heightS - d.y - 40; })
+                .curve(d3.curveCardinal);  //curve it more as too pointy
+
+      //display the curve
+      svgS.append('path').attr('class', 'heapcurve').attr('d', lineh(heappdf)).attr('stroke', 'brown').attr('stroke-width', '2').attr('fill', 'none').attr('visibility', 'hidden');
+
+      if (showMeanHeapCurve) {
+        d3.selectAll('.heapcurve').attr('visibility', 'visible');
+      }
+      else {
+        d3.selectAll('.heapcurve').attr('visibility', 'hidden');
+      }
+
+    }
+  }
+
+  function removeMeanHeapCurve() {
+    d3.selectAll('.heapcurve').remove();
+  }
+
   //draw the standard error line
   function drawSELines() {
     if (!showSELines) return;
@@ -1514,6 +1564,7 @@ $(function() {
 
     let ya = heightS - dropLimit;
     let yb = heightS - hght - 50;
+
     //xbar
     svgS.append('line').attr('class', 'selines').attr('x1', x(mu)).attr('y1', ya).attr('x2', x(mu)).attr('y2', yb).attr('stroke', 'orange').attr('stroke-width', '2').attr('visibility', 'hidden');
     //se
@@ -1558,58 +1609,12 @@ $(function() {
       //growing version not wanted
       // svgS.append('line').attr('class', 'plusminusmoe').attr('x1', x(pci[0])).attr('y1', ya).attr('x2', x(pci[0])).attr('y2', yb ).attr('stroke', 'green').attr('stroke-width', '2').attr('visibility', 'visible');
       // svgS.append('line').attr('class', 'plusminusmoe').attr('x1', x(pci[1])).attr('y1', ya).attr('x2', x(pci[1])).attr('y2', yb ).attr('stroke', 'green').attr('stroke-width', '2').attr('visibility', 'visible');
-     
+      
       //fixed height version
       svgS.append('line').attr('class', 'plusminusmoe').attr('x1', x(pci[0])).attr('y1', ya).attr('x2', x(pci[0])).attr('y2', 25 ).attr('stroke', 'green').attr('stroke-width', '2').attr('visibility', 'visible');
       svgS.append('line').attr('class', 'plusminusmoe').attr('x1', x(pci[1])).attr('y1', ya).attr('x2', x(pci[1])).attr('y2', 25 ).attr('stroke', 'green').attr('stroke-width', '2').attr('visibility', 'visible');
     }
   }
-  
-
-  //draw a normal curve to the heap
-  function drawSECurve() {
-    //only do this if showMeanHeapCurve checked
-    //if (!showMeanHeapCurve) return; //simple way of dealing with it.
-
-    d3.selectAll('.heapcurve').remove();
-    //also gets re-created every time a sample is dropped
-
-    //get max of the heap histogram i.e. the max frequency
-    heapMax = Math.max(...heap.map(o => o.f), 0);
-
-    //now create the points, 200 should be enough
-    if (heapN > 1) {
-      heappdf = [];
-      for (let k = 0; k < 200; k++) { 
-         heappdf.push( {x: k, y: jStat.normal.pdf(k, heapxbar, heapse) } );  
-      }
-
-      //get the max of the curve
-      heapCMax = Math.max(...heappdf.map(o => o.y), 0);
-
-      //now scale the heappdf by heapMax/heapCMax   sampleMeanSize is the radius of the bubbles scale by 1.2
-      //heappdf = heappdf.map (o =>  ({ x: o.x, y: o.y * heapMax/heapCMax * sampleMeanSize * 1.2 * 2}) );  
-      heappdf = heappdf.map (o =>  ({ x: o.x, y: o.y * heapMax/heapCMax * sampleMeanSize * 1.8}) );  
-
-    }
-
-    //create a generator
-    lineh = d3.line()
-              .x(function(d, i) { return x(d.x); })
-              .y(function(d, i) { return heightS - d.y - 40; })
-              .curve(d3.curveCardinal);  //curve it more as too pointy
-
-    //display the curve
-    svgS.append('path').attr('class', 'heapcurve').attr('d', lineh(heappdf)).attr('stroke', 'brown').attr('stroke-width', '2').attr('fill', 'none').attr('visibility', 'hidden');
-
-    if (showMeanHeapCurve) {
-      d3.selectAll('.heapcurve').attr('visibility', 'visible');
-    }
-    else {
-      d3.selectAll('.heapcurve').attr('visibility', 'hidden');
-    }
-  }
-
 
   /*-------------------------------------------elements and values---------------------------------*/
 
@@ -1921,8 +1926,28 @@ $(function() {
     else {
       //should clear it all really
       resetHeap();
-
       d3.selectAll('.heap').attr('visibility', 'hidden');
+
+      //also remove mean heap curve, no heap
+      removeMeanHeapCurve();
+      $showMeanHeapCurve.prop('checked', false);
+      showMeanHeapCurve = false;
+    }
+  })
+
+  //show sample distribution curve
+  $showMeanHeapCurve.on('change', function() {
+    if (!showMeanHeap) { //can only have a curve if there is a heap, if heap not checked there is no heap.
+      $showMeanHeapCurve.prop('checked', false); 
+      return;
+    }
+
+    showMeanHeapCurve = $showMeanHeapCurve.is(':checked');
+    if (showMeanHeapCurve) {
+      drawMeanHeapCurve();
+    }
+    else {
+      removeMeanHeapCurve();
     }
   })
 
@@ -1956,17 +1981,6 @@ $(function() {
     recalculateSamplemeanStatistics(); //which turns on or off display of captured stats
   })
 
-  //show sample distribution curve
-  $showMeanHeapCurve.on('change', function() {
-    showMeanHeapCurve = $showMeanHeapCurve.is(':checked');
-    if (showMeanHeapCurve) {
-      d3.selectAll('.heapcurve').attr('visibility', 'visible');
-    }
-    else {
-      // d3.selectAll('.heapcurve').attr('visibility', 'hidden');
-      d3.selectAll('.heapcurve').remove();
-    }
-  })
 
   //Number capturing next mean
   $captureNextMean.on('change', function() {

@@ -68,7 +68,8 @@ Start using version history now to record changes and fixes
 
 /*
 0.3.19    2020-06-25  Sort out heap curve and check when visible or not.
-0.3.20
+0.3.20    2020-06-28  Update Curve SE value.
+0.3.21
 */
 
 'use strict';
@@ -76,7 +77,7 @@ Start using version history now to record changes and fixes
 $(function() {
   console.log('jQuery here!');  //just to make sure everything is working
 
-  let version = '0.3.19';
+  let version = '0.3.20';
 
   //dialog box to display version
   $('#dialogversion').hide();
@@ -296,27 +297,29 @@ $(function() {
 
   let xbardata = [];            //temp record of xbars for the heap to check of continuous calculations actually working
 
+  let $curveHeapSE;             //the textbox for the heap curve SE value;
+
   //#endregion
 
   
   initialise();
 
   //#region TESTING Set some checkboxes for when testing.
-    $showPopulationCurve.prop('checked', true);
-    showPopulationCurve = $showPopulationCurve.is(':checked');
-    if (showPopulationCurve) drawPopulationCurve(); else removePopulationCurve();
+    // $showPopulationCurve.prop('checked', true);
+    // showPopulationCurve = $showPopulationCurve.is(':checked');
+    // if (showPopulationCurve) drawPopulationCurve(); else removePopulationCurve();
 
-    $showSamplePoints.prop('checked', true);
-    showSamplePoints = true;
+    // $showSamplePoints.prop('checked', true);
+    // showSamplePoints = true;
 
-    $showSampleMeans.prop('checked', true);
-    showSampleMeans = true;
+    // $showSampleMeans.prop('checked', true);
+    // showSampleMeans = true;
     
-    $dropSampleMeans.prop('checked', true);
-    dropSampleMeans = true;
+    // $dropSampleMeans.prop('checked', true);
+    // dropSampleMeans = true;
     
-    $showMeanHeap.prop('checked', true);
-    showMeanHeap = true;
+    // $showMeanHeap.prop('checked', true);
+    // showMeanHeap = true;
 
     //$fillPopulation.prop('checked', true);    
     //fillPopulation = true;
@@ -1511,10 +1514,12 @@ $(function() {
 
     //now create the points, 200 should be enough
     if (heapN > 1) {
+      let curveSE = sigma/Math.sqrt(n);
+      $curveHeapSE.text(curveSE.toFixed(2));
       heappdf = [];
       for (let k = 0; k < 200; k++) { 
          //heappdf.push( {x: k, y: jStat.normal.pdf(k, heapxbar, heapse) } );  
-         heappdf.push( {x: k, y: jStat.normal.pdf( k, mu, sigma/Math.sqrt(n) ) } ); 
+         heappdf.push( {x: k, y: jStat.normal.pdf( k, mu, curveSE ) } ); 
       }
 
       //get the max of the curve
@@ -1545,6 +1550,7 @@ $(function() {
 
   function removeMeanHeapCurve() {
     d3.selectAll('.heapcurve').remove();
+    $curveHeapSE.text(0);
   }
 
   //draw the standard error line
@@ -2053,6 +2059,8 @@ $(function() {
 
     $heapxbar             = $('#xbarhp');
     $heapse               = $('#sehp');
+
+    $curveHeapSE          = $('#curveheapse');
 
     $noInHeap             = $('#numberinheap');
 

@@ -78,7 +78,7 @@ Start using version history now to record changes and fixes
 $(function() {
   console.log('jQuery here!');  //just to make sure everything is working
 
-  let version = '0.3.20';
+  let version = '0.3.21';
 
   //dialog box to display version
   $('#dialogversion').hide();
@@ -306,21 +306,21 @@ $(function() {
   initialise();
 
   //#region TESTING Set some checkboxes for when testing.
-    // $showPopulationCurve.prop('checked', true);
-    // showPopulationCurve = $showPopulationCurve.is(':checked');
-    // if (showPopulationCurve) drawPopulationCurve(); else removePopulationCurve();
+    $showPopulationCurve.prop('checked', true);
+    showPopulationCurve = $showPopulationCurve.is(':checked');
+    if (showPopulationCurve) drawPopulationCurve(); else removePopulationCurve();
 
-    // $showSamplePoints.prop('checked', true);
-    // showSamplePoints = true;
+    $showSamplePoints.prop('checked', true);
+    showSamplePoints = true;
 
-    // $showSampleMeans.prop('checked', true);
-    // showSampleMeans = true;
+    $showSampleMeans.prop('checked', true);
+    showSampleMeans = true;
     
-    // $dropSampleMeans.prop('checked', true);
-    // dropSampleMeans = true;
+    $dropSampleMeans.prop('checked', true);
+    dropSampleMeans = true;
     
-    // $showMeanHeap.prop('checked', true);
-    // showMeanHeap = true;
+    $showMeanHeap.prop('checked', true);
+    showMeanHeap = true;
 
     //$fillPopulation.prop('checked', true);    
     //fillPopulation = true;
@@ -960,7 +960,7 @@ $(function() {
         //need some tweaks to stop bubbles overflowing boundaries - remember ah is the curve height for bubbleX
         drawit = true;
 
-        //let w = sampleMeanSize * 100/width;  //the number of real world pixels value for the radius of the sample 
+        let w = sampleMeanSize * 100/width;  //the number of real world pixels value for the radius of the sample 
         //let xb, xa; //x before, x after  (in skew calc)
         if (normal) {
           //if (bubbleY < 2)   drawit = false;

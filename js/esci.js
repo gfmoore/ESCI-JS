@@ -1660,11 +1660,6 @@ $(function() {
     removePopnBubbles();
     if (fillPopulation) fillPopnBubbles();
 
-    //clear the SELines ??should I
-    d3.selectAll('.SELines').remove();
-    $showSELines.prop('checked', false)
-    showSELines = false;
-
   }
 
   // #region  panels 
@@ -1743,6 +1738,12 @@ $(function() {
 
     resetCaptureStats();
 
+  }
+
+  function clearSELines() {  //not needed (yet!)
+    d3.selectAll('.SELines').remove();
+    $showSELines.prop('checked', false)
+    showSELines = false;
   }
 
 
@@ -2046,7 +2047,6 @@ $(function() {
       drawSELines();
     }
     else {
-      // d3.selectAll('.selines').attr('visibility', 'hidden');
       d3.selectAll('.selines').remove();
     }
   })

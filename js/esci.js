@@ -1988,6 +1988,7 @@ $(function() {
   //show/hide the CI Moe bars?
   $showMoe.on('change', function() {
     showMoe = $showMoe.is(':checked');
+    //clearAll();
     displaySampleAppearanceAll();
     recalculateSamplemeanStatistics(); //which turns on display of captured stats
     recolourHeap();
@@ -2075,7 +2076,7 @@ $(function() {
   //show the mean as not captured if known, uknown checked
   $captureOfMu.on('change', function() {
     captureOfMu = $captureOfMu.is(':checked');
-    clearAll();
+    //clearAll();
     displaySampleAppearanceAll();
     recalculateSamplemeanStatistics(); //which turns on display of captured stats
     recolourHeap();

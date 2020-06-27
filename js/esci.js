@@ -71,7 +71,7 @@ Start using version history now to record changes and fixes
                       Reviewed distribution filling for skew - half a day and can't get it perfect - it's the steep sides.
                       Good thing was that I tested the curve filling property of the centre points of my bubbles - looks good.
 0.3.21    2020-06-27  Fixed a bug on fill had commented out w.
-0.3.22
+0.3.22    2020-06-27  Added favicon code to html
 */
 
 'use strict';
@@ -79,7 +79,7 @@ Start using version history now to record changes and fixes
 $(function() {
   console.log('jQuery here!');  //just to make sure everything is working
 
-  let version = '0.3.21';
+  let version = '0.3.22';
 
   //dialog box to display version
   $('#dialogversion').hide();

@@ -23,7 +23,8 @@ Version history
 0.3.10    2020-06-20 Added data-tooltip attribute for working with tooltips
 0.3.11    2020-06-21 Custom draw and skew. Also added a tooltips on off button
 0.3.18    2020-06-25 Added mean heap se, curve se and number in heap in panel 5 
-0.3.21    
+0.3.22    2020-06-27 Added favicon refresh code and handheld friendly meta
+9.3.23
 -->
 
 <!DOCTYPE html>
@@ -33,6 +34,15 @@ Version history
   <head>
     <meta charset=utf-8>
     <!-- <meta name="viewport" content="width=device-width"> not work? allow touch and click to be the same -->
+
+    <!--to fix issue of android chrome reducing font size to tiny (unless big paragraph of text)   -->
+    <meta name="HandheldFriendly" content="true"/>
+    <!--might need this at some point?, though it disables pinch zoom-->
+    <!--<meta name="viewport" content="width=device-width, maximum-scale=1.0, user-scalable=yes">-->
+    
+    <!--clear favicon cache-->
+    <link rel="shortcut icon" href="./favicon.ico?v=2">  
+
     <title>ESCI-JS</title>
 
     <!-- stylesheets -->

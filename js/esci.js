@@ -2016,27 +2016,9 @@ $(function() {
   })
 
 
-
-
   $showMeanHeap.on('change', function() {
     showMeanHeap = $showMeanHeap.is(':checked');
     clearAll();
-
-    // if (showMeanHeap) {
-    //   d3.selectAll('.heap').attr('visibility', 'visible');
-    // }
-    // else {
-    //   //should clear it all really
-    //   resetHeap();
-    //   d3.selectAll('.heap').attr('visibility', 'hidden');
-
-    //   //also remove mean heap curve, no heap
-    //   removeMeanHeapCurve();
-    //   $showMeanHeapCurve.prop('checked', false);
-    //   showMeanHeapCurve = false;
-    //   //need to reset capture stats
-
-    // }
   })
 
   //show sample distribution curve
@@ -2093,11 +2075,10 @@ $(function() {
   //show the mean as not captured if known, uknown checked
   $captureOfMu.on('change', function() {
     captureOfMu = $captureOfMu.is(':checked');
+    clearAll();
     displaySampleAppearanceAll();
     recalculateSamplemeanStatistics(); //which turns on display of captured stats
     recolourHeap();
-
-
   })
 
   //Number capturing next mean  //TODO

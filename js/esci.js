@@ -83,7 +83,7 @@ Start using version history now to record changes and fixes
 $(function() {
   console.log('jQuery here!');  //just to make sure everything is working
 
-  let version = '0.3.24';
+  let version = '0.3.25';
 
   //dialog box to display version
   $('#dialogversion').hide();
@@ -1660,6 +1660,11 @@ $(function() {
     removePopnBubbles();
     if (fillPopulation) fillPopnBubbles();
 
+    //clear the SELines ??should I
+    d3.selectAll('.SELines').remove();
+    $showSELines.prop('checked', false)
+    showSELines = false;
+
   }
 
   // #region  panels 
@@ -2038,6 +2043,7 @@ $(function() {
     showSELines = $showSELines.is(':checked');
     if (showSELines) {
       d3.selectAll('.selines').attr('visibility', 'visible');
+      drawSELines();
     }
     else {
       // d3.selectAll('.selines').attr('visibility', 'hidden');

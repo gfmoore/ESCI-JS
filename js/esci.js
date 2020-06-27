@@ -67,10 +67,11 @@ Start using version history now to record changes and fixes
 
 /*
 0.3.19    2020-06-25  Sort out heap curve and check when visible or not.
-0.3.20    2020-06-28  Update Curve SE value. Coloured dropping means red if missed popn mean - some slight issues as to where they lie on the heap - discretising a continuous variable!                   
+0.3.20    2020-06-26  Update Curve SE value. Coloured dropping means red if missed popn mean - some slight issues as to where they lie on the heap - discretising a continuous variable!                   
                       Reviewed distribution filling for skew - half a day and can't get it perfect - it's the steep sides.
                       Good thing was that I tested the curve filling property of the centre points of my bubbles - looks good.
-0.3.21
+0.3.21    2020-06-27  Fixed a bug on fill had commented out w.
+0.3.22
 */
 
 'use strict';
@@ -306,21 +307,21 @@ $(function() {
   initialise();
 
   //#region TESTING Set some checkboxes for when testing.
-    $showPopulationCurve.prop('checked', true);
-    showPopulationCurve = $showPopulationCurve.is(':checked');
-    if (showPopulationCurve) drawPopulationCurve(); else removePopulationCurve();
+    // $showPopulationCurve.prop('checked', true);
+    // showPopulationCurve = $showPopulationCurve.is(':checked');
+    // if (showPopulationCurve) drawPopulationCurve(); else removePopulationCurve();
 
-    $showSamplePoints.prop('checked', true);
-    showSamplePoints = true;
+    // $showSamplePoints.prop('checked', true);
+    // showSamplePoints = true;
 
-    $showSampleMeans.prop('checked', true);
-    showSampleMeans = true;
+    // $showSampleMeans.prop('checked', true);
+    // showSampleMeans = true;
     
-    $dropSampleMeans.prop('checked', true);
-    dropSampleMeans = true;
+    // $dropSampleMeans.prop('checked', true);
+    // dropSampleMeans = true;
     
-    $showMeanHeap.prop('checked', true);
-    showMeanHeap = true;
+    // $showMeanHeap.prop('checked', true);
+    // showMeanHeap = true;
 
     //$fillPopulation.prop('checked', true);    
     //fillPopulation = true;

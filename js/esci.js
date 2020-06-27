@@ -62,10 +62,6 @@ Start using version history now to record changes and fixes
                       Need to clear the heap and graph when changing sigma known/unknown. Reset mean heap when heap checked off.
 0.3.17    2020-06-25  lognormal skew (including negative skew) - Can't change mean or sd. Note variable in mean and sd as calculated from bubble array and so random.
 0.3.18    2020-06-25  Fixed height plus minus moe line re-instated. 
-*/
-//#endregion
-
-/*
 0.3.19    2020-06-25  Sort out heap curve and check when visible or not.
 0.3.20    2020-06-26  Update Curve SE value. Coloured dropping means red if missed popn mean - some slight issues as to where they lie on the heap - discretising a continuous variable!                   
                       Reviewed distribution filling for skew - half a day and can't get it perfect - it's the steep sides.
@@ -73,7 +69,13 @@ Start using version history now to record changes and fixes
 0.3.21    2020-06-27  Fixed a bug on fill had commented out w.
 0.3.22    2020-06-27  Added favicon code to html
 0.3.23    2020-06-27  Fixed some logic. Basically clearAll if Mean Heap turned off or capture of mu, 
-0.3.24
+*/
+//#endregion
+
+/*
+
+0.3.24    2020-06-27  Did some refactoring on clearing and resetting routines.
+0.3.25
 */
 
 'use strict';
@@ -81,7 +83,7 @@ Start using version history now to record changes and fixes
 $(function() {
   console.log('jQuery here!');  //just to make sure everything is working
 
-  let version = '0.3.23';
+  let version = '0.3.24';
 
   //dialog box to display version
   $('#dialogversion').hide();
@@ -351,11 +353,6 @@ $(function() {
     showPmoe = true;
     showSmoe = false;
 
-    $('#numbercapturingnextmean').hide();
-    $('#percentcapturingnextmean').hide();
-    $('#nocapturingnextmean').hide();
-    $('#pccapturingnextmean').hide();
-
     //set the old values of mu sigma for use when changing from one distribution to another.These will reset the mu sigma to what they were before a switch
     normalmu    = mu;
     rectmu      = mu;
@@ -366,6 +363,8 @@ $(function() {
     rectsigma   = sigma;
     skewsigma   = sigma;
     customsigma = sigma;
+
+    $('#capturenextmeangrid').hide();
 
   }
 
@@ -466,48 +465,6 @@ $(function() {
     clearAll();
   })
 
-  //clear everything.
-  function clearAll() {
-    resetSampleStats();
-
-    //remove sample points from DOM
-    d3.selectAll('.samplepoint').remove();
-
-    //remove sample means and moes
-    d3.selectAll('.smean').remove();
-    d3.selectAll('.pmoe').remove();
-    d3.selectAll('.smoe').remove();
-
-    resetHeap();
-    xbardata = [];
-
-    resetCaptureStats();
-
-    id = 0;  //the id of the mean and moes for the svg element
-    N = 0;   //clear the number of samples taken
-
-    capturedArray = [];            //clear the capture array - used for calculating capture %
-
-    $('#numbercapturingnextmean').hide();
-    $('#percentcapturingnextmean').hide();
-    $('#nocapturingnextmean').hide();
-    $('#pccapturingnextmean').hide();
-
-    //plusminusmoe lines off
-    //$plusminusmoe.prop('checked', false);   //?why do I want to remove plus minus moe lines on clear?
-    //plusminusmoe = false;
-    //d3.selectAll('.plusminusmoe').remove();  
-
-    hght = 0;  //reset the height of the grwoing SE Lines (and if used the growing plus minus moe lines)
-
-    //pdf = [];
-
-    drawPopulationCurve();  //includes redrawing of mean an sd lines
-
-    removePopnBubbles();
-    if (fillPopulation) fillPopnBubbles();
-  }
-  
 
   /*---------------------------------------------Draw Population---------------------------------------*/
   //draw the population curve
@@ -1182,9 +1139,10 @@ $(function() {
     }
     else {
       //just hide or remove dropping means including old ones - I think removing makes more sense
-      d3.selectAll('.smean').remove();
-      d3.selectAll('.pmoe').remove();
-      d3.selectAll('.smoe').remove();
+      clearDroppingMeans();
+
+      //try this
+      resetCaptureStats();
     }
     
     //create the new sample mean and moe wings svg items.
@@ -1361,17 +1319,7 @@ $(function() {
     $smoe.text(smoe.toFixed(2));
   }
 
-  function resetSampleStats() {
-    //reset percentages captures
-    N = 0;
-    $N.text(0);
-    $N2.text(0);
 
-    $xbar.text('0');
-    $ssd.text('0');
-    $pmoe.text('0');
-    $smoe.text('0');
-  }
 
   //display the percentage captured
   function displayCapturedRate() {
@@ -1399,17 +1347,7 @@ $(function() {
     }
   }
 
-  //reset capture stats
-  function resetCaptureStats() {
-    N = 0;
-    $N.text(0);
-    $N2.text(0);
 
-    capturedP = 0;
-    capturedS = 0;
-    $captured.text('0');
-    $capturedpercent.text('0.0%');
-  }
 
   //From change CI % - alpha, ,showPmoe, showSmoe, (showMoe), if change the CI % need to recalculate the same taken and missed to be what's displayed, as previous sample are removed.
   //variables to check change $N - the number of samples taken - should capturedArray.length()
@@ -1578,40 +1516,6 @@ $(function() {
 
   }  
 
-  //create the bins for a histogram to hold frequency data for the heap
-  function resetHeap() {
-    let noOfBuckets;
-
-    d3.selectAll('.heap').remove();
-    d3.selectAll('.selines').remove();
-    removeMeanHeapCurve();
-
-    heapxbar = 0;      
-    $heapxbar.text(0);
-    
-    heapse   = 0; 
-    $heapse.text(0);
-
-    heapN    = 0;
-    $noInHeap.text(0);
-
-    //create a frequency distribution where the number of buckets is dependent on the width of the display area and the size of the sample mean
-    heap = [];
-    capturedArray = [];
-
-    //reset the number of buckets in the heap
-    noOfBuckets = parseInt(xmax / (2 * sampleMeanSize));
-    for (let xx = 0; xx <= noOfBuckets; xx += 1) {  
-      heap.push({x: xx, f: 0})
-    }
-
-    xbardata = [];
-
-    resetSampleStats();  
-    resetCaptureStats();
-
-  }
-
 
   //draw a normal curve to the heap
   function drawMeanHeapCurve() {
@@ -1737,6 +1641,108 @@ $(function() {
   function removePlusMinusMoe() {
     d3.selectAll('.plusminusmoe').remove();
   }
+
+  /* big housekeeping */
+  /*-------------------------------------------clear, show, hide UI values--------------------------*/
+
+  //clear everything.
+  function clearAll() {
+    //remove sample points from DOM
+    d3.selectAll('.samplepoint').remove();
+    
+    clearDroppingMeans();
+    resetCaptureStats();
+
+    resetSamples();
+    resetHeap();    
+
+    drawPopulationCurve();  //includes redrawing of mean an sd lines
+    removePopnBubbles();
+    if (fillPopulation) fillPopnBubbles();
+
+  }
+
+  // #region  panels 
+  //Panel 4 Samples
+  //Number of samples               $N, $N2
+  //Latest sample M and s           $xbar $ssd
+  //MoE population MoE sample       $pmoe $smoe
+  
+  //Panel 5 Mean heap 
+  //Mean heap M and SE              $heapxbar  $heapse
+  //Number of means in the heap     $noInHeap
+  
+  //Panel 7:
+  //Number capturing mu             $captured 
+  //Samples taken                   $N2
+  //Percent capturing mu            $capturedpercent
+  //#endregion
+
+  function clearDroppingMeans() {
+    //remove sample means and moes (blobs) from DOM
+    d3.selectAll('.smean').remove();
+    d3.selectAll('.pmoe').remove();
+    d3.selectAll('.smoe').remove();
+  }
+
+  function resetCaptureStats() {
+
+    resetSamples();
+
+    capturedP = 0;
+    capturedS = 0;
+    $captured.text('0');
+    $capturedpercent.text('0.0%');
+  }
+
+  function resetSamples() {
+    id = 0;  //the id of the mean and moes for the svg element
+    
+    N = 0;   //the number of taken samples
+    $N.text(0);
+    $N2.text(0);
+
+    $xbar.text(0);
+    $ssd.text(0);
+    $pmoe.text(0);
+    $smoe.text(0);
+  }
+  
+  //create the bins for a histogram to hold frequency data for the heap
+  function resetHeap() {
+    let noOfBuckets;
+
+    d3.selectAll('.heap').remove();
+    d3.selectAll('.selines').remove();
+    removeMeanHeapCurve();
+
+    heapxbar = 0;      
+    $heapxbar.text(0);
+    
+    heapse   = 0; 
+    $heapse.text(0);
+
+    heapN    = 0;
+    $noInHeap.text(0);
+
+    //create a frequency distribution where the number of buckets is dependent on the width of the display area and the size of the sample mean
+    heap = [];
+    capturedArray = [];
+    xbardata = [];
+
+    //reset the number of buckets in the heap
+    noOfBuckets = parseInt(xmax / (2 * sampleMeanSize));
+    for (let xx = 0; xx <= noOfBuckets; xx += 1) {  
+      heap.push({x: xx, f: 0})
+    }
+
+    resetCaptureStats();
+
+  }
+
+
+
+
 
   /*-------------------------------------------elements and values---------------------------------*/
 
@@ -1934,7 +1940,7 @@ $(function() {
       d3.selectAll('.samplepoint').attr('visibility', 'visible');
     }
     else {
-      d3.selectAll('.samplepoint').attr('visibility', 'hidden');
+      d3.selectAll('.samplepoint').attr('visibility', 'hidden');           
     }
   })
 
@@ -1949,7 +1955,7 @@ $(function() {
       //deselect dropping means as well
       $dropSampleMeans.prop('checked', false);
       dropSampleMeans = $dropSampleMeans.is(':checked');
-      removeDroppingMeans();
+      clearAll();
     }
 
   })
@@ -1965,17 +1971,10 @@ $(function() {
       resetCaptureStats();
     }
     else { //remove
-      removeDroppingMeans();  //includes reset capturestats
+      clearAll();
     }
   })
 
-  function removeDroppingMeans() {
-    //I think removing all dropped means makes sense
-    d3.selectAll('.smean').remove();
-    d3.selectAll('.pmoe').remove();
-    d3.selectAll('.smoe').remove();
-    resetCaptureStats();
-  }
 
   //Select confidence interval % and alpha
   $ci.on('change', function() {
@@ -2000,8 +1999,6 @@ $(function() {
     showSmoe = $showSmoe.is(':checked');
     displaySampleAppearanceAll();
     recalculateSamplemeanStatistics();
-    //clear the mean heap if displayed  as will not match the CI  ???
-    //resetHeap();
     recolourHeap();
   })
 
@@ -2011,8 +2008,6 @@ $(function() {
     showSmoe = $showSmoe.is(':checked');
     displaySampleAppearanceAll();
     recalculateSamplemeanStatistics();
-    //clear the mean heap if displayed as will not match the CI  ???
-    //resetHeap();
     recolourHeap();
   })
 
@@ -2086,16 +2081,10 @@ $(function() {
   $captureNextMean.on('change', function() {
     captureNextMean = $captureNextMean.is(':checked');
     if (captureNextMean) {
-      $('#numbercapturingnextmean').show();
-      $('#percentcapturingnextmean').show();
-      $('#nocapturingnextmean').show();
-      $('#pccapturingnextmean').show();
+      $('#capturenextmeangrid').show();
     }
     else {
-      $('#numbercapturingnextmean').hide();
-      $('#percentcapturingnextmean').hide();
-      $('#nocapturingnextmean').hide();
-      $('#pccapturingnextmean').hide();
+      $('#capturenextmeangrid').hide();
     }
   })
   //#endregion

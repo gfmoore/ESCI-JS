@@ -75,7 +75,8 @@ Start using version history now to record changes and fixes
 /*
 
 0.3.24    2020-06-27  Did some refactoring on clearing and resetting routines.
-0.3.25
+0.3.25    2020-06-27  Renstate SEines - where did they go?
+0.3.26
 */
 
 'use strict';
@@ -1139,9 +1140,7 @@ $(function() {
     }
     else {
       //just hide or remove dropping means including old ones - I think removing makes more sense
-      clearDroppingMeans();
-
-      //try this
+      resetSamples();
       resetCaptureStats();
     }
     
@@ -1173,6 +1172,18 @@ $(function() {
 
     //increment the id value
     id += 1;
+  }
+
+  function displaySampleAppearanceAll() {
+    //hide all wings
+    d3.selectAll('.pmoe, .smoe').attr('visibility', 'hidden');
+
+    //get all displayed mean blobs
+    d3.selectAll('.smean').each(function() {
+      //get the id
+      blobId = parseInt($(this).attr('id').substring(5));
+      displaySampleAppearance(blobId);
+    })
   }
 
   //decide what to display for dropping means blob and MoEs
@@ -1274,18 +1285,6 @@ $(function() {
   }
 
 
-  function displaySampleAppearanceAll() {
-    //hide all wings
-    d3.selectAll('.pmoe, .smoe').attr('visibility', 'hidden');
-
-    //get all displayed mean blobs
-    d3.selectAll('.smean').each(function() {
-      //get the id
-      blobId = parseInt($(this).attr('id').substring(5));
-      displaySampleAppearance(blobId);
-    })
-  }
-
   //calculate statistics in samples[]
   function sampleStatistics() {
     //get stats from jStat
@@ -1319,8 +1318,6 @@ $(function() {
     $smoe.text(smoe.toFixed(2));
   }
 
-
-
   //display the percentage captured
   function displayCapturedRate() {
 
@@ -1346,7 +1343,6 @@ $(function() {
       $capturedpercent.text('0.0%');
     }
   }
-
 
 
   //From change CI % - alpha, ,showPmoe, showSmoe, (showMoe), if change the CI % need to recalculate the same taken and missed to be what's displayed, as previous sample are removed.
@@ -1612,6 +1608,12 @@ $(function() {
     }
   }
 
+  function removeSELines() {
+    d3.selectAll('.SELines').remove();
+    $showSELines.prop('checked', false)
+    showSELines = false;
+  }
+
   //draw the +/- bars
   function drawPlusMinusMoe() {
     pci = jStat.normalci( mu, alpha, sigma, n );
@@ -1650,10 +1652,8 @@ $(function() {
     //remove sample points from DOM
     d3.selectAll('.samplepoint').remove();
     
-    clearDroppingMeans();
-    resetCaptureStats();
-
     resetSamples();
+    resetCaptureStats();
     resetHeap();    
 
     drawPopulationCurve();  //includes redrawing of mean an sd lines
@@ -1678,24 +1678,12 @@ $(function() {
   //Percent capturing mu            $capturedpercent
   //#endregion
 
-  function clearDroppingMeans() {
+  function resetSamples() {
     //remove sample means and moes (blobs) from DOM
     d3.selectAll('.smean').remove();
     d3.selectAll('.pmoe').remove();
     d3.selectAll('.smoe').remove();
-  }
 
-  function resetCaptureStats() {
-
-    resetSamples();
-
-    capturedP = 0;
-    capturedS = 0;
-    $captured.text('0');
-    $capturedpercent.text('0.0%');
-  }
-
-  function resetSamples() {
     id = 0;  //the id of the mean and moes for the svg element
     
     N = 0;   //the number of taken samples
@@ -1707,13 +1695,21 @@ $(function() {
     $pmoe.text(0);
     $smoe.text(0);
   }
+
+  function resetCaptureStats() {
+    capturedP = 0;
+    capturedS = 0;
+    $captured.text('0');
+    $capturedpercent.text('0.0%');
+  }
   
   //create the bins for a histogram to hold frequency data for the heap
   function resetHeap() {
     let noOfBuckets;
 
     d3.selectAll('.heap').remove();
-    d3.selectAll('.selines').remove();
+    drawSELines();
+    //d3.selectAll('.selines').remove();
     removeMeanHeapCurve();
 
     heapxbar = 0;      
@@ -1735,19 +1731,9 @@ $(function() {
     for (let xx = 0; xx <= noOfBuckets; xx += 1) {  
       heap.push({x: xx, f: 0})
     }
-
+    resetSamples();
     resetCaptureStats();
-
   }
-
-  function clearSELines() {  //not needed (yet!)
-    d3.selectAll('.SELines').remove();
-    $showSELines.prop('checked', false)
-    showSELines = false;
-  }
-
-
-
 
 
   /*-------------------------------------------elements and values---------------------------------*/
@@ -1974,6 +1960,7 @@ $(function() {
     }
     dropSampleMeans = $dropSampleMeans.is(':checked');
     if (dropSampleMeans) {
+      resetSamples();
       resetCaptureStats();
     }
     else { //remove
@@ -2020,7 +2007,9 @@ $(function() {
 
   $showMeanHeap.on('change', function() {
     showMeanHeap = $showMeanHeap.is(':checked');
+
     clearAll();
+    drawSELines(); // draws them at initial height if checked (order important!)
   })
 
   //show sample distribution curve

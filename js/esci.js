@@ -72,6 +72,8 @@ Start using version history now to record changes and fixes
                       Good thing was that I tested the curve filling property of the centre points of my bubbles - looks good.
 0.3.21    2020-06-27  Fixed a bug on fill had commented out w.
 0.3.22    2020-06-27  Added favicon code to html
+0.3.23    2020-06-27  Fixed some logic. Basically clearAll if Mean Heap turned off or capture of mu, 
+0.3.24
 */
 
 'use strict';
@@ -79,7 +81,7 @@ Start using version history now to record changes and fixes
 $(function() {
   console.log('jQuery here!');  //just to make sure everything is working
 
-  let version = '0.3.22';
+  let version = '0.3.23';
 
   //dialog box to display version
   $('#dialogversion').hide();
@@ -212,7 +214,7 @@ $(function() {
   let lineh;                    //line generator for heap curve
 
   let $captured;                //display the number captured
-  let $capturedpercent = 0.0;   //display the % captured
+  let $capturedpercent = '0.0%';  //display the % captured
   let capturedP = 0             //The number captured for the population moe
   let capturedS = 0;            //The number captured for the sample moe
 
@@ -319,7 +321,13 @@ $(function() {
     
     // $dropSampleMeans.prop('checked', true);
     // dropSampleMeans = true;
-    
+
+    // $speed.val(0);
+    // speed = 0;
+
+    // $('#samplesselected option[value=2]').prop('selected', true);
+    // n = parseInt( $('#samplesselected option:selected').val() );
+
     // $showMeanHeap.prop('checked', true);
     // showMeanHeap = true;
 
@@ -493,6 +501,11 @@ $(function() {
     hght = 0;  //reset the height of the grwoing SE Lines (and if used the growing plus minus moe lines)
 
     //pdf = [];
+
+    drawPopulationCurve();  //includes redrawing of mean an sd lines
+
+    removePopnBubbles();
+    if (fillPopulation) fillPopnBubbles();
   }
   
 
@@ -1363,7 +1376,7 @@ $(function() {
   //display the percentage captured
   function displayCapturedRate() {
 
-    //only do this if CI on  Mu line on  capture of mu on
+    //only do this if CI on  Mu line on???  capture of mu on
     if (showMoe || showCaptureMuLine || captureOfMu) {
       //given that N is the number of samples
       $N.text(N);
@@ -1382,7 +1395,7 @@ $(function() {
     else {
       $N2.text(0);
       $captured.text(0);
-      $capturedpercent.text(0);
+      $capturedpercent.text('0.0%');
     }
   }
 
@@ -1575,22 +1588,27 @@ $(function() {
 
     heapxbar = 0;      
     $heapxbar.text(0);
-     
+    
     heapse   = 0; 
     $heapse.text(0);
-    
 
     heapN    = 0;
     $noInHeap.text(0);
 
     //create a frequency distribution where the number of buckets is dependent on the width of the display area and the size of the sample mean
     heap = [];
+    capturedArray = [];
+
+    //reset the number of buckets in the heap
     noOfBuckets = parseInt(xmax / (2 * sampleMeanSize));
     for (let xx = 0; xx <= noOfBuckets; xx += 1) {  
       heap.push({x: xx, f: 0})
     }
 
     xbardata = [];
+
+    resetSampleStats();  
+    resetCaptureStats();
 
   }
 
@@ -1729,8 +1747,7 @@ $(function() {
     mu = parseInt($mu.val());
     $("#muslider").val(mu);
 
-    resetHeap();
-    resetDisplay();
+    clearAll();
     setOldMu();
   })
 
@@ -1739,8 +1756,7 @@ $(function() {
     mu = parseInt($muslider.val());
     $mu.val(mu);
 
-    resetHeap();
-    resetDisplay();
+    clearAll();
     setOldMu();
   })
 
@@ -1748,9 +1764,9 @@ $(function() {
   $sigma.on('change', function() {
     sigma = parseInt($sigma.val());
     $("#sigmaslider").val(sigma);
-
-    resetDisplay();
-    seOldSigma();
+    
+    clearAll();
+    setOldSigma();
   })
 
   //sigma slider
@@ -1758,7 +1774,7 @@ $(function() {
     sigma = parseInt($sigmaslider.val());
     $sigma.val(sigma);
 
-    resetDisplay();
+    clearAll();
     setOldSigma();
   })
 
@@ -1766,7 +1782,7 @@ $(function() {
     if (normal)      normalmu    = mu;
     if (rectangular) rectmu      = mu;
     if (skew)        skewmu      = mu;
-    if (custom)      custommu   = mu;
+    if (custom)      custommu    = mu;
   }
 
   function setOldSigma() {
@@ -1774,26 +1790,6 @@ $(function() {
     if (rectangular) rectsigma   = sigma;
     if (skew)        skewsigma   = sigma;
     if (custom)      customsigma = sigma;
-  }
-
-
-  function resetDisplay() {
-    //remove sample points from DOM
-    d3.selectAll('.samplepoint').remove();
-
-    //remove any bubbles from DOM
-    removePopnBubbles();
-
-    //remove dropped sample means and moes
-    d3.selectAll('.smean').remove();
-    d3.selectAll('.pmoe').remove();
-    d3.selectAll('.smoe').remove();
-
-    resetSampleStats();
-    resetCaptureStats();
-    drawPopulationCurve();  //includes redrawing of mean an sd lines
-    if (fillPopulation) fillPopnBubbles();
-
   }
 
   //normal radio button clicked
@@ -2019,30 +2015,28 @@ $(function() {
     recolourHeap();
   })
 
-  //show the mean as not captured if known, uknown checked
-  $captureOfMu.on('change', function() {
-    captureOfMu = $captureOfMu.is(':checked');
-    displaySampleAppearanceAll();
-    recalculateSamplemeanStatistics();
-    recolourHeap();
-  })
+
 
 
   $showMeanHeap.on('change', function() {
     showMeanHeap = $showMeanHeap.is(':checked');
-    if (showMeanHeap) {
-      d3.selectAll('.heap').attr('visibility', 'visible');
-    }
-    else {
-      //should clear it all really
-      resetHeap();
-      d3.selectAll('.heap').attr('visibility', 'hidden');
+    clearAll();
 
-      //also remove mean heap curve, no heap
-      removeMeanHeapCurve();
-      $showMeanHeapCurve.prop('checked', false);
-      showMeanHeapCurve = false;
-    }
+    // if (showMeanHeap) {
+    //   d3.selectAll('.heap').attr('visibility', 'visible');
+    // }
+    // else {
+    //   //should clear it all really
+    //   resetHeap();
+    //   d3.selectAll('.heap').attr('visibility', 'hidden');
+
+    //   //also remove mean heap curve, no heap
+    //   removeMeanHeapCurve();
+    //   $showMeanHeapCurve.prop('checked', false);
+    //   showMeanHeapCurve = false;
+    //   //need to reset capture stats
+
+    // }
   })
 
   //show sample distribution curve
@@ -2096,8 +2090,17 @@ $(function() {
     recalculateSamplemeanStatistics(); //which turns on or off display of captured stats
   })
 
+  //show the mean as not captured if known, uknown checked
+  $captureOfMu.on('change', function() {
+    captureOfMu = $captureOfMu.is(':checked');
+    displaySampleAppearanceAll();
+    recalculateSamplemeanStatistics(); //which turns on display of captured stats
+    recolourHeap();
 
-  //Number capturing next mean
+
+  })
+
+  //Number capturing next mean  //TODO
   $captureNextMean.on('change', function() {
     captureNextMean = $captureNextMean.is(':checked');
     if (captureNextMean) {

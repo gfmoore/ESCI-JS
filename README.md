@@ -8,7 +8,7 @@ by Geoff Cumming and Robert Calin-Jageman
 https://thenewstatistics.com/
 
 
-## Current version 0.3.22  
+## Current version 0.3.23  
 
 You can see which version by hovering on the logo.
 

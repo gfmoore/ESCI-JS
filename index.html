@@ -4,8 +4,9 @@ Author        Gordon Moore
 Date          15 May 2020
 Description   A JavaScript implementation of Geoff Cummings ESCI sampling simulator - The New Statistics
 Licence       GNU General Public LIcence Version 3, 29 June 2007
-
-Version history
+-->
+<!-- #region version history-->
+<!--
 0.1.0     Initial version
 0.2.0     Refactored. Used D3 for parts
 ...
@@ -24,8 +25,13 @@ Version history
 0.3.11    2020-06-21 Custom draw and skew. Also added a tooltips on off button
 0.3.18    2020-06-25 Added mean heap se, curve se and number in heap in panel 5 
 0.3.22    2020-06-27 Added favicon refresh code and handheld friendly meta
-9.3.27
+
 -->
+<!--endregion -->
+<!--
+9.3.28
+-->
+
 
 <!DOCTYPE html>
 
@@ -97,8 +103,8 @@ Version history
               <div id=sigmavalue><input id=sigmavaluetext type=text size=3 value=20></div>
             </div>
 
+            <div data-tooltip><span>Shape</span></div>
             <div id=shape>
-              <div data-tooltip><span>Shape</span></div>
               <div><input type=radio id=normal  name=shape value=normal checked=checked><label for=normal>Normal</label></div>
               <div><input type=radio id=rectangular name=shape value=rectangular><label for=rectangular>Rectangular</label><br></div>
               <div data-tooltip>

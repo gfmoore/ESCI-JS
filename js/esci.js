@@ -4,12 +4,9 @@ Author        Gordon Moore
 Date          15 May 2020
 Description   The JavaScript code for ESCI
 Licence       GNU General Public LIcence Version 3, 29 June 2007
-
-Version history
 */
 
-
-//#region version history
+// #region Version history
 /*
 0.1.0                 Initial version
 
@@ -69,24 +66,36 @@ Start using version history now to record changes and fixes
 0.3.21    2020-06-27  Fixed a bug on fill had commented out w.
 0.3.22    2020-06-27  Added favicon code to html
 0.3.23    2020-06-27  Fixed some logic. Basically clearAll if Mean Heap turned off or capture of mu, 
-*/
-//#endregion
-
-/*
-
 0.3.24    2020-06-27  Did some refactoring on clearing and resetting routines.
 0.3.25    2020-06-27  Renstate SEines - where did they go?
 0.3.26    2020-06-30  Capture of mu to control visibility of mean and MoEs and display of Capture mu stats
 0.3.27    2020-06-30  Change colour of heap to match dropping means.
-0.3.28 
 */
+//#endregion 
+/*
+0.3.28    2020-06-30  Let's sort out tablet and phone display. 
+                      Also filled normal curve a bit more. 
+                      Reset heap modified so that SE Lines cleared properly on Clear.
+                      
+*/
+ let version = '0.3.28';
 
 'use strict';
 //$(window).load(function () { //doesn't work anyway need to wait for everything to load, not just jquery, though I didn't experience any problems?
 $(function() {
   console.log('jQuery here!');  //just to make sure everything is working
 
-  let version = '0.3.27';
+  //am I on a touchable device? If so probably mobile or touch laptop display for laptop - add a scroll bar
+  let deviceType = (('ontouchstart' in window)
+  || (navigator.maxTouchPoints > 0)
+  || (navigator.msMaxTouchPoints > 0)
+  ) ? 'touchable' : 'nonTouchable';
+ 
+  if (deviceType === 'touchable') {
+    //add a scroll bar to left hand panel?
+    $('#control').css('overflow-y', 'scroll');
+  }
+ 
 
   //dialog box to display version
   $('#dialogversion').hide();
@@ -317,9 +326,9 @@ $(function() {
   initialise();
 
   //#region TESTING Set some checkboxes for when testing.
-    // $showPopulationCurve.prop('checked', true);
-    // showPopulationCurve = $showPopulationCurve.is(':checked');
-    // if (showPopulationCurve) drawPopulationCurve(); else removePopulationCurve();
+    $showPopulationCurve.prop('checked', true);
+    showPopulationCurve = $showPopulationCurve.is(':checked');
+    if (showPopulationCurve) drawPopulationCurve(); else removePopulationCurve();
 
     // $showSamplePoints.prop('checked', true);
     // showSamplePoints = true;
@@ -405,7 +414,7 @@ $(function() {
     heightS = ymaxS - margin.top - margin.bottom;
 
 
-    //set the oldwidth to be the width when first loaded, after wards it remebers width after a resize
+    //set the oldwidth to be the width when first loaded, after wards it remembers width after a resize
     // if (doOnce) {
     //   oldwidth = width;
     //   doOnce = false;
@@ -941,7 +950,7 @@ $(function() {
         //let xb, xa; //x before, x after  (in skew calc)
         if (normal) {
           //if (bubbleY < 2)   drawit = false;
-          if (bubbleY > ah - 7)  drawit = false;
+          if (bubbleY > ah - 5)  drawit = false;
           if (bubbleX < minxpdf + w ) drawit = false;
           if (bubbleX > maxxpdf - w ) drawit = false;
         }
@@ -1712,11 +1721,6 @@ $(function() {
   function resetHeap() {
     let noOfBuckets;
 
-    d3.selectAll('.heap').remove();
-    drawSELines();
-    //d3.selectAll('.selines').remove();
-    removeMeanHeapCurve();
-
     heapxbar = 0;      
     $heapxbar.text(0);
     
@@ -1736,6 +1740,12 @@ $(function() {
     for (let xx = 0; xx <= noOfBuckets; xx += 1) {  
       heap.push({x: xx, f: 0})
     }
+
+    d3.selectAll('.heap').remove();
+    drawSELines();
+    //d3.selectAll('.selines').remove();
+    removeMeanHeapCurve();
+
     resetSamples();
     resetCaptureStats();
   }
@@ -2066,6 +2076,7 @@ $(function() {
       removeMuLine();
     }
     recalculateSamplemeanStatistics(); //which turns on or off display of captured stats
+    displaySampleAppearanceAll();
     recolourHeap();
   })
 

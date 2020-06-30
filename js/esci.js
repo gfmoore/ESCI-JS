@@ -76,8 +76,9 @@ Start using version history now to record changes and fixes
 
 0.3.24    2020-06-27  Did some refactoring on clearing and resetting routines.
 0.3.25    2020-06-27  Renstate SEines - where did they go?
-0.3.26    2020-06-30  Capture of mu to control visibility of mean and MoEs
-0.3.27
+0.3.26    2020-06-30  Capture of mu to control visibility of mean and MoEs and display of Capture mu stats
+0.3.27    2020-06-30  Change colour of heap to match dropping means.
+0.3.28 
 */
 
 'use strict';
@@ -85,7 +86,7 @@ Start using version history now to record changes and fixes
 $(function() {
   console.log('jQuery here!');  //just to make sure everything is working
 
-  let version = '0.3.26';
+  let version = '0.3.27';
 
   //dialog box to display version
   $('#dialogversion').hide();
@@ -332,11 +333,11 @@ $(function() {
     // $speed.val(0);
     // speed = 0;
 
-    // $('#samplesselected option[value=2]').prop('selected', true);
-    // n = parseInt( $('#samplesselected option:selected').val() );
-
     // $showMeanHeap.prop('checked', true);
     // showMeanHeap = true;
+
+    // $('#samplesselected option[value=2]').prop('selected', true);
+    // n = parseInt( $('#samplesselected option:selected').val() );
 
     //$fillPopulation.prop('checked', true);    
     //fillPopulation = true;
@@ -1423,7 +1424,7 @@ $(function() {
       //color code the drops and add the pmissed and smissed attributes for recoluring depending on CI selecetd (on change)
       hx = (heap[xint].x * 2* sampleMeanSize) + (sampleMeanSize  + 2);
       hy = heightS - (heap[xint].f * sampleMeanSize * 2) - dropLimit + 3;
-      if (captureOfMu) {
+      if (captureOfMu && showCaptureMuLine) {
         if (showPmoe && pmissed === 'true') {
           svgS.append('circle').attr('class', 'heap').attr('cx', hx ).attr('cy', hy).attr('r', sampleMeanSize).attr('stroke', 'black').attr('stroke-width', 1).attr('fill', 'red').attr('visibility', 'visible').attr('pmissed', pmissed).attr('smissed', smissed);
         }
@@ -1438,7 +1439,7 @@ $(function() {
         }
       }
       else {
-        svgS.append('circle').attr('class', 'heap').attr('cx', hx ).attr('cy', hy).attr('r', sampleMeanSize).attr('stroke', 'black').attr('stroke-width', 1).attr('fill', darkGreen).attr('visibility', 'visible').attr('pmissed', pmissed).attr('smissed', smissed);
+        svgS.append('circle').attr('class', 'heap').attr('cx', hx ).attr('cy', hy).attr('r', sampleMeanSize).attr('stroke', 'black').attr('stroke-width', 1).attr('fill', lightGreen).attr('visibility', 'visible').attr('pmissed', pmissed).attr('smissed', smissed);
       }
     }
 
@@ -1477,7 +1478,7 @@ $(function() {
       }
 
       else {
-        $(this).attr('fill', darkGreen);
+        $(this).attr('fill', lightGreen);
       } 
     })
 

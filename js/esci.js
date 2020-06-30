@@ -316,27 +316,27 @@ $(function() {
   initialise();
 
   //#region TESTING Set some checkboxes for when testing.
-    $showPopulationCurve.prop('checked', true);
-    showPopulationCurve = $showPopulationCurve.is(':checked');
-    if (showPopulationCurve) drawPopulationCurve(); else removePopulationCurve();
+    // $showPopulationCurve.prop('checked', true);
+    // showPopulationCurve = $showPopulationCurve.is(':checked');
+    // if (showPopulationCurve) drawPopulationCurve(); else removePopulationCurve();
 
-    $showSamplePoints.prop('checked', true);
-    showSamplePoints = true;
+    // $showSamplePoints.prop('checked', true);
+    // showSamplePoints = true;
 
-    $showSampleMeans.prop('checked', true);
-    showSampleMeans = true;
+    // $showSampleMeans.prop('checked', true);
+    // showSampleMeans = true;
     
-    $dropSampleMeans.prop('checked', true);
-    dropSampleMeans = true;
+    // $dropSampleMeans.prop('checked', true);
+    // dropSampleMeans = true;
 
-    $speed.val(0);
-    speed = 0;
+    // $speed.val(0);
+    // speed = 0;
 
     // $('#samplesselected option[value=2]').prop('selected', true);
     // n = parseInt( $('#samplesselected option:selected').val() );
 
-    $showMeanHeap.prop('checked', true);
-    showMeanHeap = true;
+    // $showMeanHeap.prop('checked', true);
+    // showMeanHeap = true;
 
     //$fillPopulation.prop('checked', true);    
     //fillPopulation = true;

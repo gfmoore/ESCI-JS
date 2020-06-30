@@ -76,9 +76,11 @@ Start using version history now to record changes and fixes
 0.3.28    2020-06-30  Let's sort out tablet and phone display. 
                       Also filled normal curve a bit more. 
                       Reset heap modified so that SE Lines cleared properly on Clear.
+0.3.29    2020-06-30  The displayPDF section and the curve drawing don't scale. 
                       
 */
- let version = '0.3.28';
+ let version = '0.3.29';
+ 
 
 'use strict';
 //$(window).load(function () { //doesn't work anyway need to wait for everything to load, not just jquery, though I didn't experience any problems?
@@ -326,9 +328,9 @@ $(function() {
   initialise();
 
   //#region TESTING Set some checkboxes for when testing.
-    $showPopulationCurve.prop('checked', true);
-    showPopulationCurve = $showPopulationCurve.is(':checked');
-    if (showPopulationCurve) drawPopulationCurve(); else removePopulationCurve();
+    // $showPopulationCurve.prop('checked', true);
+    // showPopulationCurve = $showPopulationCurve.is(':checked');
+    // if (showPopulationCurve) drawPopulationCurve(); else removePopulationCurve();
 
     // $showSamplePoints.prop('checked', true);
     // showSamplePoints = true;

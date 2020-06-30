@@ -26,7 +26,7 @@ Version history
 0.3.16     2020-06-25 Make axis font and mu line text a little bigger. Slight increase in width of left fram and adjusted space for Mean M in 4. Samples
 0.3.18     2020-06-25 Slight tweaks on moving items from panel 7 to panel 5 and adding new spans
 0.3.19     2020-06-26 Adjusted colour of panel 5 and 8 slightly to match ESCI Classic.
-0.3.26     
+0.3.27     
 
 */
 
@@ -471,19 +471,19 @@ span {
 }
 
 .samplepoint {
-  stroke: blue;
+  stroke: black;
   stroke-width: 1px;
   fill: lightyellow;
 }
 
 .smean {
-  stroke: blue;
+  stroke: black;
   stroke-width: 1px;
   /* fill: lawngreen;*/      /*need to set at program level */
 }
 
 .smeanmoe {
-  stroke: blue;
+  stroke: black;
   stroke-width: 1px;
   /* fill: lawngreen;*/      /*need to set at program level */
 }

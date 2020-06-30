@@ -79,7 +79,7 @@ Start using version history now to record changes and fixes
 0.3.29    2020-06-30  The displayPDF section and the curve drawing don't scale. 
                       
 */
- let version = '0.3.29';
+ let version = '0.3.28';
  
 
 'use strict';

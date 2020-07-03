@@ -79,9 +79,11 @@ Start using version history now to record changes and fixes
 0.3.29    2020-06-30  The displayPDF section and the curve drawing don't scale. 
 0.3.30    2020-07-01  So lots of work on scaling when resized, required sorting out fill population. 
                       Also added 8 conditions for coping with showMoE, capture mu, mu line.
-0.3.31    2020-07-01  Implemented logic for issue #7 capture of mu.                 
+0.3.31    2020-07-01  Implemented logic for issue #7 capture of mu. 
+0.3.32    2020-07-03  Force population curve and SE Lines to draw over popn fill bubbles    
+                      Changed colour of sd lines, sample stroke.            
 */
- let version = '0.3.31';
+ let version = '0.3.32';
  
 
 'use strict';
@@ -335,7 +337,7 @@ $(function() {
   initialise();
 
   //#region TESTING Set some checkboxes for when testing.
-    // $showPopulationCurve.prop('checked', true);
+    $showPopulationCurve.prop('checked', true);
     // showPopulationCurve = $showPopulationCurve.is(':checked');
     // if (showPopulationCurve) drawPopulationCurve(); else removePopulationCurve();
 
@@ -860,12 +862,12 @@ $(function() {
     svgP.append('line').attr('class', 'meanlines').attr('x1', x(mu)).attr('y1', 25).attr('x2', x(mu)).attr('y2', heightP -5);
 
     //sd lines
-    svgP.append('line').attr('class', 'sdlines').attr('x1', x(mu-3*sigma)).attr('y1', 25).attr('x2', x(mu-3*sigma)).attr('y2', heightP -5);
-    svgP.append('line').attr('class', 'sdlines').attr('x1', x(mu-2*sigma)).attr('y1', 25).attr('x2', x(mu-2*sigma)).attr('y2', heightP -5);
-    svgP.append('line').attr('class', 'sdlines').attr('x1', x(mu-sigma)).attr('y1', 25).attr('x2', x(mu-sigma)).attr('y2', heightP -5);
-    svgP.append('line').attr('class', 'sdlines').attr('x1', x(mu+sigma)).attr('y1', 25).attr('x2', x(mu+sigma)).attr('y2', heightP -5);
-    svgP.append('line').attr('class', 'sdlines').attr('x1', x(mu+2*sigma)).attr('y1', 25).attr('x2', x(mu+2*sigma)).attr('y2', heightP -5);
-    svgP.append('line').attr('class', 'sdlines').attr('x1', x(mu+3*sigma)).attr('y1', 25).attr('x2', x(mu+3*sigma)).attr('y2', heightP -5);
+    svgP.append('line').attr('class', 'sdlines').attr('x1', x(mu-3*sigma)).attr('y1', 25).attr('x2', x(mu-3*sigma)).attr('y2', heightP -2);
+    svgP.append('line').attr('class', 'sdlines').attr('x1', x(mu-2*sigma)).attr('y1', 25).attr('x2', x(mu-2*sigma)).attr('y2', heightP -2);
+    svgP.append('line').attr('class', 'sdlines').attr('x1', x(mu-sigma)).attr('y1', 25).attr('x2', x(mu-sigma)).attr('y2', heightP -2);
+    svgP.append('line').attr('class', 'sdlines').attr('x1', x(mu+sigma)).attr('y1', 25).attr('x2', x(mu+sigma)).attr('y2', heightP -2);
+    svgP.append('line').attr('class', 'sdlines').attr('x1', x(mu+2*sigma)).attr('y1', 25).attr('x2', x(mu+2*sigma)).attr('y2', heightP -2);
+    svgP.append('line').attr('class', 'sdlines').attr('x1', x(mu+3*sigma)).attr('y1', 25).attr('x2', x(mu+3*sigma)).attr('y2', heightP -2);
   }
 
   //remove the mean and sd lines
@@ -1993,6 +1995,14 @@ $(function() {
     fillPopulation = $fillPopulation.is(':checked');
     if (fillPopulation) {
       fillPopnBubbles();
+      //draw curves on top of bubbles
+      if (showPopulationCurve) {
+        if (normal)       drawNormalCurve();
+        if (rectangular)  drawRectangularCurve();
+        if (skew)         drawSkewCurve();
+        if (custom)       drawCustomCurve();
+      }
+      if (showSDLines) drawSDLines();
     } 
     else {
       removePopnBubbles();

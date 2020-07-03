@@ -8,9 +8,9 @@ by Geoff Cumming and Robert Calin-Jageman
 https://thenewstatistics.com/
 
 
-## Current version 0.3.31  
+## Current version 0.3.32  
 
-You can see which version by hovering on the logo.
+You can see which version by ~hovering~/clicking on the logo.
 
 
 It is still in development. It could be better refactored, but hey, we do the best we can with the time available!

@@ -79,9 +79,9 @@ Start using version history now to record changes and fixes
 0.3.29    2020-06-30  The displayPDF section and the curve drawing don't scale. 
 0.3.30    2020-07-01  So lots of work on scaling when resized, required sorting out fill population. 
                       Also added 8 conditions for coping with showMoE, capture mu, mu line.
-0.3.31                     
+0.3.31    2020-07-01  Implemented logic for issue #7 capture of mu.                 
 */
- let version = '0.3.30';
+ let version = '0.3.31';
  
 
 'use strict';
@@ -1286,32 +1286,11 @@ $(function() {
     }
 
     //0 1 1 
-    if (!showMoe && captureOfMu && showCaptureMuLine) {   //show darkgreen blobs but no moe lines
-      if (showPmoe) {
-        if ( mblob.attr('pmissed') === 'true') {
-          pwing.attr('stroke', 'red');
-          mblob.attr('fill', 'red');
-        }
-        else {
-          pwing.attr('stroke', darkGreen);
-          mblob.attr('fill', darkGreen);
-        }
-        pwing.attr('visibility', 'hidden');
-        mblob.attr('visibility', 'visible');
-      }
-
-      if (showSmoe) {
-        if (mblob.attr('smissed') === 'true') {
-          swing.attr('stroke', 'red');
-          mblob.attr('fill', 'red');
-        }
-        else {
-          swing.attr('stroke', darkGreen);
-          mblob.attr('fill', darkGreen);
-        }
-        swing.attr('visibility', 'hidden');
-        mblob.attr('visibility', 'visible');
-      }
+    if (!showMoe && captureOfMu && showCaptureMuLine) {   //show lightgreen blobs but no moe lines
+      mblob.attr('fill', lightGreen);
+      pwing.attr('visibility', 'hidden');
+      swing.attr('visibility', 'hidden');
+      if (showSampleMeans) mblob.attr('visibility', 'visible');
     }
 
     //1 0 0
@@ -1562,7 +1541,7 @@ $(function() {
       //color code the drops and add the pmissed and smissed attributes for recoluring depending on CI selecetd (on change)
       hx = (heap[xint].x * 2* sampleMeanSize) + (sampleMeanSize  + 2);
       hy = heightS - (heap[xint].f * sampleMeanSize * 2) - dropLimit + 3;
-      if (captureOfMu && showCaptureMuLine) {
+      if (showMoe && captureOfMu && showCaptureMuLine) {
         if (showPmoe && pmissed === 'true') {
           svgS.append('circle').attr('class', 'heap').attr('cx', hx ).attr('cy', hy).attr('r', sampleMeanSize).attr('stroke', 'black').attr('stroke-width', 1).attr('fill', 'red').attr('visibility', 'visible').attr('pmissed', pmissed).attr('smissed', smissed);
         }
@@ -1591,10 +1570,14 @@ $(function() {
   //recolour heap if CI checked and mu known unknown checked && showCaptureMuLine
   function recolourHeap() {
     let pmissed, smissed;
+    
     d3.selectAll('.heap').each( function(h) {
       pmissed = $(this).attr('pmissed');
       smissed = $(this).attr('smissed');
-      if (captureOfMu && showCaptureMuLine) {
+
+
+      //1 1 1
+      if (showMoe && captureOfMu && showCaptureMuLine) {   //show dark green and red blobs and moes
         if (showPmoe) {
           if (pmissed === 'true') {
             $(this).attr('fill', 'red');
@@ -1602,7 +1585,6 @@ $(function() {
           else {
             $(this).attr('fill', darkGreen);
           }
-
         }
         if (showSmoe) {
           if (smissed === 'true') {
@@ -1612,14 +1594,12 @@ $(function() {
             $(this).attr('fill', darkGreen);
           }
         }
-  
+      }
+      else {  //if not all checked then just
+        $(this).attr('fill', lightGreen);
       }
 
-      else {
-        $(this).attr('fill', lightGreen);
-      } 
     })
-
   }
 
   //get xbar and sse for heap
@@ -2123,6 +2103,11 @@ $(function() {
   //show/hide the CI Moe bars?
   $showMoe.on('change', function() {
     showMoe = $showMoe.is(':checked');
+    if (!showMoe) {
+      //set capture of mu off
+      $captureOfMu.prop('checked', false);
+      captureOfMu = false;
+    }
     //clearAll();
     displaySampleAppearanceAll();
     recalculateSamplemeanStatistics(); //which turns on display of captured stats
@@ -2201,6 +2186,9 @@ $(function() {
       drawMuLine(); 
     }
     else {
+      //set capture of mu off
+      $captureOfMu.prop('checked', false);
+      captureOfMu = false;
       removeMuLine();
     }
     recalculateSamplemeanStatistics(); //which turns on or off display of captured stats

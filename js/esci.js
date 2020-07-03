@@ -84,9 +84,10 @@ Start using version history now to record changes and fixes
                       Changed colour of sd lines, sample stroke.
 0.3.33    2020-07-03  Changed scaling factor on sampling distribution curve. Changed height of rectangle in relation to sigma. Note I limit height for small sigma.
                       Adjust checkboxes so that fill and SDlines not appear unless popn curve on.                   
-0.3.34    2020            
+0.3.34    2020 -07-03 Issue #17 logic   
+0.3.35        
 */
- let version = '0.3.33';
+ let version = '0.3.34';
  
 
 'use strict';
@@ -340,24 +341,24 @@ $(function() {
   initialise();
 
   //#region TESTING Set some checkboxes for when testing.
-    // $showPopulationCurve.prop('checked', true);
-    // showPopulationCurve = $showPopulationCurve.is(':checked');
-    // if (showPopulationCurve) drawPopulationCurve(); else removePopulationCurve();
+    $showPopulationCurve.prop('checked', true);
+    showPopulationCurve = $showPopulationCurve.is(':checked');
+    if (showPopulationCurve) drawPopulationCurve(); else removePopulationCurve();
 
-    // $showSamplePoints.prop('checked', true);
-    // showSamplePoints = true;
+    $showSamplePoints.prop('checked', true);
+    showSamplePoints = true;
 
-    // $showSampleMeans.prop('checked', true);
-    // showSampleMeans = true;
+    $showSampleMeans.prop('checked', true);
+    showSampleMeans = true;
     
-    // $dropSampleMeans.prop('checked', true);
-    // dropSampleMeans = true;
+    $dropSampleMeans.prop('checked', true);
+    dropSampleMeans = true;
 
-    // $speed.val(0);
-    // speed = 0;
+    $speed.val(0);
+    speed = 0;
 
-    // $showMeanHeap.prop('checked', true);
-    // showMeanHeap = true;
+    $showMeanHeap.prop('checked', true);
+    showMeanHeap = true;
 
     // $('#samplesselected option[value=2]').prop('selected', true);
     // n = parseInt( $('#samplesselected option:selected').val() );
@@ -493,6 +494,7 @@ $(function() {
 
   //clear button
   $clear.on('click', function() {
+    stop();
     clearAll();
   })
 
@@ -1574,6 +1576,8 @@ $(function() {
 
     drawSELines()       //dynamic and now fixed to population sd.
     drawMeanHeapCurve() // this will be dynamic as well
+    if (showCaptureMuLine) drawMuLine();       //need to keep it on top
+    if (plusminusmoe) drawPlusMinusMoe();      //need to keep it on top
   }
 
   //recolour heap if CI checked and mu known unknown checked && showCaptureMuLine
@@ -1879,7 +1883,7 @@ $(function() {
   $mu.on('change', function() {
     mu = parseFloat($mu.val());
     $("#muslider").val(mu);
-
+    stop();
     clearAll();
     setOldMu();
   })
@@ -1888,7 +1892,7 @@ $(function() {
   $muslider.on('change', function() {
     mu = parseFloat($muslider.val());
     $mu.val(mu);
-
+    stop();
     clearAll();
     setOldMu();
   })
@@ -1897,7 +1901,7 @@ $(function() {
   $sigma.on('change', function() {
     sigma = parseFloat($sigma.val());
     $("#sigmaslider").val(sigma);
-    
+    stop();
     clearAll();
     setOldSigma();
   })
@@ -1906,7 +1910,7 @@ $(function() {
   $sigmaslider.on('change', function() {
     sigma = parseFloat($sigmaslider.val());
     $sigma.val(sigma);
-
+    stop();
     clearAll();
     setOldSigma();
   })
@@ -1934,7 +1938,10 @@ $(function() {
     custom = false;
     changedDistribution = true;
 
-    if (normal) clearAll() //calls drawpdf
+    if (normal) {
+      stop();
+      clearAll(); //calls drawpdf
+    }
   })
 
   //rectangular
@@ -1945,7 +1952,10 @@ $(function() {
     custom = false;
     changedDistribution = true;
 
-    if (rectangular) clearAll() //calls drawpdf   
+    if (rectangular) {
+      clearAll() //calls drawpdf   
+      stop();
+    }
   })
 
   //skew
@@ -1956,7 +1966,10 @@ $(function() {
     custom = false;
     changedDistribution = true;
 
-    if (skew) clearAll() //calls drawpdf   
+    if (skew) {
+      stop(); 
+      clearAll(); //calls drawpdf   
+    }
   })
 
   //custom
@@ -1967,13 +1980,17 @@ $(function() {
     skew = false;
     changedDistribution = true;
 
-    if (custom) clearAll() //calls drawpdf
+    if (custom) {
+      stop();
+      clearAll(); //calls drawpdf
+    }
   })
 
   //skew amount
   $skewAmount.on('change', function() {
     skewAmount = parseFloat($skewAmount.val());
-
+    stop();
+    clearAll();
     drawPopulationCurve();
   })
 
@@ -2026,26 +2043,35 @@ $(function() {
 
   //take one sample
   $takeSample.on('click', function() {
+    if (runFreely) stop();
     takeSample();
   })
 
   //run freely
   $runFreely.on('click', function() {
     if (!runFreely) {
-      runFreely = true;
-      $runFreely.css('background-color', 'red');
-      $runFreely.text('Stop');
-      //now trigger the TakeSample code
-      triggerTakeSample = setInterval(takeSample, speed);
+      start();
     }
     else {
-      runFreely = false;
-      $runFreely.css('background-color', 'rgb(148, 243, 148)');
-      $runFreely.text('Run Stop');
-      //now stop the triggering
-      clearInterval(triggerTakeSample);
+      stop();
     }
   })
+
+  function start() {
+    runFreely = true;
+    $runFreely.css('background-color', 'red');
+    $runFreely.text('Stop');
+    //now trigger the TakeSample code
+    triggerTakeSample = setInterval(takeSample, speed);
+  }
+
+  function stop() {
+    runFreely = false;
+    $runFreely.css('background-color', 'rgb(148, 243, 148)');
+    $runFreely.text('Run Stop');
+    //now stop the triggering
+    clearInterval(triggerTakeSample);
+  }
 
   //if slider for speed changes
   $speed.on('change', function() {
@@ -2064,6 +2090,7 @@ $(function() {
     n = parseInt( $('#samplesselected option:selected').val() );
 
     //clear everything
+    stop();
     clearAll();
 
     //redisplay +/- moe if sample size changes
@@ -2095,6 +2122,7 @@ $(function() {
       //deselect dropping means as well
       $dropSampleMeans.prop('checked', false);
       dropSampleMeans = $dropSampleMeans.is(':checked');
+      stop();
       clearAll();
     }
 
@@ -2112,6 +2140,7 @@ $(function() {
       resetCaptureStats();
     }
     else { //remove
+      stop();
       clearAll();
     }
   })
@@ -2119,6 +2148,9 @@ $(function() {
 
   //Select confidence interval % and alpha
   $ci.on('change', function() {
+    stop();
+    clearAll();
+
     alpha = parseFloat($('#CI').val());
     displaySampleAppearanceAll();
 
@@ -2162,7 +2194,13 @@ $(function() {
     showMeanHeap = $showMeanHeap.is(':checked');
 
     clearAll();
-    drawSELines(); // draws them at initial height if checked (order important!)
+    if (showMeanHeap) {
+      if (showSELines) drawSELines(); // draws them at initial height if checked (order important!)
+    }
+    else {
+      d3.selectAll('.selines').attr('visibility', 'hidden');
+    }
+
   })
 
   //show sample distribution curve
@@ -2186,7 +2224,7 @@ $(function() {
     showSELines = $showSELines.is(':checked');
     if (showSELines) {
       d3.selectAll('.selines').attr('visibility', 'visible');
-      drawSELines();
+      if (showMeanHeap) drawSELines();
     }
     else {
       d3.selectAll('.selines').remove();
@@ -2224,10 +2262,15 @@ $(function() {
   //show the mean as not captured if known, uknown checked
   $captureOfMu.on('change', function() {
     captureOfMu = $captureOfMu.is(':checked');
-    //clearAll();
-    displaySampleAppearanceAll();
-    recalculateSamplemeanStatistics(); //which turns on display of captured stats
-    recolourHeap();
+    if (!showCaptureMuLine) {
+      $captureOfMu.prop('checked', false);
+    }
+    else {
+      //clearAll();
+      displaySampleAppearanceAll();
+      recalculateSamplemeanStatistics(); //which turns on display of captured stats
+      recolourHeap();
+    }
   })
 
   //Number capturing next mean  //TODO

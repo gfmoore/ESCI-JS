@@ -81,9 +81,12 @@ Start using version history now to record changes and fixes
                       Also added 8 conditions for coping with showMoE, capture mu, mu line.
 0.3.31    2020-07-01  Implemented logic for issue #7 capture of mu. 
 0.3.32    2020-07-03  Force population curve and SE Lines to draw over popn fill bubbles    
-                      Changed colour of sd lines, sample stroke.            
+                      Changed colour of sd lines, sample stroke.
+0.3.33    2020-07-03  Changed scaling factor on sampling distribution curve. Changed height of rectangle in relation to sigma. Note I limit height for small sigma.
+                      Adjust checkboxes so that fill and SDlines not appear unless popn curve on.                   
+0.3.34    2020            
 */
- let version = '0.3.32';
+ let version = '0.3.33';
  
 
 'use strict';
@@ -337,7 +340,7 @@ $(function() {
   initialise();
 
   //#region TESTING Set some checkboxes for when testing.
-    $showPopulationCurve.prop('checked', true);
+    // $showPopulationCurve.prop('checked', true);
     // showPopulationCurve = $showPopulationCurve.is(':checked');
     // if (showPopulationCurve) drawPopulationCurve(); else removePopulationCurve();
 
@@ -553,7 +556,7 @@ $(function() {
   }
 
   function drawRectangularCurve() {
-    let l, h;
+    let l, h, c, t;
 
     pdf = [];
 
@@ -566,11 +569,15 @@ $(function() {
     l = mu-sigma * Math.sqrt(3);
     h = mu+sigma * Math.sqrt(3);
 
+    c = 10 * heightP / sigma
+    if (c > heightP - 20) c = heightP - 20;  //limit height of rectangle for display
+    
+
     //actually I only need 6 points in the pdf!! but its so fast...
     pdf.push( {x: 0, y: 0} ); 
     pdf.push( {x: l, y: 0} );
-    pdf.push( {x: l, y: 160} );
-    pdf.push( {x: h, y: 160} );
+    pdf.push( {x: l, y: c} );
+    pdf.push( {x: h, y: c} );
     pdf.push( {x: h, y: 0} );
     pdf.push( {x:100, y: 0} );
 
@@ -969,7 +976,7 @@ $(function() {
 
         if (rectangular) {
           if (bubbleY < 2)   drawit = false;
-          if (bubbleY > 154)   drawit = false;
+          if (bubbleY > ah - sampleMeanSize - 2)   drawit = false;
           if (bubbleX < minxpdf + w) drawit = false;
           if (bubbleX > maxxpdf - w) drawit = false;
         }
@@ -1664,7 +1671,7 @@ $(function() {
 
       //now scale the heappdf by heapMax/heapCMax   sampleMeanSize is the radius of the bubbles scale by 1.2
       //heappdf = heappdf.map (o =>  ({ x: o.x, y: o.y * heapMax/heapCMax * sampleMeanSize * 1.2 * 2}) );  
-      heappdf = heappdf.map (o =>  ({ x: o.x, y: o.y * heapMax/heapCMax * sampleMeanSize * 2.0}) );  
+      heappdf = heappdf.map (o =>  ({ x: o.x, y: o.y * heapMax/heapCMax * sampleMeanSize * 1.8}) );  
 
       //create a generator
       lineh = d3.line()
@@ -1986,12 +1993,20 @@ $(function() {
 
   //show mu and sd lines
   $showSDLines.on('change', function() {
+    if (!showPopulationCurve) {
+      $showSDLines.prop('checked', false);
+      return;
+    }
     showSDLines = $showSDLines.is(':checked');
     if (showSDLines) drawSDLines(); else removeSDLines();
   })
 
   //fill the distribution with sample 'bubbles'
   $fillPopulation.on('change', function() {
+    if (!showPopulationCurve) {
+      $fillPopulation.prop('checked', false);
+      return;
+    }
     fillPopulation = $fillPopulation.is(':checked');
     if (fillPopulation) {
       fillPopnBubbles();

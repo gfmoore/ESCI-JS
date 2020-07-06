@@ -70,9 +70,6 @@ Start using version history now to record changes and fixes
 0.3.25    2020-06-27  Renstate SEines - where did they go?
 0.3.26    2020-06-30  Capture of mu to control visibility of mean and MoEs and display of Capture mu stats
 0.3.27    2020-06-30  Change colour of heap to match dropping means.
-*/
-//#endregion 
-/*
 0.3.28    2020-06-30  Let's sort out tablet and phone display. 
                       Also filled normal curve a bit more. 
                       Reset heap modified so that SE Lines cleared properly on Clear.
@@ -86,9 +83,14 @@ Start using version history now to record changes and fixes
                       Adjust checkboxes so that fill and SDlines not appear unless popn curve on.                   
 0.3.34    2020-07-03  Issue #17 logic   
 0.3.35    2020-07-06  Adjust heap distribution curve, remove fill when changing custom, use - instead of NaN
-0.3.36   
+
 */
- let version = '0.3.35';
+//#endregion 
+/*
+0.3.36    2020-07-06  Review the falling means to heap logic and check the "red" means fall to the right side. Made sure that no of bins was odd to allow centre bin around mean (50) - uhmm.
+0.3.37
+*/
+ let version = '0.3.36';
  
 
 'use strict';
@@ -1324,7 +1326,39 @@ $(function() {
       pwing.attr('visibility', 'hidden');
       swing.attr('visibility', 'hidden');
       if (showSampleMeans) mblob.attr('visibility', 'visible');
-    }
+    }    
+
+/***********TEMP FOR TESTING */
+    // //0 1 1
+    // if (!showMoe && captureOfMu && showCaptureMuLine) {   //show dark green and red blobs and moes
+    //   if (showPmoe) {
+    //     if ( mblob.attr('pmissed') === 'true') {
+    //       pwing.attr('stroke', 'red');
+    //       mblob.attr('fill', 'red');
+    //     }
+    //     else {
+    //       pwing.attr('stroke', darkGreen);
+    //       mblob.attr('fill', darkGreen);
+    //     }
+    //     pwing.attr('visibility', 'hidden');
+    //     mblob.attr('visibility', 'visible');
+    //   }
+
+    //   if (showSmoe) {
+    //     if (mblob.attr('smissed') === 'true') {
+    //       swing.attr('stroke', 'red');
+    //       mblob.attr('fill', 'red');
+    //     }
+    //     else {
+    //       swing.attr('stroke', darkGreen);
+    //       mblob.attr('fill', darkGreen);
+    //     }
+    //     swing.attr('visibility', 'hidden');
+    //     mblob.attr('visibility', 'visible');
+    //   }
+    // }
+
+/************************************************************************* */
 
     //1 0 0
     if (showMoe && !captureOfMu && !showCaptureMuLine) {    //show light green blobs and moe
@@ -1553,6 +1587,7 @@ $(function() {
   //when sample mean gets far enough, add to the heap display   -- from takeSample()
   function addToHeap(xbar, pmissed, smissed) {
     let hx, hy;
+    let xb;
 
      if (!showMeanHeap  && !captureOfMu && !showCaptureMuLine) return;
     
@@ -1561,14 +1596,10 @@ $(function() {
       //don't do anything to visible part of heap
     }
     else {
-      //increase the heap frequency
-      
-      //let heapse = sigma/Math.sqrt(n);
-      xint = parseInt( Math.floor(xbar/100 * heap.length ));  //I've tried ceil, floor, trunc using mean or mean + se because I thin there is a slight bias to the right???
-
+      //increase the heap frequency. Remember that 50 is the middle bar
+      xint = parseInt( Math.floor(xbar/100 * heap.length ));  
       //increase the frequency of the heap for that x value
       heap[xint].f += 1;
-
 
       //now draw a bubble at co-ords xint and heap(xint)
       //color code the drops and add the pmissed and smissed attributes for recoluring depending on CI selecetd (on change)
@@ -1591,6 +1622,27 @@ $(function() {
       else {
         svgS.append('circle').attr('class', 'heap').attr('cx', hx ).attr('cy', hy).attr('r', sampleMeanSize).attr('stroke', 'black').attr('stroke-width', 1).attr('fill', lightGreen).attr('visibility', 'visible').attr('pmissed', pmissed).attr('smissed', smissed);
       }
+
+/************************TESTING************************* */
+// if (!showMoe && captureOfMu && showCaptureMuLine) {
+//   if (showPmoe && pmissed === 'true') {
+//     svgS.append('circle').attr('class', 'heap').attr('cx', hx ).attr('cy', hy).attr('r', sampleMeanSize).attr('stroke', 'black').attr('stroke-width', 1).attr('fill', 'red').attr('visibility', 'visible').attr('pmissed', pmissed).attr('smissed', smissed);
+//   }
+//   if (showPmoe && pmissed === 'false') {
+//     svgS.append('circle').attr('class', 'heap').attr('cx', hx ).attr('cy', hy).attr('r', sampleMeanSize).attr('stroke', 'black').attr('stroke-width', 1).attr('fill', darkGreen).attr('visibility', 'visible').attr('pmissed', pmissed).attr('smissed', smissed);
+//   }
+//   if (showSmoe && smissed === 'true') {
+//     svgS.append('circle').attr('class', 'heap').attr('cx', hx ).attr('cy', hy).attr('r', sampleMeanSize).attr('stroke', 'black').attr('stroke-width', 1).attr('fill', 'red').attr('visibility', 'visible').attr('pmissed', pmissed).attr('smissed', smissed);
+//   }
+//   if (showSmoe && smissed === 'false') {
+//     svgS.append('circle').attr('class', 'heap').attr('cx', hx ).attr('cy', hy).attr('r', sampleMeanSize).attr('stroke', 'black').attr('stroke-width', 1).attr('fill', darkGreen).attr('visibility', 'visible').attr('pmissed', pmissed).attr('smissed', smissed);
+//   }
+// }
+/*********************************************************** */
+
+
+
+
     }
 
     //must calculate heap stats even with non visible mean
@@ -1633,6 +1685,30 @@ $(function() {
       else {  //if not all checked then just
         $(this).attr('fill', lightGreen);
       }
+
+
+/*****************Temp for testing******************* */
+// if (!showMoe && captureOfMu && showCaptureMuLine) {   //show dark green and red blobs and moes
+//   if (showPmoe) {
+//     if (pmissed === 'true') {
+//       $(this).attr('fill', 'red');
+//     }
+//     else {
+//       $(this).attr('fill', darkGreen);
+//     }
+//   }
+//   if (showSmoe) {
+//     if (smissed === 'true') {
+//       $(this).attr('fill', 'red');
+//     }
+//     else {
+//       $(this).attr('fill', darkGreen);
+//     }
+//   }
+// }
+
+/********************************************************/
+
 
     })
   }
@@ -1695,9 +1771,8 @@ $(function() {
       //get the max of the curve
       heapCMax = Math.max(...heappdf.map(o => o.y), 0);
 
-      //now scale the heappdf by heapMax/heapCMax   sampleMeanSize is the radius of the bubbles scale by 1.2
-      //heappdf = heappdf.map (o =>  ({ x: o.x, y: o.y * heapMax/heapCMax * sampleMeanSize * 1.2 * 2}) );  
-      heappdf = heappdf.map (o =>  ({ x: o.x, y: o.y * heapMax/heapCMax * sampleMeanSize * 1.7}) );  
+      //now scale the heappdf by heapMax/heapCMax   sampleMeanSize is the radius of the bubbles scale by 1.2  
+      heappdf = heappdf.map (o =>  ({ x: o.x, y: o.y * heapMax/heapCMax * sampleMeanSize * 1.75}) );  
 
       //create a generator
       lineh = d3.line()
@@ -1821,8 +1896,6 @@ $(function() {
     if (fillPopulation) fillPopnBubbles();
   }
 
-
-
   // #region  panels 
   //Panel 4 Samples
   //Number of samples               $N, $N2
@@ -1883,7 +1956,12 @@ $(function() {
     xbardata = [];
 
     //reset the number of buckets in the heap
-    noOfBuckets = parseInt(xmax / (2 * sampleMeanSize));
+    //subtle issue here. I really need the middle bucket to correspond with 50. So I need an odd number of buckets
+    //So check if noOfBuckets is odd, if not subtract 1 from it (or add 1?) 
+
+    noOfBuckets = Math.round(xmax / (2 * sampleMeanSize));
+    if (noOfBuckets % 2 === 0) noOfBuckets -= 1;
+
     for (let xx = 0; xx <= noOfBuckets; xx += 1) {  
       heap.push({x: xx, f: 0})
     }
@@ -1893,8 +1971,6 @@ $(function() {
     //d3.selectAll('.selines').remove();
     removeMeanHeapCurve();
 
-    resetSamples();
-    resetCaptureStats();
   }
 
 
@@ -2171,6 +2247,7 @@ $(function() {
 
   //Select confidence interval % and alpha
   $ci.on('change', function() {
+    $ci
     stop();
     clearAll();
 
@@ -2178,6 +2255,9 @@ $(function() {
     displaySampleAppearanceAll();
 
     recalculateSamplemeanStatistics();
+
+    if (plusminusmoe) drawPlusMinusMoe();
+    if (showSELines) drawSELines();
   })
 
   //show/hide the CI Moe bars?

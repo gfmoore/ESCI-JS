@@ -84,10 +84,11 @@ Start using version history now to record changes and fixes
                       Changed colour of sd lines, sample stroke.
 0.3.33    2020-07-03  Changed scaling factor on sampling distribution curve. Changed height of rectangle in relation to sigma. Note I limit height for small sigma.
                       Adjust checkboxes so that fill and SDlines not appear unless popn curve on.                   
-0.3.34    2020 -07-03 Issue #17 logic   
-0.3.35        
+0.3.34    2020-07-03  Issue #17 logic   
+0.3.35    2020-07-06  Adjust heap distribution curve, remove fill when changing custom, use - instead of NaN
+0.3.36   
 */
- let version = '0.3.34';
+ let version = '0.3.35';
  
 
 'use strict';
@@ -721,8 +722,16 @@ $(function() {
   let oldxm, oldym, xm, ym, mdown = false;
   $('#displaypdf')
     .mousedown(function(e) {
-      //probably best to clear everything
-      clearAll();
+      //probably best to clear everything (from ClearAll)
+      d3.selectAll('.samplepoint').remove();
+    
+      resetSamples();
+      resetCaptureStats();
+      resetHeap();   
+
+      removePopnBubbles();
+      removeSDLines();
+
       if (!showPopulationCurve) return;  //can only draw custom curve if popuation checked
       if (!custom) return;               //and when custom selected
       custompdf = [];  //record the pixels, will scale to pdf later
@@ -752,6 +761,7 @@ $(function() {
       }
     })
     .mouseup(function() {
+      if (!showPopulationCurve) return;
       if (!custom) return;
       mdown = false;
       custompdf.push({ x:oldxm , y:heightP }) //ending point
@@ -817,11 +827,23 @@ $(function() {
   }
 
   function setMuSigmaSliderVal(mu, sigma) {
-    $mu.val(mu.toFixed(2));
-    $muslider.val(mu.toFixed(2));
+    if (isNaN(mu)) {
+      $mu.val(' -');
+      $muslider.val(0);
+    }
+    else {
+      $mu.val(mu.toFixed(2));
+      $muslider.val(mu.toFixed(2));
+    }
 
-    $sigma.val(sigma.toFixed(2));
-    $sigmaslider.val(sigma.toFixed(2));
+    if (isNaN(sigma)) {
+      $sigma.val(' -');
+      $sigmaslider.val(0);
+    }
+    else {
+      $sigma.val(sigma.toFixed(2));
+      $sigmaslider.val(sigma.toFixed(2));
+    }
 
     changedDistribution = false; 
   }
@@ -1675,7 +1697,7 @@ $(function() {
 
       //now scale the heappdf by heapMax/heapCMax   sampleMeanSize is the radius of the bubbles scale by 1.2
       //heappdf = heappdf.map (o =>  ({ x: o.x, y: o.y * heapMax/heapCMax * sampleMeanSize * 1.2 * 2}) );  
-      heappdf = heappdf.map (o =>  ({ x: o.x, y: o.y * heapMax/heapCMax * sampleMeanSize * 1.8}) );  
+      heappdf = heappdf.map (o =>  ({ x: o.x, y: o.y * heapMax/heapCMax * sampleMeanSize * 1.7}) );  
 
       //create a generator
       lineh = d3.line()
@@ -1792,13 +1814,14 @@ $(function() {
     resetCaptureStats();
     resetHeap();    
 
-    drawPopulationCurve();  //includes redrawing of mean an sd lines
+    drawPopulationCurve();  //includes redrawing of mean and sd lines
     removeSDLines();
     if (showSDLines) drawSDLines();
     removePopnBubbles();
     if (fillPopulation) fillPopnBubbles();
-
   }
+
+
 
   // #region  panels 
   //Panel 4 Samples

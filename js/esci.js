@@ -88,9 +88,10 @@ Start using version history now to record changes and fixes
 //#endregion 
 /*
 0.3.36    2020-07-06  Review the falling means to heap logic and check the "red" means fall to the right side. Made sure that no of bins was odd to allow centre bin around mean (50) - uhmm.
-0.3.37
+0.3.37    2020-07-06  Adjusted the height of normal.This involved qite a lot of re-scaling of normal and of skew. Skew sd now 15 rather than 20.
+0.3.38
 */
- let version = '0.3.36';
+ let version = '0.3.37';
  
 
 'use strict';
@@ -344,9 +345,9 @@ $(function() {
   initialise();
 
   //#region TESTING Set some checkboxes for when testing.
-    // $showPopulationCurve.prop('checked', true);
-    // showPopulationCurve = $showPopulationCurve.is(':checked');
-    // if (showPopulationCurve) drawPopulationCurve(); else removePopulationCurve();
+    $showPopulationCurve.prop('checked', true);
+    showPopulationCurve = $showPopulationCurve.is(':checked');
+    if (showPopulationCurve) drawPopulationCurve(); else removePopulationCurve();
 
     // $showSamplePoints.prop('checked', true);
     // showSamplePoints = true;
@@ -545,16 +546,24 @@ $(function() {
       sigma = normalsigma;
     }
 
-    //for (let x = mu-5*sigma; x < mu+5*sigma; x += 0.1) {
-   for (let x = 0; x < 100; x += 0.1) {
+    //get the curve
+    for (let x = 0; x < 100; x += 0.1) {
       pdf.push({ x: x, y: jStat.normal.pdf(x, mu, sigma) })
     }
 
-    let mn = d3.max(pdf, function(d) { return  d.y } );
-
     //scale it to fit in with drawing area
+    let p = pdfDisplayAreaHeight; //shorthand :)
+    let mh = d3.max(pdf, function(d) { return d.y});
     pdf.forEach(function(v) {
-      v.y = v.y  * (sigma * 160 + 2000); //linear equation            
+      if (sigma >= 20) {
+        //0.02 is maxheight when sigma = 20
+         v.y = v.y * p / 0.02 * 0.7;
+      }    
+      else {  //* some scale factor
+        //0.08 is max height when sigma = 5
+        v.y = (v.y * p / mh * 0.95) * (1.0877 - 0.0125 * sigma);
+      }    
+
     })
 
     drawPDF();
@@ -601,51 +610,51 @@ $(function() {
 
     //lognormal version
     let k = Math.abs(skewAmount);
-    for (let x = -0.5; x < 5; x += 0.01) {
+    for (let x = -5; x < 10; x += 0.005) {
       pdf.push( {x: x, y: jStat.lognormal.pdf(x, 0, k) } );
     }
 
     //scale it up
     pdf.forEach( v => {
       if (k === 0.1) {
-        v.x = v.x*198.0 - 149;
-        v.y = v.y * 26;
+        v.x = v.x*154.0 - 104;
+        v.y = v.y * 45; 
       }
       if (k === 0.2) {
-        v.x = v.x*100.0 - 52;
-        v.y = v.y * 60;
+        v.x = v.x*76.0 - 27.0;
+        v.y = v.y * 95; 
       }
       if (k === 0.3) {
-        v.x = v.x*60.0 - 13.0;
-        v.y = v.y * 100;
+        v.x = v.x*50.0 - 1.5;
+        v.y = v.y * 145; 
       }
       if (k === 0.4) {
-        v.x = v.x*45.0 + 1.0;
-        v.y = v.y * 140;
+        v.x = v.x*38.0 + 10.0;
+        v.y = v.y * 200; 
       }
       if (k === 0.5) {
-        v.x = v.x*34.0 + 12.0;
-        v.y = v.y * 180;
+        v.x = v.x*30.0 + 17.5;
+        v.y = v.y * 260; 
       }
       if (k === 0.6) {
-        v.x = v.x*28.0 + 17.0;
-        v.y = v.y * 220;
+        v.x = v.x*25.0 + 22.0;
+        v.y = v.y * 280; 
       }
       if (k === 0.7) {
-        v.x = v.x*24.0 + 21.0;
-        v.y = v.y * 245;
+        v.x = v.x*22.0 + 25.0;
+        v.y = v.y * 310; 
       }
       if (k === 0.8) {
-        v.x = v.x*22.0 + 23.0;
-        v.y = v.y * 270;
+        v.x = v.x*20.0 + 27.0;
+        v.y = v.y * 330; 
       }
       if (k === 0.9) {
-        v.x = v.x*20.0 + 25.0;
-        v.y = v.y * 290;
+        v.x = v.x*19.0 + 28.0;
+        v.y = v.y * 350; 
       }
       if (k === 1.0) {
-        v.x = v.x*18.0 +27.0;
-        v.y = v.y * 300;
+        v.x = v.x*15.5 +32.5;
+        v.y = v.y * 370; 
       }
 
       //get the negative version, of course this reverses the array so largest x values at start, need to put back in order otherwise bubble won't work
@@ -659,7 +668,7 @@ $(function() {
     let temp = [];
     //think I'll remove any negative x values
     for (let i = pdf.length - 1; i >= 0; i--) {
-      if (pdf[i].x < 2 || pdf[i].x > 100) {   //anything else is too small! If I use 0 it appears on the display
+      if (pdf[i].x < 1 || pdf[i].x > 100) {   //anything else is too small! If I use 0 it appears on the display
         pdf.splice(i, 1);
       }
       else {
@@ -717,13 +726,18 @@ $(function() {
     removeSDLines();
     if (showSDLines) drawSDLines();
 
+    //actually just draw the custompdf directly as in pixels
     drawPDF();
+
   }
+
+  let rightclick = false;
 
   //if mousedown on displaypdf area and custom selected allow draw
   let oldxm, oldym, xm, ym, mdown = false;
   $('#displaypdf')
     .mousedown(function(e) {
+      e.preventDefault();
       //probably best to clear everything (from ClearAll)
       d3.selectAll('.samplepoint').remove();
     
@@ -741,6 +755,7 @@ $(function() {
       d3.selectAll('.pdf').remove();
       if (event.which === 1) { //left click
         mdown = true;
+
         oldxm = e.pageX - $(this).offset().left;
         oldym = e.pageY - $(this).offset().top;
 
@@ -760,23 +775,32 @@ $(function() {
         oldpdf = [];
         removePopnBubbles();
         removeSDLines();
+        rightclick = true;
       }
     })
-    .mouseup(function() {
+    .mouseup(function(e) {
+      //don't trigger this on right click
+      if (rightclick) {
+        rightclick = false;
+        return;
+      }
+      e.preventDefault();
+      e.stopPropagation();
       if (!showPopulationCurve) return;
       if (!custom) return;
       mdown = false;
+      
       custompdf.push({ x:oldxm , y:heightP }) //ending point
       d3.selectAll('.custompdf').remove();
 
-      //need to scale the custompdf which is in pixels say, 0->width, heightP->0 to the pdf which is say 0->100 and 0->200
+      //need to scale the custompdf which is in pixels say, 0->width, heightP->0 to the pdf which is say 0->100 and 0->250
       //note might not be that many pixels in custom - will this be a problem?
       //note there are margins to take into account
       pdf = [];
       let p = pdfDisplayAreaHeight; //just shorthand
       custompdf.forEach( function(v) {
-        pdf.push({ x: v.x * 100 / width - 0.8, y: p - v.y/heightP * p}); 
-        oldpdf.push({ x: v.x * 100 / width - 0.8, y: p - v.y/heightP * p}); //make a backup for redraw purposes if shape is changed (i.e. Normal, Rect, Skew)
+        pdf.push({ x: v.x * 100 / width, y: p - v.y/heightP * p}); 
+        oldpdf.push({ x: v.x * 100 / width, y: p - v.y/heightP * p}); //make a backup for redraw purposes if shape is changed (i.e. Normal, Rect, Skew)
       })
       
       //to do means and mu sigma etc create the bubbles array, but not display it unless fill population enabled
@@ -790,10 +814,15 @@ $(function() {
     e.preventDefault();
     e.stopPropagation();
     if (!custom) return;
+
+    //if mouse moving outide of displaypdf stop it selecting axis labels etc.
+
     if (custom && mdown) {
+
       xm = e.pageX - $(this).offset().left;
       if (xm < oldxm) xm = oldxm; //can't go backwards
       ym = e.pageY - $(this).offset().top;
+
       //draw lines between the points, but not let x go backwards
       svgP.append('line').attr('class', 'custompdf')
         .attr('x1', oldxm).attr('y1', oldym).attr('x2', xm).attr('y2', ym)
@@ -802,6 +831,12 @@ $(function() {
       if (xm >= oldxm) oldxm = xm;  //can't go backwards
       oldym = ym;
       custompdf.push( {x: oldxm, y: oldym} )
+
+      //if mouse goes outside population display area call mouseup  //note cannot manually position mouse
+
+      if ((xm < 2) || (xm > width - 2) || (ym < 15) || (ym > heightP - 4)) {
+        $('#displaypdf').trigger("mouseup");
+      }
     }
   })
 
@@ -811,7 +846,25 @@ $(function() {
   });
   //#endregion
 
+  //prevent mouse moves selecting items
+  $('#displaysection').on('mousedown', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+  })
   
+  $('#displaysection').on('mousemove', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    //if mouse goes outside displaypdf too fast then displaypdf mousemove doesn't catch it so put it here as well (hack)
+    xm = e.pageX - $(this).offset().left;
+    ym = e.pageY - $(this).offset().top;
+    if ((xm < 2) || (xm > width) || (ym < 15) || (ym > heightP)) {
+      $('#displaypdf').trigger("mouseup");
+    }
+  })
+
+
+
   function calculateCustomMuSigma() {
 
     fillPopnBubbles();
@@ -853,20 +906,29 @@ $(function() {
 
   function drawPDF() {
 
-    //changed to so that pdf is prescaled and shows the correct changes with change of sd
-    //yp = d3.scaleLinear().domain([ 0, d3.max(pdf, function(d) { return d.y}) + 0.005 ]).range([heightP, 10]);
-    //yp = d3.scaleLinear().domain([ 0, heightP ]).range([heightP, 10]);
-    ypp = d3.scaleLinear().domain([ 0, pdfDisplayAreaHeight ]).range([heightP, 10]);  
+    if (!custom) {  //do a special draw pdf for custom curve
+      ypp = d3.scaleLinear().domain([ 0, pdfDisplayAreaHeight ]).range([heightP, 20]);  //the 20 allows for the top axis
 
-    //create a generator
-    line = d3.line()
-    .x(function(d, i) { return x(d.x); })
-    .y(function(d, i) { return ypp(d.y); });
+      //create a generator
+      line = d3.line()
+      .x(function(d, i) { return x(d.x); })
+      .y(function(d, i) { return ypp(d.y); });
 
-    //display the curve
-    svgP.append('path')
-      .attr('class', 'pdf')
-      .attr('d', line(pdf))
+      //display the curve
+      svgP.append('path')
+        .attr('class', 'pdf')
+        .attr('d', line(pdf))
+    }
+    else { //since I have the custompdf which is in pixels, just draw that - more accurate
+      line = d3.line()
+      .x(function(d, i) { return d.x })
+      .y(function(d, i) { return d.y })
+    
+        //display the curve
+      svgP.append('path')
+        .attr('class', 'pdf')
+        .attr('d', line(custompdf))
+    }
 
     //draw popn bubbles if fill selected
     if (fillPopulation) fillPopnBubbles();

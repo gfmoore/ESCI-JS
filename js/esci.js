@@ -90,9 +90,10 @@ Start using version history now to record changes and fixes
 0.3.36    2020-07-06  Review the falling means to heap logic and check the "red" means fall to the right side. Made sure that no of bins was odd to allow centre bin around mean (50) - uhmm.
 0.3.37    2020-07-07  Adjusted the height of normal.This involved qite a lot of re-scaling of normal and of skew. Skew sd now 15 rather than 20.
 0.3.38    2020-07-07  Review population curve filling with bubbles. Found some logic control errors. Fill not correct yet
-0.3.39
+0.3.39    2020-07-08  Fixed bugs and played around with population bubbles quantity, settled for 20 x width for now.
+0.3.40
 */
- let version = '0.3.38';
+ let version = '0.3.39';
  
 
 'use strict';
@@ -342,15 +343,26 @@ $(function() {
   let fillBubbles = true;      //I need to be able to drawPDF over the bubbles when filling with bubbles. This controls that.
   let dontDrawBubbles = false;  //when recalculating mu sigma for skew and custom don't want to draw bubbles when filling pdf
 
+
+  let rightclick = false;                   //mouse control
+  let drawingPDF = false;                   //mouse control
+  let oldxm, oldym, xm, ym, mdown = false;  //mouse control
+
   //#endregion
 
   
   initialise();
 
+//TESTING
   //#region TESTING Set some checkboxes for when testing.
     // $showPopulationCurve.prop('checked', true);
     // showPopulationCurve = $showPopulationCurve.is(':checked');
-    // if (showPopulationCurve) drawPopulationCurve(); else removePopulationCurve();
+    // if (showPopulationCurve) drawPopulationCurve(); //else removePopulationCurve();
+
+    // $showSDLines.prop('checked', true);  
+    // showSDLines = true;
+    // drawSDLines();
+
 
     // $showSamplePoints.prop('checked', true);
     // showSamplePoints = true;
@@ -374,9 +386,6 @@ $(function() {
     //fillPopulation = true;
     //if (fillPopulation) fillPopnBubbles();
 
-    // $showSDLines.prop('checked', true);  //this doesn't work for some strange reason
-    // showSDlines = true;
-    // drawSDLines();
   //#endregion
 
   function initialise() {
@@ -395,12 +404,12 @@ $(function() {
     normalmu    = mu;
     rectmu      = mu;
     skewmu      = mu;
-    custommu   = mu;
+    custommu   = NaN;
 
     normalsigma = sigma;
     rectsigma   = sigma;
     skewsigma   = sigma;
-    customsigma = sigma;
+    customsigma = NaN;
 
     $('#capturenextmeangrid').hide();
 
@@ -436,13 +445,6 @@ $(function() {
     heightP = ymaxP - margin.top - margin.bottom;
     heightS = ymaxS - margin.top - margin.bottom;
 
-
-    //set the oldwidth to be the width when first loaded, after wards it remembers width after a resize
-    // if (doOnce) {
-    //   oldwidth = width;
-    //   doOnce = false;
-    // }
-
     //set a reference to the displaypdf area
     d3.selectAll('svg > *').remove();  //remove all elements under svgP
     $('svg').remove();                 //remove the all svg elements from the DOM
@@ -462,12 +464,11 @@ $(function() {
 
     ys = d3.scaleLinear().domain([ 0, 500 ]).range([0, heightS]);  //go from y = 500 at bottom to 0 at top, beacuse samplemeans increase as they drop!
 
-    //check the draw population radiobutton
-    if (showPopulationCurve) drawPopulationCurve(); else removePopulationCurve();
-    if (fillPopulation) fillPopnBubbles();
- 
     drawAxes();
     clearAll();
+
+    //if resize
+    if (fillPopulation) fillPopnBubbles();  
 
     if (plusminusmoe) drawPlusMinusMoe();
 
@@ -519,9 +520,6 @@ $(function() {
       if (skew)         drawSkewCurve();
       if (custom)       drawCustomCurve();
     }
-
-    //now re-draw the mean and sd lines
-    if (showSDLines && custompdf.length !== 0) drawSDLines();
 
     if (showCaptureMuLine) drawMuLine();
   }
@@ -682,24 +680,8 @@ $(function() {
 
     if (skewAmount < 0) pdf = temp; //I think you can do this?
 
-
-
     //need a random array of bubbles for calculating means and sds
-    dontDrawBubbles = true;
-    fillPopnBubbles(); 
-    dontDrawBubbles = false;
-
-    //get  mean and sigma
-    let s = 0, n = 0, s2 = 0;
-    popnBubbles.forEach( v => {
-      s += v.x;
-      s2 += v.x * v.x;
-      n += 1;
-    })
-
-    mu = s/n;
-    sigma = Math.sqrt(s2/n - mu*mu);
-    setMuSigmaSliderVal(mu, sigma);
+    calculateCustomMuSigma();
 
     drawPDF();
   }
@@ -726,22 +708,18 @@ $(function() {
     }
 
     //Calculate the mu and sigma here from the popnBubbles array
-    //calculateCustomMuSigma();
-    //removeSDLines();
-    //
+    if (custompdf.length != 0) calculateCustomMuSigma();
 
     //actually just draw the custompdf directly as in pixels
     if (custompdf.length !== 0) drawPDF();
 
-    //if (showSDLines) drawSDLines();
   }
 
-  let rightclick = false;
-  let drawingPDF = false;
 
   //if mousedown on displaypdf area and custom selected allow draw
-  let oldxm, oldym, xm, ym, mdown = false;
+
   $('#displaypdf')
+//MOUSEDOWN  
     .mousedown(function(e) {
       drawingPDF = true;
       e.preventDefault();
@@ -754,10 +732,13 @@ $(function() {
 
       removePopnBubbles();
       removeSDLines();
+      custommu = NaN;
+      customsigma = NaN;
+      setMuSigmaSliderVal(custommu, customsigma);
 
       if (!showPopulationCurve) return;  //can only draw custom curve if popuation checked
       if (!custom) return;               //and when custom selected
-      custompdf = [];  //record the pixels, will scale to pdf later
+      custompdf = [];                   //record the pixels, will scale to pdf later
       oldpdf = [];
       d3.selectAll('.pdf').remove();
       if (event.which === 1) { //left click
@@ -774,6 +755,7 @@ $(function() {
         .attr('stroke', 'red').attr('stroke-width', 2);
       }
       //right click
+//RIGHT MOUSE
       if (e.which === 3) { 
         e.preventDefault();
         e.stopPropagation();
@@ -783,8 +765,12 @@ $(function() {
         removePopnBubbles();
         removeSDLines();
         rightclick = true;
+        custommu = NaN;
+        customsigma = NaN;
+        setMuSigmaSliderVal(custommu, customsigma);
       }
     })
+//MOUSE UP
     .mouseup(function(e) {
       //don't trigger this on right click
       if (rightclick) {
@@ -804,20 +790,20 @@ $(function() {
       //note might not be that many pixels in custom - will this be a problem?
       //note there are margins to take into account
       pdf = [];
-      let p = pdfDisplayAreaHeight; //just shorthand
+      let p = pdfDisplayAreaHeight + 21; //just shorthand + adjustment
       custompdf.forEach( function(v) {
-        pdf.push({ x: v.x * 100 / width, y: p - v.y/heightP * p}); 
-        oldpdf.push({ x: v.x * 100 / width, y: p - v.y/heightP * p}); //make a backup for redraw purposes if shape is changed (i.e. Normal, Rect, Skew)
+        pdf.push({ x: v.x * 100 / width - 0.5, y: p - v.y/heightP  * p}); 
+        oldpdf.push({ x: v.x * 100 / width - 0.5, y: p - v.y/heightP * p}); //make a backup for redraw purposes if shape is changed (i.e. Normal, Rect, Skew)
       })
       
       //to do means and mu sigma etc create the bubbles array, but not display it unless fill population enabled
-      // fillPopnBubbles();
-      calculateCustomMuSigma();
-      if (showSDLines) drawSDLines();
+      //if (custompdf.length !== 0) calculateCustomMuSigma();
+
       drawCustomCurve();  //now draw it and get values from it
+
       drawingPDF = false;
     })
-
+//MOUSE MOVE
   $('#displaypdf').mousemove(function(e) {
     e.preventDefault();
     e.stopPropagation();
@@ -841,7 +827,6 @@ $(function() {
       custompdf.push( {x: oldxm, y: oldym} )
 
       //if mouse goes outside population display area call mouseup  //note cannot manually position mouse
-
       if ((xm < 2) || (xm > width - 2) || (ym < 15) || (ym > heightP - 4)) {
         $('#displaypdf').trigger("mouseup");
       }
@@ -878,11 +863,13 @@ $(function() {
 
   function calculateCustomMuSigma() {
 
-    dontDrawBubbles = true;
-    fillPopnBubbles();
-    dontDrawBubbles = false;
-    let s = 0, n = 0, s2 = 0;
+    if (!fillPopulation) {
+      dontDrawBubbles = true;
+      fillPopnBubbles();
+      dontDrawBubbles = false;
+    }
 
+    let s = 0, n = 0, s2 = 0;
     popnBubbles.forEach( v => {
       s += v.x;
       s2 += v.x * v.x;
@@ -919,36 +906,24 @@ $(function() {
 
   function drawPDF() {
 
-    if (!custom) {  //do a special draw pdf for custom curve
-      ypp = d3.scaleLinear().domain([ 0, pdfDisplayAreaHeight ]).range([heightP, 20]);  //the 20 allows for the top axis
+    ypp = d3.scaleLinear().domain([ 0, pdfDisplayAreaHeight ]).range([heightP, 20]);  //the 20 allows for the top axis
 
-      //create a generator
-      line = d3.line()
-      .x(function(d, i) { return x(d.x); })
-      .y(function(d, i) { return ypp(d.y); });
+    //create a generator
+    line = d3.line()
+    .x(function(d, i) { return x(d.x); })
+    .y(function(d, i) { return ypp(d.y); });
 
-      //display the curve
-      svgP.append('path')
-        .attr('class', 'pdf')
-        .attr('d', line(pdf))
-    }
-    else { //since I have the custompdf which is in pixels, just draw that - more accurate
-      line = d3.line()
-      .x(function(d, i) { return d.x })
-      .y(function(d, i) { return d.y })
-    
-        //display the curve
-      svgP.append('path')
-        .attr('class', 'pdf')
-        .attr('d', line(custompdf))
-    }
+    //display the curve
+    svgP.append('path')
+      .attr('class', 'pdf')
+      .attr('d', line(pdf))
 
     //draw popn bubbles if fill selected  //fillBubbles is a flag to stop fillPopnBubbles being called twice if drawing over the fill!
     if (fillPopulation && fillBubbles) {
       fillPopnBubbles();
     }
 
-    if (showSDLines && custompdf.length !== 0) drawSDLines();  //only draw sd lines for custom if there is a pdf to draw
+    if (showSDLines) drawSDLines();  //only draw sd lines for custom if there is a pdf to draw
     else removeSDLines();   
 
     //just a big fix for when switching distributions especially on custom
@@ -1021,11 +996,12 @@ $(function() {
 
     fillPopulation = $fillPopulation.is(':checked');
 
-    minxpdf = d3.min(pdf, function(d) { return d.x });
-    maxxpdf = d3.max(pdf, function(d) { return d.x });
-    minypdf = d3.min(pdf, function(d) { return d.y });
-    maxypdf = d3.max(pdf, function(d) { return d.y });
-
+    if (normal || skew || custom) {
+      minxpdf = d3.min(pdf, function(d) { return d.x });
+      maxxpdf = d3.max(pdf, function(d) { return d.x });
+      minypdf = d3.min(pdf, function(d) { return d.y });
+      maxypdf = d3.max(pdf, function(d) { return d.y });
+    }
     if (rectangular) {
       minxpdf = mu - sigma * Math.sqrt(3);
       maxxpdf = mu + sigma * Math.sqrt(3);
@@ -1033,28 +1009,32 @@ $(function() {
 
     //scale Y for fillpopulation (bubbles)
     ypb = d3.scaleLinear().domain([ 0, pdfDisplayAreaHeight ]).range([heightP, 20]);  
- 
+//let c = 0; 
+//let d = 0;
     //create array of bubbles, not all may be drawn, but array will be used for random sampling (except for normal)
-    for (let b = 0; b < width * 50; b += 1) {   //this many bubbles, depends on display width width * 1
+    for (let b = 0; b < width * 20; b += 1) {   //this many bubbles, depends on display width width * 1
 
       //now need to get a random x between min and max x of pdf
       bubbleX = randbetween(minxpdf, maxxpdf);
 
-      //scan through pdf looking for nearest x coordinate  
-      ah = 0;
-      for (let v = 0; v < pdf.length; v += 1) { 
-        if (pdf[v].x > bubbleX) { //found one
-          if (v !== 0) { 
-            //linear interpolation
-            minx = pdf[v-1].x;
-            maxx = pdf[v].x;
-            miny = pdf[v-1].y;
-            maxy = pdf[v].y;
-            ah = miny + (bubbleX - minx)/(maxx-minx) * (maxy - miny); //linear interpolation between two ordinates - best I can do?, splines least squares?
-            break;
+      //scan through pdf looking for nearest x coordinate 
+      if (true) { 
+        ah = 0;
+        for (let v = 0; v < pdf.length; v += 1) { 
+          if (pdf[v].x > bubbleX) { //found one
+            if (v !== 0) { 
+              //linear interpolation
+              minx = pdf[v-1].x;
+              maxx = pdf[v].x;
+              miny = pdf[v-1].y;
+              maxy = pdf[v].y;
+              ah = miny + (bubbleX - minx)/(maxx-minx) * (maxy - miny); //linear interpolation between two ordinates - best I can do?, splines least squares?
+              break;
+            }
           }
-        }
-      }  //end of scan
+        }  //end of scan
+      }
+
 
       //pick a random n bewtween 0 and (~heightP in pdf coords, not pixels). If it is < ah then we have a bubble - its a probability! If the curve is close to the bottom there is less probability of filling it with a bubble, if it is higher then more probability!
       bubbleY = randbetween(0, pdfDisplayAreaHeight );
@@ -1062,51 +1042,52 @@ $(function() {
       if (bubbleY < ah) {  //less than curve height, should it be <= ?
 
         popnBubbles.push({ x: bubbleX, y: bubbleY });
+//c += 1;
 
-        //need some tweaks to stop bubbles overflowing boundaries - remember ah is the curve height for bubbleX
-        drawit = true;
+       if (!dontDrawBubbles) {  //when doing skew or custom mu sigma calculations
+          //need some tweaks to stop bubbles overflowing boundaries - remember ah is the curve height for bubbleX
+          drawit = true;
 
-        let w = sampleMeanSize * 100/width;  //the number of real world pixels value for the radius of the sample 
-        //let xb, xa; //x before, x after  (in skew calc)
-        if (normal) {
-          if (bubbleY < 2)   drawit = false;
-          if (bubbleY > ah - sampleMeanSize - 2)  drawit = false;
-          if (bubbleX < minxpdf + w ) drawit = false;
-          if (bubbleX > maxxpdf - w ) drawit = false;
-        }
+          let w = sampleMeanSize * 100/width;  //the number of real world pixels value for the radius of the sample 
+          //let xb, xa; //x before, x after  (in skew calc)
+          if (normal) {
+            if (bubbleY < 2)   drawit = false;
+            if (bubbleY > ah - sampleMeanSize - 2)  drawit = false;
+            if (bubbleX < minxpdf + w ) drawit = false;
+            if (bubbleX > maxxpdf - w ) drawit = false;
+          }
 
-        if (rectangular) {
-          if (bubbleY < 2)   drawit = false;
-          if (bubbleY > ah - sampleMeanSize - 2)   drawit = false;
-          if (bubbleX < minxpdf + w) drawit = false;
-          if (bubbleX > maxxpdf - w) drawit = false;
-        }
+          if (rectangular) {
+            if (bubbleY < 2)   drawit = false;
+            if (bubbleY > ah - sampleMeanSize - 2)   drawit = false;
+            if (bubbleX < minxpdf + w) drawit = false;
+            if (bubbleX > maxxpdf - w) drawit = false;
+          }
 
-        if (skew) {
-          if (bubbleY < 2)   drawit = false;
-          if (bubbleY > ah - sampleMeanSize - 2)  drawit = false;
-          if (bubbleX < minxpdf + w ) drawit = false;
-          if (bubbleX > maxxpdf - w) drawit = false;
-        }
+          if (skew) {
+            if (bubbleY < 2)   drawit = false;
+            if (bubbleY > ah - sampleMeanSize - 2)  drawit = false;
+            if (bubbleX < minxpdf + w ) drawit = false;
+            if (bubbleX > maxxpdf - w) drawit = false;
+          }
 
-        if (custom) {
-          if (bubbleY < 2)   drawit = false;
-          if (bubbleY > ah - sampleMeanSize - 2)   drawit = false;
-          if (bubbleX < minxpdf + w) drawit = false;
-          if (bubbleX > maxxpdf - w) drawit = false;
-        }
+          if (custom) {
+            if (bubbleY < 2)   drawit = false;
+            if (bubbleY > ah - sampleMeanSize - 2)   drawit = false;
+            if (bubbleX < minxpdf + w) drawit = false;
+            if (bubbleX > maxxpdf - w) drawit = false;
+          }
 
-        if (drawit && !dontDrawBubbles) {
-          //if (!custom) {
+          if (drawit) {
+//d += 1;
             if (fillPopulation) svgP.append('circle').attr('class', 'popnbubble').attr('cx', x(bubbleX)).attr('cy', ypb(bubbleY) ).attr('r', sampleMeanSize).attr('visibility', 'visible');
             //if (fillPopulation) svgP.append('circle').attr('class', 'popnbubble').attr('cx', x(bubbleX)).attr('cy', ypb(bubbleY) ).attr('r', 1).attr('visibility', 'visible');
-          //}
+          }
+
         }
-
       }
-
     }
-    let q=1;
+//l(c + ' -> ' + d);
   }
 
   function showPopnBubbles() {
@@ -1969,10 +1950,6 @@ $(function() {
     if (custom) removeSDLines();  //because no pdf yet
     drawPopulationCurve();  //includes redrawing of mean and sd lines
 
-    //removePopnBubbles();
-    //if (fillPopulation) fillPopnBubbles();
-
-    //if (showSDLines) drawSDLines();
   }
 
   // #region  panels 

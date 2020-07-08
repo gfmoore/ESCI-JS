@@ -91,9 +91,10 @@ Start using version history now to record changes and fixes
 0.3.37    2020-07-07  Adjusted the height of normal.This involved qite a lot of re-scaling of normal and of skew. Skew sd now 15 rather than 20.
 0.3.38    2020-07-07  Review population curve filling with bubbles. Found some logic control errors. Fill not correct yet
 0.3.39    2020-07-08  Fixed bugs and played around with population bubbles quantity, settled for 20 x width for now.
-0.3.40
+0.3.40    2020-07-08  First stab at Panel 7 Capture of next mean
+0.3.41
 */
- let version = '0.3.39';
+ let version = '0.3.40';
  
 
 'use strict';
@@ -276,8 +277,10 @@ $(function() {
 
   let samples = [];             //the array of samples
   let id = 0;                   //use as an id for all the samplemeans and elements I create
+  let idnext = 0;               //for use in capture of next mean
 
   let ypos;                     //temp variable for y position of a sample mean
+  let yposs;
   
   let meanid;                   //used to remove moe wings when at bottom
 
@@ -348,6 +351,16 @@ $(function() {
   let drawingPDF = false;                   //mouse control
   let oldxm, oldym, xm, ym, mdown = false;  //mouse control
 
+  let oldxbar = 0;               //used for capture of next mean calculation
+  let oldpmoe = 0;
+  let oldsmoe = 0;
+
+  let $nocapturingnextmean;       //capture of next mean panel
+  let $pccapturingnextmean;
+  let nocapturingnextmeanP = 0;
+  let nocapturingnextmeanS = 0;
+  let pccapturingnextmean = 0;
+
   //#endregion
 
   
@@ -385,6 +398,10 @@ $(function() {
     //$fillPopulation.prop('checked', true);    
     //fillPopulation = true;
     //if (fillPopulation) fillPopnBubbles();
+
+    // $captureNextMean.prop('checked', true);
+    // captureNextMean = true;
+    // $('#capturenextmeangrid').show();
 
   //#endregion
 
@@ -1201,6 +1218,7 @@ $(function() {
           //tempted to put in a small delay here since can't see the sample mean hit the bottom axis as it's too fast
 
           ypos = parseInt($(this).attr('cy')) + 1; //move it 1 pixel at a time
+          yposs = ypos - droppingMeanGap;
 
           letDrop = false;
           if (showMeanHeap) {  //if the mean heap is visible look at the sample mean. Compare it with the height of the heap  frequency at that point
@@ -1247,18 +1265,28 @@ $(function() {
 
           //allow to hit the axis or top of heap before disappearing
           if (letDrop) {
-            $(this).attr('cy', ypos);  //move it and moe wings down 1 pixel
+            $(this).attr('cy', ypos);  //move it and moe wings and capture lines down 1 pixel
             d3.select('#pmoe'+meanid).attr('y1', ypos);  
             d3.select('#pmoe'+meanid).attr('y2', ypos); 
             d3.select('#smoe'+meanid).attr('y1', ypos);
             d3.select('#smoe'+meanid).attr('y2', ypos); 
+
+            //move capture of next mean
+            d3.select('#pcapture'+meanid).attr('y1', ypos);
+            d3.select('#pcapture'+meanid).attr('y2', yposs); 
+
+            d3.select('#scapture'+meanid).attr('y1', ypos);
+            d3.select('#scapture'+meanid).attr('y2', yposs); 
           }
-          else {  // gone too far remove it and the moe wings
+          else {  // gone too far remove it and the moe wings and any capturelines
             let pmissed = $(this).attr('pmissed');  //for use in colouring the heap, text value 'true' 'false'
             let smissed = $(this).attr('smissed');
             $(this).remove();
             d3.select('#pmoe'+meanid).remove();  
             d3.select('#smoe'+meanid).remove();
+
+            d3.select('#pcapture'+meanid).remove();  
+            d3.select('#scapture'+meanid).remove();
 
             if (showMeanHeap) addToHeap(fxbar, pmissed, smissed); 
             break;  //no point in moving anymore
@@ -1266,7 +1294,7 @@ $(function() {
 
         }
         //break to here
-        let a = 2;
+
       })
     }
     else {
@@ -1293,6 +1321,40 @@ $(function() {
 
     //add the blob on top  -- note the attr for xbar, with svg can add any attribute you want as long as it doesn't conflict. The 'missed' attribute will be used to try and fill the inside red when showPmoe showSmoe selected or back to green when mot selected
     svgS.append('circle').attr('class', 'smean').attr('id', 'smean' + id).attr('cx', x(xbar)).attr('cy', ypos).attr('r', sampleMeanSize).attr('fill', lightGreen).attr('visibility', 'hidden').attr('xbar', xbar).attr('xbar', xbar).attr('sigma', sigma).attr('ssd', ssd).attr('pmissed', 'false').attr('smissed', 'false');
+
+    //capture of next mean. Shall I add a line
+    //only if there are at least two samples
+    if (N >= 2) {
+      nocapturingnextmeanP += 1;
+      nocapturingnextmeanS += 1;
+
+      idnext = id - 1;  //the previous one is lower
+      //I know the current xbar, but need the xbar and moe of the previous mean
+      if ( oldxbar + oldpmoe < xbar ) {
+        svgS.append('line').attr('class', 'pcaptureline').attr('id', 'pcapture' + +idnext).attr('x1', x(oldxbar + oldpmoe)).attr('y1', ypos + droppingMeanGap).attr('x2', x(xbar)).attr('y2', ypos).attr('visibility', 'hidden');
+        nocapturingnextmeanP -= 1;
+      }
+      if ( oldxbar - oldpmoe > xbar ) {
+        svgS.append('line').attr('class', 'pcaptureline').attr('id', 'pcapture' + +idnext).attr('x1', x(oldxbar - oldpmoe)).attr('y1', ypos + droppingMeanGap).attr('x2', x(xbar)).attr('y2', ypos).attr('visibility', 'hidden');
+        nocapturingnextmeanP -= 1;
+      }
+      
+      if ( oldxbar + oldsmoe < xbar ) {
+        svgS.append('line').attr('class', 'scaptureline').attr('id', 'scapture' + +idnext).attr('x1', x(oldxbar + oldsmoe)).attr('y1', ypos + droppingMeanGap).attr('x2', x(xbar)).attr('y2', ypos).attr('visibility', 'hidden');
+        nocapturingnextmeanS -= 1;
+      }
+      if ( oldxbar - oldsmoe > xbar ) {
+        svgS.append('line').attr('class', 'scaptureline').attr('id', 'scapture' + +idnext).attr('x1', x(oldxbar - oldsmoe)).attr('y1', ypos + droppingMeanGap).attr('x2', x(xbar)).attr('y2', ypos).attr('visibility', 'hidden');
+        nocapturingnextmeanS -= 1;
+      }
+
+      showCapturelines();
+      displayCaptureOfNextMeanStats();
+    }
+
+    oldxbar = xbar;  //remember the current xbar
+    oldpmoe = pmoe;
+    oldsmoe = smoe;
 
     //just display the currently created sample appearance
     displaySampleAppearance(id);
@@ -1640,6 +1702,35 @@ $(function() {
     })
   }
 
+  function showCapturelines() {
+    hideCapturelines();  
+    if (!captureNextMean) return;
+
+    if (showPmoe && showMoe) {
+      d3.selectAll('.pcaptureline').attr('visibility', 'visible');
+      d3.selectAll('.scaptureline').attr('visibility', 'hidden');
+    }
+    if (showSmoe && showMoe) {
+      d3.selectAll('.pcaptureline').attr('visibility', 'hidden');
+      d3.selectAll('.scaptureline').attr('visibility', 'visible');
+    }
+  }
+
+  function hideCapturelines() {
+    d3.selectAll('.pcaptureline').attr('visibility', 'hidden');
+    d3.selectAll('.scaptureline').attr('visibility', 'hidden');
+  }
+
+  function displayCaptureOfNextMeanStats() {
+    if (captureNextMean && showMoe && showPmoe) {
+      $nocapturingnextmean.text( parseInt(nocapturingnextmeanP) );
+      $pccapturingnextmean.text( parseFloat(nocapturingnextmeanP / (N-1) * 100).toFixed(1) +'%');
+    }
+    if (showMoe && showSmoe) {
+      $nocapturingnextmean.text( parseInt(nocapturingnextmeanS) );
+      $pccapturingnextmean.text( parseFloat(nocapturingnextmeanS / (N-1) * 100).toFixed(1) +'%');
+    }
+  }
 
   /*------------------------------------------do the heap------------------------------------------*/
   //when sample mean gets far enough, add to the heap display   -- from takeSample()
@@ -1950,6 +2041,12 @@ $(function() {
     if (custom) removeSDLines();  //because no pdf yet
     drawPopulationCurve();  //includes redrawing of mean and sd lines
 
+    oldxbar = 0;
+    oldpmoe = 0;
+    oldsmoe = 0;
+    clearCapturelines();
+    resetNumberCapturingNextMean();
+
   }
 
   // #region  panels 
@@ -2029,6 +2126,18 @@ $(function() {
 
   }
 
+  function clearCapturelines() {
+    d3.selectAll('.pcaptureline').remove();
+    d3.selectAll('.scaptureline').remove();
+  }
+
+  function resetNumberCapturingNextMean() {
+    nocapturingnextmeanP = 0;
+    nocapturingnextmeanS = 0;
+    pccapturingnextmean = 0;
+    $nocapturingnextmean.text(0);
+    $pccapturingnextmean.text('0.0%');
+  }
 
   /*-------------------------------------------elements and values---------------------------------*/
 
@@ -2328,6 +2437,7 @@ $(function() {
       captureOfMu = false;
     }
     //clearAll();
+    showCapturelines();
     displaySampleAppearanceAll();
     recalculateSamplemeanStatistics(); //which turns on display of captured stats
     recolourHeap();
@@ -2337,6 +2447,8 @@ $(function() {
   $showPmoe.on('change', function() {
     showPmoe = $showPmoe.is(':checked');
     showSmoe = $showSmoe.is(':checked');
+    showCapturelines();
+    displayCaptureOfNextMeanStats();
     displaySampleAppearanceAll();
     recalculateSamplemeanStatistics();
     recolourHeap();
@@ -2346,6 +2458,8 @@ $(function() {
   $showSmoe.on('change', function() {
     showPmoe = $showPmoe.is(':checked');
     showSmoe = $showSmoe.is(':checked');
+    showCapturelines();
+    displayCaptureOfNextMeanStats();
     displaySampleAppearanceAll();
     recalculateSamplemeanStatistics();
     recolourHeap();
@@ -2426,9 +2540,11 @@ $(function() {
     captureOfMu = $captureOfMu.is(':checked');
     if (!showCaptureMuLine) {
       $captureOfMu.prop('checked', false);
+      showCapturelines();
     }
     else {
       //clearAll();
+      hideCaptureLines();
       displaySampleAppearanceAll();
       recalculateSamplemeanStatistics(); //which turns on display of captured stats
       recolourHeap();
@@ -2440,9 +2556,15 @@ $(function() {
     captureNextMean = $captureNextMean.is(':checked');
     if (captureNextMean) {
       $('#capturenextmeangrid').show();
+      //showCapturelines();
+      stop();
+      clearAll();
     }
     else {
       $('#capturenextmeangrid').hide();
+      //hideCapturelines();
+      stop();
+      clearAll();
     }
   })
   //#endregion
@@ -2508,6 +2630,9 @@ $(function() {
     $showCaptureMuLine    = $('#capturemuline');
 
     $captureNextMean      = $('#capturenextmean');
+
+    $nocapturingnextmean  = $('#nocapturingnextmean');
+    $pccapturingnextmean  = $('#pccapturingnextmean');
 
     $tooltipsonoff        = $('#tooltipsonoff');
   }

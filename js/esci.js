@@ -93,8 +93,10 @@ Start using version history now to record changes and fixes
 0.3.39    2020-07-08  Fixed bugs and played around with population bubbles quantity, settled for 20 x width for now.
 0.3.40    2020-07-08  First stab at Panel 7 Capture of next mean
 0.3.41    2020-07-09  Added link back to newstatistics (at bottom) and changed title to esci-web. Dance of the p-values!!!
+0.3.42    2020-07-09  Oops forgot to check colours for dance of the p-values.
+0.3.43
 */
- let version = '0.3.41';
+ let version = '0.3.42';
  
 
 'use strict';
@@ -370,10 +372,11 @@ $(function() {
   let pv;                         //p-value calculations
   let z, t, pvz, pvt;
 
-  let audiolow      = new Audio('./audio/trom1.wav');
-  let audiomiddle   = new Audio('./audio/clarry1.wav');
-  let audiohigh     = new Audio('./audio/clarry2.wav');
-  let audioveryhigh = new Audio('./audio/trumpet1.wav');
+  let audiolow        = new Audio('./audio/trom1.wav');
+  let audiolowmiddle  = new Audio('./audio/trom2.wav');
+  let audiomiddle     = new Audio('./audio/clarry1.wav');
+  let audiomiddlehigh = new Audio('./audio/clarry2.wav');
+  let audiohigh   = new Audio('./audio/trumpet1.wav');
 
   //#endregion
 
@@ -1383,20 +1386,24 @@ $(function() {
 
     //add p-value rectangle
     calcpvalue();
-    if (pvz < 0.01) {
+    if (pvz < 0.005) {
       svgS.append('rect').attr('class', 'pvalue').attr('id', 'pvalue' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 6.5  )).attr('height', droppingMeanGap-2).attr('fill', 'red').attr('visibility', 'hidden');
-      if (pvaluesound) audioveryhigh.play();
-    }
-    if (pvz >= 0.01 && pvz < 0.05) {
-      svgS.append('rect').attr('class', 'pvalue').attr('id', 'pvalue' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 6.5  )).attr('height', droppingMeanGap-2).attr('fill', 'orange').attr('visibility', 'hidden');
       if (pvaluesound) audiohigh.play();
     }
-    if (pvz >= 0.05 && pvz < 0.1) {
-      svgS.append('rect').attr('class', 'pvalue').attr('id', 'pvalue' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 6.5  )).attr('height', droppingMeanGap-2).attr('fill', 'yellow').attr('visibility', 'hidden');
+    if (pvz >= 0.005 && pvz < 0.01) {
+      svgS.append('rect').attr('class', 'pvalue').attr('id', 'pvalue' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 6.5  )).attr('height', droppingMeanGap-2).attr('fill', 'orange').attr('visibility', 'hidden');
+      if (pvaluesound) audiomiddlehigh.play();
+    }
+    if (pvz >= 0.01 && pvz < 0.05) {
+      svgS.append('rect').attr('class', 'pvalue').attr('id', 'pvalue' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 6.5  )).attr('height', droppingMeanGap-2).attr('fill', 'lemonchiffon').attr('visibility', 'hidden');
       if (pvaluesound) audiomiddle.play();
     }
+    if (pvz >= 0.05 && pvz < 0.1) {
+      svgS.append('rect').attr('class', 'pvalue').attr('id', 'pvalue' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 6.5  )).attr('height', droppingMeanGap-2).attr('fill', 'lightskyblue').attr('visibility', 'hidden');
+      if (pvaluesound) audiolowmiddle.play();
+    }
     if (pvz >= 0.1) {
-      svgS.append('rect').attr('class', 'pvalue').attr('id', 'pvalue' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 6.5  )).attr('height', droppingMeanGap-2).attr('fill', 'lightgreen').attr('visibility', 'hidden');
+      svgS.append('rect').attr('class', 'pvalue').attr('id', 'pvalue' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 6.5  )).attr('height', droppingMeanGap-2).attr('fill', 'dodgerblue').attr('visibility', 'hidden');
       if (pvaluesound) audiolow.play();
     }
 

@@ -1,4 +1,4 @@
-# ESCI-JS
+# esci-web
 
 This is a JavaScript implementation of the ESCI software (Exploratory Software for Confidence Intervals) that accompanies: 
 
@@ -8,7 +8,7 @@ by Geoff Cumming and Robert Calin-Jageman
 https://thenewstatistics.com/
 
 
-## Current version 0.3.41  
+## Current version 0.3.42  
 
 You can see which version by ~hovering~/clicking on the logo.
 

@@ -32,7 +32,7 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
 0.3.28    2020-06-30  Increased width of left hand panel for mobiles.
 0.3.32    2020-07-03  Changed colours of samples and sd/mean lines
 0.3.40    2020-07-08  Add css for capture of next mean line stroke
-0.3.41
+0.3.41    2020-07-09  Add css for footer link, for p-values panel
 */
 
 /*default fon size*/
@@ -113,7 +113,9 @@ span {
 /*-------------------------------------------------The left hand control side---------------------------------------------------------------*/
 
 #control {
-  border: 1px solid black; 
+  border: 2px solid black; 
+  display: grid;
+  grid-template-rows: auto 1fr auto;
 }
 
 /*----------------------------------------------------header section------------------------------------------------------------------*/
@@ -133,8 +135,9 @@ span {
 } 
 
 #subheading {
-  padding: 0.3rem;
-  font-size: 2.2rem;
+  margin-left: 1.0rem;
+  padding: 0.4rem;
+  font-size: 2.0rem;
 }
 
 #tooltipsonoff {
@@ -410,6 +413,40 @@ span {
   color: firebrick;
 }
 
+/*---------------------------------------------------9. dance of the p-values-----------------------------------------------*/
+
+#pvaluesection {
+  border: 1px solid black;
+  background-color: #ff9999f6;
+  padding: 0.3rem;
+  display: grid;
+  grid-template-columns: 20rem auto;
+}
+
+
+
+/*--------------------------------------------------Footer-------------------------------------------------------------------*/
+
+#footer {
+  float:left;
+  bottom: 5px;
+
+  border: 1px solid black;
+  color: #0c43f8;
+  background-color: #e8eef0e3;
+  padding: 0.3rem;
+  clear: both;
+}
+
+#footer:hover {
+  background-color: palegreen;
+}
+
+#footer:active {
+  background-color: green;
+}
+
+
 /*---------------------------------------------------Filler-------------------------------------------------------------------*/
 
 #filler {
@@ -520,6 +557,15 @@ span {
 .scaptureline {
   stroke-width: 4px;
   stroke: magenta;
+}
+
+.pvalue {
+  stroke-width: 0.5px;
+  stroke:black;
+}
+
+.pvtext {
+  font-size: 1.0rem;
 }
 
 /*-----------------------------------------------------------------------------------------------------------------------------*/

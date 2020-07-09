@@ -92,9 +92,9 @@ Start using version history now to record changes and fixes
 0.3.38    2020-07-07  Review population curve filling with bubbles. Found some logic control errors. Fill not correct yet
 0.3.39    2020-07-08  Fixed bugs and played around with population bubbles quantity, settled for 20 x width for now.
 0.3.40    2020-07-08  First stab at Panel 7 Capture of next mean
-0.3.41
+0.3.41    2020-07-09  Added link back to newstatistics (at bottom) and changed title to esci-web. Dance of the p-values!!!
 */
- let version = '0.3.40';
+ let version = '0.3.41';
  
 
 'use strict';
@@ -361,6 +361,20 @@ $(function() {
   let nocapturingnextmeanS = 0;
   let pccapturingnextmean = 0;
 
+  let $pvalue;                    //show the pvalues dance
+  let pvalue;
+
+  let $pvaluesound;               //p-value sounds
+  let pvaluesound;
+
+  let pv;                         //p-value calculations
+  let z, t, pvz, pvt;
+
+  let audiolow      = new Audio('./audio/trom1.wav');
+  let audiomiddle   = new Audio('./audio/clarry1.wav');
+  let audiohigh     = new Audio('./audio/clarry2.wav');
+  let audioveryhigh = new Audio('./audio/trumpet1.wav');
+
   //#endregion
 
   
@@ -403,11 +417,15 @@ $(function() {
     // captureNextMean = true;
     // $('#capturenextmeangrid').show();
 
+    // $pvalue.prop('checked', true);
+    // pvalue = true;
+    // $('#pvaluesoundblock').show();
+
   //#endregion
 
   function initialise() {
 
-    $('#mainheading').text('ESCI-JS'); //was D3
+    $('#mainheading').text('esci-web'); //was D3
     getInterfaceElements()     //get the jquery references to items on the user interface
     getInterfaceValues();      //get current values of all checkboxes, radio-buttons and text-boxes etc.
 
@@ -429,6 +447,8 @@ $(function() {
     customsigma = NaN;
 
     $('#capturenextmeangrid').hide();
+
+    $('#pvaluesoundblock').hide();
 
   }
 
@@ -1277,6 +1297,12 @@ $(function() {
 
             d3.select('#scapture'+meanid).attr('y1', ypos);
             d3.select('#scapture'+meanid).attr('y2', yposs); 
+
+            //move p-value
+            d3.select('#pvalue'+meanid).attr('y', ypos-6);
+            d3.select('#pvtext'+meanid).attr('y', ypos+4);
+
+            let qq=1;
           }
           else {  // gone too far remove it and the moe wings and any capturelines
             let pmissed = $(this).attr('pmissed');  //for use in colouring the heap, text value 'true' 'false'
@@ -1287,6 +1313,9 @@ $(function() {
 
             d3.select('#pcapture'+meanid).remove();  
             d3.select('#scapture'+meanid).remove();
+
+            d3.select('#pvalue'+meanid).remove();
+            d3.select('#pvtext'+meanid).remove();
 
             if (showMeanHeap) addToHeap(fxbar, pmissed, smissed); 
             break;  //no point in moving anymore
@@ -1352,6 +1381,30 @@ $(function() {
       displayCaptureOfNextMeanStats();
     }
 
+    //add p-value rectangle
+    calcpvalue();
+    if (pvz < 0.01) {
+      svgS.append('rect').attr('class', 'pvalue').attr('id', 'pvalue' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 6.5  )).attr('height', droppingMeanGap-2).attr('fill', 'red').attr('visibility', 'hidden');
+      if (pvaluesound) audioveryhigh.play();
+    }
+    if (pvz >= 0.01 && pvz < 0.05) {
+      svgS.append('rect').attr('class', 'pvalue').attr('id', 'pvalue' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 6.5  )).attr('height', droppingMeanGap-2).attr('fill', 'orange').attr('visibility', 'hidden');
+      if (pvaluesound) audiohigh.play();
+    }
+    if (pvz >= 0.05 && pvz < 0.1) {
+      svgS.append('rect').attr('class', 'pvalue').attr('id', 'pvalue' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 6.5  )).attr('height', droppingMeanGap-2).attr('fill', 'yellow').attr('visibility', 'hidden');
+      if (pvaluesound) audiomiddle.play();
+    }
+    if (pvz >= 0.1) {
+      svgS.append('rect').attr('class', 'pvalue').attr('id', 'pvalue' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 6.5  )).attr('height', droppingMeanGap-2).attr('fill', 'lightgreen').attr('visibility', 'hidden');
+      if (pvaluesound) audiolow.play();
+    }
+
+    //svgS.append('rect').attr('class', 'pvalue').attr('id', 'pvalue' + +id).attr('x', x( 2 )).attr('y', ypos).attr('width', x( 7  )).attr('height', droppingMeanGap-2).attr('fill', 'yellow').attr('visibility', 'hidden');
+    svgS.append('text').text(pvz.toFixed(3)).attr('class', 'pvtext').attr('id', 'pvtext' + +id).attr('x', x( 1 )).attr('y', ypos+4).attr('fill', 'black').attr('visibility', 'hidden');
+    showpvalues();
+
+
     oldxbar = xbar;  //remember the current xbar
     oldpmoe = pmoe;
     oldsmoe = smoe;
@@ -1362,8 +1415,18 @@ $(function() {
     //just display new captured stats
     displayCapturedRate();
 
+
     //increment the id value
     id += 1;
+  }
+
+
+  function calcpvalue() {
+    z = Math.abs((xbar-mu)/(sigma/Math.sqrt(n)));
+    t = Math.abs((xbar-mu)/(ssd/Math.sqrt(n)));
+
+    pvz = (1-jStat.normal.cdf(z, 0, 1)) * 2; //for 2-tailed
+    pvt = (1-jStat.studentt.cdf(t, n-1)) * 2;
   }
 
   function displaySampleAppearanceAll() {
@@ -1664,6 +1727,12 @@ $(function() {
     }
   }
 
+  //display p-value in the p-value block
+  function displaypvalue() {
+    if (pvalue) {
+
+    }
+  }
 
   //From change CI % - alpha, ,showPmoe, showSmoe, (showMoe), if change the CI % need to recalculate the same taken and missed to be what's displayed, as previous sample are removed.
   //variables to check change $N - the number of samples taken - should capturedArray.length()
@@ -1730,6 +1799,18 @@ $(function() {
       $nocapturingnextmean.text( parseInt(nocapturingnextmeanS) );
       $pccapturingnextmean.text( parseFloat(nocapturingnextmeanS / (N-1) * 100).toFixed(1) +'%');
     }
+  }
+
+  function showpvalues() {
+    if (pvalue) {
+      d3.selectAll('.pvalue').attr('visibility', 'visible');
+      d3.selectAll('.pvtext').attr('visibility', 'visible');
+    }
+  }
+
+  function hidepvalues() {
+    d3.selectAll('.pvalue').attr('visibility', 'hidden');
+    d3.selectAll('.pvtext').attr('visibility', 'hidden');
   }
 
   /*------------------------------------------do the heap------------------------------------------*/
@@ -2047,6 +2128,7 @@ $(function() {
     clearCapturelines();
     resetNumberCapturingNextMean();
 
+    clearpvalues();
   }
 
   // #region  panels 
@@ -2137,6 +2219,11 @@ $(function() {
     pccapturingnextmean = 0;
     $nocapturingnextmean.text(0);
     $pccapturingnextmean.text('0.0%');
+  }
+
+  function clearpvalues() {
+    d3.selectAll('.pvalue').remove();
+    d3.selectAll('.pvtext').remove();
   }
 
   /*-------------------------------------------elements and values---------------------------------*/
@@ -2544,7 +2631,7 @@ $(function() {
     }
     else {
       //clearAll();
-      hideCaptureLines();
+      hideCapturelines();
       displaySampleAppearanceAll();
       recalculateSamplemeanStatistics(); //which turns on display of captured stats
       recolourHeap();
@@ -2567,6 +2654,31 @@ $(function() {
       clearAll();
     }
   })
+
+
+  //show the p-values
+  $pvalue.on('change', function() {
+    pvalue = $pvalue.is(':checked');
+    if (pvalue) {
+      $('#pvaluesoundblock').show();
+      showpvalues();
+    }
+    else {
+      $('#pvaluesoundblock').hide();
+      hidepvalues();
+    }
+  })
+
+  //p-value sound
+  $pvaluesound.on('change', function() {
+    pvaluesound = $pvaluesound.is(':checked');
+  })
+
+
+  $('#footer').on('click', function() {
+    window.location.href = "https://thenewstatistics.com/";
+  })
+
   //#endregion
 
    //get values of all checkboxes, radio-buttons and text-boxes etc.
@@ -2634,6 +2746,9 @@ $(function() {
     $nocapturingnextmean  = $('#nocapturingnextmean');
     $pccapturingnextmean  = $('#pccapturingnextmean');
 
+    $pvalue               = $('#pvalue');
+    $pvaluesound          = $('#pvaluesound');
+
     $tooltipsonoff        = $('#tooltipsonoff');
   }
 
@@ -2685,6 +2800,9 @@ $(function() {
     showCaptureMuLine     = $showCaptureMuLine.is(':checked');
 
     captureNextMean      = $captureNextMean.is('checked');
+
+    pvalue               = $pvalue.is(':checked');
+    pvaluesound          = $pvaluesound.is(':checked');
 
     //tooltipsonoff        = $tooltipsonoff.is('checked');
 

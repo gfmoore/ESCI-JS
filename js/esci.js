@@ -93,10 +93,10 @@ Start using version history now to record changes and fixes
 0.3.39    2020-07-08  Fixed bugs and played around with population bubbles quantity, settled for 20 x width for now.
 0.3.40    2020-07-08  First stab at Panel 7 Capture of next mean
 0.3.41    2020-07-09  Added link back to newstatistics (at bottom) and changed title to esci-web. Dance of the p-values!!!
-0.3.42    2020-07-09  Oops forgot to check colours for dance of the p-values.
-0.3.43
+0.3.42    2020-07-09  Oops forgot to check colours for dance of the p-values and added extra level.
+0.3.43    2020-07-10  Various fixes/changes made.
 */
- let version = '0.3.42';
+ let version = '0.3.43';
  
 
 'use strict';
@@ -383,38 +383,44 @@ $(function() {
   
   initialise();
 
-//TESTING
-  //#region TESTING Set some checkboxes for when testing.
-    // $showPopulationCurve.prop('checked', true);
-    // showPopulationCurve = $showPopulationCurve.is(':checked');
-    // if (showPopulationCurve) drawPopulationCurve(); //else removePopulationCurve();
+  //#region Initial setup of checkboxes
+  $showPopulationCurve.prop('checked', true);
+  showPopulationCurve = $showPopulationCurve.is(':checked');
+  if (showPopulationCurve) drawPopulationCurve(); //else removePopulationCurve();
 
-    // $showSDLines.prop('checked', true);  
+  $fillPopulation.prop('checked', true);    
+  fillPopulation = true;
+  if (fillPopulation) fillPopnBubbles();
+
+  $showSamplePoints.prop('checked', true);
+  showSamplePoints = true;
+
+  $showSampleMeans.prop('checked', true);
+  showSampleMeans = true;
+  
+  $dropSampleMeans.prop('checked', true);
+  dropSampleMeans = true;
+
+  $showMeanHeap.prop('checked', true);
+  showMeanHeap = true;
+
+  $showCaptureMuLine.prop('checked', true);
+  showCaptureMuLine = true;
+  drawMuLine();
+  //#endregion
+
+
+//TESTING
+  //#region TESTING Set some checkboxes for when testing. 
+   // $showSDLines.prop('checked', true);  
     // showSDLines = true;
     // drawSDLines();
-
-
-    // $showSamplePoints.prop('checked', true);
-    // showSamplePoints = true;
-
-    // $showSampleMeans.prop('checked', true);
-    // showSampleMeans = true;
-    
-    // $dropSampleMeans.prop('checked', true);
-    // dropSampleMeans = true;
 
     // $speed.val(0);
     // speed = 0;
 
-    // $showMeanHeap.prop('checked', true);
-    // showMeanHeap = true;
-
     // $('#samplesselected option[value=2]').prop('selected', true);
     // n = parseInt( $('#samplesselected option:selected').val() );
-
-    //$fillPopulation.prop('checked', true);    
-    //fillPopulation = true;
-    //if (fillPopulation) fillPopnBubbles();
 
     // $captureNextMean.prop('checked', true);
     // captureNextMean = true;
@@ -579,6 +585,8 @@ $(function() {
   function drawNormalCurve() {
     pdf = [];
 
+    enableMuSigmaSliders();
+
     //reinstate original mu sigma only if coming from another distribution
     if (changedDistribution) {
       setMuSigmaSliderVal(normalmu, normalsigma);
@@ -612,6 +620,9 @@ $(function() {
   function drawRectangularCurve() {
     let l, h, c, t;
 
+    enableMuSigmaSliders();
+
+
     pdf = [];
 
     if (changedDistribution) {
@@ -624,7 +635,7 @@ $(function() {
     h = mu+sigma * Math.sqrt(3);
 
     c = 10 * heightP / sigma
-    if (c > heightP - 20) c = heightP - 20;  //limit height of rectangle for display
+    if (c > heightP + 15) c = heightP + 15;  //limit height of rectangle for display
     
 
     //actually I only need 6 points in the pdf!! but its so fast...
@@ -640,6 +651,9 @@ $(function() {
 
   function drawSkewCurve() {
     pdf = [];
+
+    disableMuSigmaSliders();
+
     skewAmount = parseFloat($skewAmount.val());
 
     if (changedDistribution) {
@@ -729,6 +743,9 @@ $(function() {
 
   function drawCustomCurve() {
     //#region draw the custom curve
+
+    disableMuSigmaSliders();
+
     if (changedDistribution) {
       setMuSigmaSliderVal(custommu, customsigma);
       mu = normalmu;
@@ -941,6 +958,20 @@ $(function() {
     }
 
     changedDistribution = false; 
+  }
+
+  function enableMuSigmaSliders() {
+    $muslider.prop( "disabled", false );
+    $mu.prop( "disabled", false );
+    $sigmaslider.prop( "disabled", false );
+    $sigma.prop( "disabled", false );
+  }
+
+  function disableMuSigmaSliders() {
+    $muslider.prop( "disabled", true );
+    $mu.prop( "disabled", true );
+    $sigmaslider.prop( "disabled", true );
+    $sigma.prop( "disabled", true );
   }
 
 
@@ -2673,6 +2704,8 @@ $(function() {
     else {
       $('#pvaluesoundblock').hide();
       hidepvalues();
+      $pvaluesound.prop('checked', false);
+      pvaluesound = false;
     }
   })
 

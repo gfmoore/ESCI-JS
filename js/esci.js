@@ -95,8 +95,9 @@ Start using version history now to record changes and fixes
 0.3.41    2020-07-09  Added link back to newstatistics (at bottom) and changed title to esci-web. Dance of the p-values!!!
 0.3.42    2020-07-09  Oops forgot to check colours for dance of the p-values and added extra level.
 0.3.43    2020-07-10  Various fixes/changes made.
+0.3.44    
 */
- let version = '0.3.43';
+ let version = '0.3.44';
  
 
 'use strict';

@@ -98,10 +98,11 @@ Start using version history now to record changes and fixes
 0.3.44    2020-07-11  Fixed bug with sd lines not working when fill on - needed to recalculate mu sigma at different point
                       Other bug fixes
 0.3.45    2020-07-11  CI#19 Change in mu, sigma when turning fill on/off for skew, made sure mu sigma displayed as int or to 2dp.
-0.3.46
+0.3.46    2020-07-11  CI#19 New algorithm for fill population curve (bubbles)
+0.3.47
 
 */
- let version = '0.3.45';
+ let version = '0.3.46';
  
 
 'use strict';
@@ -649,13 +650,23 @@ $(function() {
     if (c > heightP + 15) c = heightP + 15;  //limit height of rectangle for display
     
 
-    //actually I only need 6 points in the pdf!! but its so fast...
-    pdf.push( {x: 0, y: 0} ); 
-    pdf.push( {x: l, y: 0} );
-    pdf.push( {x: l, y: c} );
-    pdf.push( {x: h, y: c} );
-    pdf.push( {x: h, y: 0} );
-    pdf.push( {x:100, y: 0} );
+    // //actually I only need 6 points in the pdf!! but its so fast...
+    // pdf.push( {x: 0, y: 0} ); 
+    // pdf.push( {x: l, y: 0} );
+    // pdf.push( {x: l, y: c} );
+    // pdf.push( {x: h, y: c} );
+    // pdf.push( {x: h, y: 0} );
+    // pdf.push( {x:100, y: 0} );
+
+    //No I actually need lots of pdf points so that fillPopnBubbles will work
+    for (let x = 0; x < 100; x += 0.1) { 
+      if (x < l) pdf.push( {x: x, y: 0} ); 
+      else if (x > h ) pdf.push( {x: x, y: 0} );
+      else pdf.push( {x: x, y: c} );
+    }  
+    //get the vertical lines
+    // pdf.push( {x: l, y: 0} );
+    // pdf.push( {x: h, y: 0} );
 
     drawPDF();
   }
@@ -1141,49 +1152,107 @@ $(function() {
 
     //scale Y for fillpopulation (bubbles)
     ypb = d3.scaleLinear().domain([ 0, pdfDisplayAreaHeight ]).range([heightP, 20]);  
+    
+    //scale sampleMeanSize to real world pdf coords
 
-    //go through bubbles array and draw them
-    popnBubbles.forEach(function(v) {
+    let bx, by;
+    let bxb, bxa;
+    let px, py;
+    let d;
+    let sf = 0;  //tweak;
+    //let s2 = (sampleMeanSize/width * 100 + sf) * (sampleMeanSize/heightP * pdfDisplayAreaHeight + sf);
+    let s2 = sampleMeanSize * sampleMeanSize;
+    let foundOne;
 
+    let l,h, c;
+
+    //for rectangular
+    if (rectangular) {
+      l = x(mu-sigma * Math.sqrt(3));
+      h = x(mu+sigma * Math.sqrt(3));
+
+      c = 10 * heightP / sigma;
+      if (c > heightP + 15) c = heightP + 15; 
+    }
+    //for custom 
+    //find where pdf ceases to be 0 from left and where it is o to the right.
+    if (custom) {
+      let left = true;
+      l = 0; h = 0;
+      for (let p = 0; p < pdf.length; p += 1) {
+        if (left) {
+          if (pdf[p].y === 0) {
+            l = pdf[p].x;
+          }
+          else {
+            left = false;
+          }
+        }
+        else {
+          if (pdf[p].y === 0) {
+            h = pdf[p].x;
+            break;
+          }
+          else {
+
+          }
+        }
+      }
+    }
+
+    //go through bubbles array. Is the distance of the curve point  in pdf from bubble center smaller than radius of bubble? If so don't draw it
+
+    for (let b = 0; b < popnBubbles.length; b += 1) {
       drawit = true;
+      foundOne = false;
+      bx = x(popnBubbles[b].x); //in pixels now
+      by = ypb(popnBubbles[b].y);
+      bxa = bx - sampleMeanSize;
+      bxb = bx + sampleMeanSize;
 
-      bubbleX = v.x;
-      bubbleY = v.y;
+      //this is looking at bubbles and pdf in real world coords, not pixels
+      if (normal || skew || custom) {
+        for (let p = 0; p < pdf.length; p += 1) {
+          px = x(pdf[p].x);  //in pixels
+          py = ypb(pdf[p].y);  //in pixels
 
-      // let w = sampleMeanSize * 100/width;  //the number of real world pixels value for the radius of the sample 
-      // //let xb, xa; //x before, x after  (in skew calc)
-      // if (normal) {
-      //   if (bubbleY < 2)   drawit = false;
-      //   if (bubbleY > ah - sampleMeanSize - 2)  drawit = false;
-      //   if (bubbleX < minxpdf + w ) drawit = false;
-      //   if (bubbleX > maxxpdf - w ) drawit = false;
-      // }
+          if (px >= bxa && px <= bxb) {
+            foundOne = true;
+            d = ((bx - px) * (bx - px)) + ((by - py) * (by - py));
+            if (d < s2) {
+              drawit = false;
+              break;
+            }
+          }
 
-      // if (rectangular) {
-      //   if (bubbleY < 2)   drawit = false;
-      //   if (bubbleY > ah - sampleMeanSize - 2)   drawit = false;
-      //   if (bubbleX < minxpdf + w) drawit = false;
-      //   if (bubbleX > maxxpdf - w) drawit = false;
-      // }
+          if (!drawit) break;
+        }
+        if (!foundOne) drawit = false;
+      }
 
-      // if (skew) {
-      //   if (bubbleY < 2) drawit = false;
-      //   if (bubbleY > ah - sampleMeanSize - 2)  drawit = false;
-      //   if (bubbleX < minxpdf + w ) drawit = false;
-      //   if (bubbleX > maxxpdf - w) drawit = false;
-      // }
+      //this is looking at left and righ in pixels (this is a tweak for vertical sides)
+      if (custom) {
+        if (popnBubbles[b].x - 0.5 < l) drawit = false;
+        if (popnBubbles[b].x + 0.5 > h) drawit = false;
+      }
 
-      // if (custom) {
-      //   if (bubbleY < 2)   drawit = false;
-      //   if (bubbleY > ah - sampleMeanSize - 2)   drawit = false;
-      //   if (bubbleX < minxpdf + w) drawit = false;
-      //   if (bubbleX > maxxpdf - w) drawit = false;
-      // }
+      //this is looking at left, right and top in pixels
+      if (rectangular) {
+        if (bx - sampleMeanSize < l) drawit = false;
+        if (bx + sampleMeanSize > h) drawit = false; 
+        if (popnBubbles[b].y + sampleMeanSize > c) drawit = false;
+      }
 
       if (drawit) {
-        if (fillPopulation) svgP.append('circle').attr('class', 'popnbubble').attr('cx', x(bubbleX)).attr('cy', ypb(bubbleY) ).attr('r', sampleMeanSize).attr('visibility', 'visible');
+        //if (fillPopulation) svgP.append('circle').attr('class', 'popnbubble').attr('cx', x(bx)).attr('cy', ypb(by) ).attr('r', sampleMeanSize).attr('visibility', 'visible');
+        if (fillPopulation) svgP.append('circle').attr('class', 'popnbubble').attr('cx', bx).attr('cy', by).attr('r', sampleMeanSize).attr('fill', 'lightyellow').attr('stroke','blue'). attr('stroke-width', 0.5).attr('visibility', 'visible');
       }
-    })
+      else {
+        //if (fillPopulation) svgP.append('circle').attr('class', 'popnbubble').attr('cx', bx).attr('cy', by ).attr('r', sampleMeanSize).attr('fill', 'white').attr('stroke','red'). attr('stroke-width', 0.5).attr('visibility', 'visible');
+      }
+    }
+
+
   }
 
   //remove population bubbles

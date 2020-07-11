@@ -33,7 +33,7 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
 0.3.32    2020-07-03  Changed colours of samples and sd/mean lines
 0.3.40    2020-07-08  Add css for capture of next mean line stroke
 0.3.41    2020-07-09  Add css for footer link, for p-values panel
-0.3.45
+0.3.46
 */
 
 /*default fon size*/
@@ -486,11 +486,11 @@ span {
   font: 14px sans-serif; 
 }
 
-.popnbubble {
+/* .popnbubble {
   stroke: blue;
   stroke-width: 0.5;
   fill: lightyellow;
-}
+} */
 
 .pdf {
   fill: none;

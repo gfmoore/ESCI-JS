@@ -83,10 +83,6 @@ Start using version history now to record changes and fixes
                       Adjust checkboxes so that fill and SDlines not appear unless popn curve on.                   
 0.3.34    2020-07-03  Issue #17 logic   
 0.3.35    2020-07-06  Adjust heap distribution curve, remove fill when changing custom, use - instead of NaN
-
-*/
-//#endregion 
-/*
 0.3.36    2020-07-06  Review the falling means to heap logic and check the "red" means fall to the right side. Made sure that no of bins was odd to allow centre bin around mean (50) - uhmm.
 0.3.37    2020-07-07  Adjusted the height of normal.This involved qite a lot of re-scaling of normal and of skew. Skew sd now 15 rather than 20.
 0.3.38    2020-07-07  Review population curve filling with bubbles. Found some logic control errors. Fill not correct yet
@@ -97,12 +93,15 @@ Start using version history now to record changes and fixes
 0.3.43    2020-07-10  Various fixes/changes made.
 0.3.44    2020-07-11  Fixed bug with sd lines not working when fill on - needed to recalculate mu sigma at different point
                       Other bug fixes
+*/
+//#endregion 
+/*
 0.3.45    2020-07-11  CI#19 Change in mu, sigma when turning fill on/off for skew, made sure mu sigma displayed as int or to 2dp.
 0.3.46    2020-07-11  CI#19 New algorithm for fill population curve (bubbles)
 0.3.47    2020-07-11  CI#17 Single sample should now show MoE is CI on. Nit redo fill if no need.
-
+0.3.48    2020-07-11  CI#17 Fixed update fill on change of mu or sigma
 */
- let version = '0.3.47';
+ let version = '0.3.48';
  
 
 'use strict';
@@ -2329,6 +2328,7 @@ $(function() {
     setMuSigmaSliderVal(mu, sigma);
     stop();
     setOldMu();
+    changedDistribution = true;
     clearAll();
   })
 
@@ -2338,6 +2338,7 @@ $(function() {
     setMuSigmaSliderVal(mu, sigma);
     stop();
     setOldMu();
+    changedDistribution = true;
     clearAll();
   })
 
@@ -2347,6 +2348,7 @@ $(function() {
     setMuSigmaSliderVal(mu, sigma);
     stop();
     setOldSigma();
+    changedDistribution = true;
     clearAll();
   })
 
@@ -2356,6 +2358,7 @@ $(function() {
     setMuSigmaSliderVal(mu, sigma);
     stop();
     setOldSigma();
+    changedDistribution = true;
     clearAll();
   })
 

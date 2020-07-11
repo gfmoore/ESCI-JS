@@ -95,7 +95,9 @@ Start using version history now to record changes and fixes
 0.3.41    2020-07-09  Added link back to newstatistics (at bottom) and changed title to esci-web. Dance of the p-values!!!
 0.3.42    2020-07-09  Oops forgot to check colours for dance of the p-values and added extra level.
 0.3.43    2020-07-10  Various fixes/changes made.
-0.3.44    
+0.3.44    2020-07-11  Fixed bug with sd lines not working when fill on - needed to recalculate mu sigma at different point
+                      Other bug fixes
+0.3.45
 */
  let version = '0.3.44';
  
@@ -568,7 +570,7 @@ $(function() {
       if (custom)       drawCustomCurve();
     }
 
-    if (showCaptureMuLine) drawMuLine();
+    //if (showCaptureMuLine) drawMuLine();  done in drawPDF
   }
 
   //remove the population curve
@@ -628,8 +630,8 @@ $(function() {
 
     if (changedDistribution) {
       setMuSigmaSliderVal(rectmu, rectsigma);
-      mu = normalmu;
-      sigma = normalsigma;
+      mu = rectmu;
+      sigma = rectsigma;
     }
 
     l = mu-sigma * Math.sqrt(3);
@@ -659,8 +661,8 @@ $(function() {
 
     if (changedDistribution) {
       setMuSigmaSliderVal(skewmu, skewsigma);
-      mu = normalmu;
-      sigma = normalsigma;
+      mu = skewmu;
+      sigma = skewsigma;
     }
 
     //lognormal version
@@ -736,7 +738,7 @@ $(function() {
     if (skewAmount < 0) pdf = temp; //I think you can do this?
 
     //need a random array of bubbles for calculating means and sds
-    calculateCustomMuSigma();
+    calculateMuSigma();
 
     drawPDF();
   }
@@ -749,8 +751,8 @@ $(function() {
 
     if (changedDistribution) {
       setMuSigmaSliderVal(custommu, customsigma);
-      mu = normalmu;
-      sigma = normalsigma;
+      mu = custommu;
+      sigma = customsigma;
     }
 
     //is there still a custompdf, if so copy the oldpdf to pdf
@@ -766,7 +768,7 @@ $(function() {
     }
 
     //Calculate the mu and sigma here from the popnBubbles array
-    if (custompdf.length != 0) calculateCustomMuSigma();
+    if (custompdf.length != 0) calculateMuSigma();
 
     //actually just draw the custompdf directly as in pixels
     if (custompdf.length !== 0) drawPDF();
@@ -779,6 +781,7 @@ $(function() {
   $('#displaypdf')
 //MOUSEDOWN  
     .mousedown(function(e) {
+      if (!custom) return;
       drawingPDF = true;
       e.preventDefault();
       //probably best to clear everything (from ClearAll)
@@ -855,7 +858,7 @@ $(function() {
       })
       
       //to do means and mu sigma etc create the bubbles array, but not display it unless fill population enabled
-      //if (custompdf.length !== 0) calculateCustomMuSigma();
+      //if (custompdf.length !== 0) calculateMuSigma();
 
       drawCustomCurve();  //now draw it and get values from it
 
@@ -919,7 +922,7 @@ $(function() {
   //#endregion
 
 
-  function calculateCustomMuSigma() {
+  function calculateMuSigma() {
 
     if (!fillPopulation) {
       dontDrawBubbles = true;
@@ -985,20 +988,23 @@ $(function() {
     .x(function(d, i) { return x(d.x); })
     .y(function(d, i) { return ypp(d.y); });
 
+    //draw popn bubbles if fill selected or if need mu sigma (skew, custom)  //fillBubbles is a flag to stop fillPopnBubbles being called twice if drawing over the fill!
+    if (fillPopulation && fillBubbles) {
+      fillPopnBubbles();
+    }
+
     //display the curve
     svgP.append('path')
       .attr('class', 'pdf')
       .attr('d', line(pdf))
 
-    //draw popn bubbles if fill selected  //fillBubbles is a flag to stop fillPopnBubbles being called twice if drawing over the fill!
-    if (fillPopulation && fillBubbles) {
-      fillPopnBubbles();
-    }
+    //do we have the correct mu and sigma?
+    if (skew || custom) calculateMuSigma();
 
     if (showSDLines) drawSDLines();  //only draw sd lines for custom if there is a pdf to draw
     else removeSDLines();   
 
-    //just a big fix for when switching distributions especially on custom
+    //when switching distributions especially on custom
     if (showCaptureMuLine) drawMuLine(); else removeMuLine();
 
     //I know mu and sigma so I know pmoe
@@ -1014,6 +1020,9 @@ $(function() {
   function drawSDLines() {
     //remove sd lines first then redraw
     removeSDLines();
+
+    //get the correct mu and sigma?
+
 
     //line styles in css eg style('stroke', 'gray').style('stroke-width', 2)
     svgP.append('line').attr('class', 'meanlines').attr('x1', x(mu)).attr('y1', 25).attr('x2', x(mu)).attr('y2', heightP -5);
@@ -1035,8 +1044,10 @@ $(function() {
 
   function drawMuLine() {
     removeMuLine(); //remove any previous one
-    svgS.append('line').attr('class', 'muline').attr('x1', x(mu)).attr('y1', 25).attr('x2', x(mu)).attr('y2', heightS-dropLimit);  
-    svgS.append('text').text('\u00B5').attr('class', 'mutext').attr('x', x(mu)-4).attr('y', heightS-10);
+    if (!isNaN(mu)) {
+      svgS.append('line').attr('class', 'muline').attr('x1', x(mu)).attr('y1', 25).attr('x2', x(mu)).attr('y2', heightS-dropLimit);  
+      svgS.append('text').text('\u00B5').attr('class', 'mutext').attr('x', x(mu)-4).attr('y', heightS-10);
+    }
   }
 
   function removeMuLine() {
@@ -1137,7 +1148,7 @@ $(function() {
           }
 
           if (skew) {
-            if (bubbleY < 2)   drawit = false;
+            if (bubbleY < 2) drawit = false;
             if (bubbleY > ah - sampleMeanSize - 2)  drawit = false;
             if (bubbleX < minxpdf + w ) drawit = false;
             if (bubbleX > maxxpdf - w) drawit = false;

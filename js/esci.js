@@ -99,10 +99,10 @@ Start using version history now to record changes and fixes
                       Other bug fixes
 0.3.45    2020-07-11  CI#19 Change in mu, sigma when turning fill on/off for skew, made sure mu sigma displayed as int or to 2dp.
 0.3.46    2020-07-11  CI#19 New algorithm for fill population curve (bubbles)
-0.3.47
+0.3.47    2020-07-11  CI#17 Single sample should now show MoE is CI on. Nit redo fill if no need.
 
 */
- let version = '0.3.46';
+ let version = '0.3.47';
  
 
 'use strict';
@@ -348,7 +348,7 @@ $(function() {
 
 
 
-  let changedDistribution = false; //to indicate if there was a change in distribution
+  let changedDistribution = true; //to indicate if there was a change in distribution
 
   let xbardata = [];            //temp record of xbars for the heap to check of continuous calculations actually working
 
@@ -561,7 +561,7 @@ $(function() {
     resetNumberCapturingNextMean();
     clearpvalues();  
 
-    drawPopulationCurve();  //includes redrawing of mean and sd lines
+    drawPopulationCurve();  //includes redrawing of mean and sd lines and fill
   }
 
 
@@ -1017,10 +1017,15 @@ $(function() {
     .x(function(d, i) { return x(d.x); })
     .y(function(d, i) { return ypp(d.y); });
 
+
     //draw popn bubbles if checked
     if ((normal || rectangular) && fillPopulation) {
-      fillPopnBubbles(); //fill the popnBubbles array
-      drawPopnBubbles();
+      if (changedDistribution) {
+        fillPopnBubbles(); //fill the popnBubbles array
+        drawPopnBubbles();
+        changedDistribution = false;
+      }
+      if (fillPopulation) drawPopnBubbles();
     }
 
     if (skew || custom) {
@@ -1265,17 +1270,6 @@ $(function() {
     if (b < a) return a;
     return (Math.random() * (b - a) + a);
   }
-
-  
-  // function searchpdf(x) {
-  //   //search through pdf till find an index close to it i.e. i just > than x
-  //   for (let i = 0; i < pdf.length; i += 1) {
-  //     if (pdf[i].x > x) {
-  //       return i;
-  //     }
-  //   }
-  //   return -1;
-  // }
 
 
   //------------------------------------------------Get Samples--------------------------------------*/
@@ -2574,7 +2568,7 @@ $(function() {
   $showSampleMeans.on('change', function() {
     showSampleMeans = $showSampleMeans.is(':checked');
     if (showSampleMeans) {
-      d3.selectAll('.smean').attr('visibility', 'visible');
+      displaySampleAppearanceAll()
     }
     else {
       d3.selectAll('.smean').attr('visibility', 'hidden');

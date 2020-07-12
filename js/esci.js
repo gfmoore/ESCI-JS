@@ -102,9 +102,10 @@ Start using version history now to record changes and fixes
 0.3.48    2020-07-11  CI#17 Fixed update fill on change of mu or sigma
 0.3.49    2020-07-12  CI#19 Drawing a custom curve too fast doesn't fill - not enough data points
                       Yet another algorithm!
+0.3.50    2020-07-12  CI#19 Fixed rectangle fill bug with new fill algorithm
 
 */
- let version = '0.3.49';
+ let version = '0.3.50';
  
 
 'use strict';
@@ -648,27 +649,31 @@ $(function() {
     l = mu-sigma * Math.sqrt(3);
     h = mu+sigma * Math.sqrt(3);
 
-    c = 10 * heightP / sigma
-    if (c > heightP + 15) c = heightP + 15;  //limit height of rectangle for display
-    
+    c = 10 * heightP / sigma;
+    if (c > pdfDisplayAreaHeight) c = pdfDisplayAreaHeight;
 
-    // //actually I only need 6 points in the pdf!! but its so fast...
-    // pdf.push( {x: 0, y: 0} ); 
-    // pdf.push( {x: l, y: 0} );
-    // pdf.push( {x: l, y: c} );
-    // pdf.push( {x: h, y: c} );
-    // pdf.push( {x: h, y: 0} );
-    // pdf.push( {x:100, y: 0} );
+    let rise = false;
+    let fall = false;
+    for (let x = 0; x < 100; x += 1) { 
+      if (x <= l) pdf.push( {x: x, y: 0} ); 
 
-    //No I actually need lots of pdf points so that fillPopnBubbles will work
-    for (let x = 0; x < 100; x += 0.1) { 
-      if (x < l) pdf.push( {x: x, y: 0} ); 
-      else if (x > h ) pdf.push( {x: x, y: 0} );
-      else pdf.push( {x: x, y: c} );
+      if (x >= l && x <= h) {
+        if (!rise) {
+          pdf.push( {x: x-1, y: c} ); 
+          rise = true;
+        }
+        pdf.push( {x: x, y: c} );
+      }
+
+      if (x >= h ) {
+        if (!fall) {
+          pdf.push( {x: x, y: c} );
+          fall = true; 
+        }
+        pdf.push( {x: x, y: 0} );
+      }
     }  
-    //get the vertical lines
-    // pdf.push( {x: l, y: 0} );
-    // pdf.push( {x: h, y: 0} );
+
 
     drawPDF();
   }
@@ -1118,9 +1123,15 @@ $(function() {
       minypdf = d3.min(pdf, function(d) { return d.y });
       maxypdf = d3.max(pdf, function(d) { return d.y });
     }
+
     if (rectangular) {
       minxpdf = mu - sigma * Math.sqrt(3);
       maxxpdf = mu + sigma * Math.sqrt(3);
+
+      minypdf = 0;
+      maxypdf = 10 * heightP / sigma;
+      if (maxypdf > pdfDisplayAreaHeight) maxypdf = pdfDisplayAreaHeight;
+  
     }
 
     //create array of bubbles, not all may be drawn, but array will be used for random sampling (except for normal)
@@ -1253,7 +1264,6 @@ $(function() {
       }
     }
   }
-
 
   //remove population bubbles
   function removePopnBubbles() {

@@ -104,9 +104,10 @@ Start using version history now to record changes and fixes
                       Yet another algorithm!
 0.3.50    2020-07-12  CI#19 Fixed rectangle fill bug with new fill algorithm
 0.3.51    2020-07-12  CI#19 Fixed the fix - one day I might write code that works!
+0.3.52    2020-07-12  CI#26 Turn of scroll bars for touchable display
 
 */
- let version = '0.3.51';
+ let version = '0.3.52';
  
 
 'use strict';
@@ -122,7 +123,7 @@ $(function() {
  
   if (deviceType === 'touchable') {
     //add a scroll bar to left hand panel?
-    $('#control').css('overflow-y', 'scroll');
+    //$('#control').css('overflow-y', 'scroll');
   }
   else {
   }

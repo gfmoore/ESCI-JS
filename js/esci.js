@@ -93,9 +93,6 @@ Start using version history now to record changes and fixes
 0.3.43    2020-07-10  Various fixes/changes made.
 0.3.44    2020-07-11  Fixed bug with sd lines not working when fill on - needed to recalculate mu sigma at different point
                       Other bug fixes
-*/
-//#endregion 
-/*
 0.3.45    2020-07-11  CI#19 Change in mu, sigma when turning fill on/off for skew, made sure mu sigma displayed as int or to 2dp.
 0.3.46    2020-07-11  CI#19 New algorithm for fill population curve (bubbles)
 0.3.47    2020-07-11  CI#17 Single sample should now show MoE is CI on. Nit redo fill if no need.
@@ -106,9 +103,16 @@ Start using version history now to record changes and fixes
 0.3.51    2020-07-12  CI#19 Fixed the fix - one day I might write code that works!
 0.3.52    2020-07-12  CI#26 Turn of scroll bars for touchable display
 0.3.53    2020-07-12  CI#17 Panel 5 aspects implemented
-0.3.54    2020-07-12  CI#25 Increased number of points that makes up heappdf and removed d3 curve interpolation.  
 */
- let version = '0.3.54';
+//#endregion 
+/*
+
+0.3.54    2020-07-12  CI#25 Increased number of points that makes up heappdf and removed d3 curve interpolation.  
+0.3.55    2020-07-12  CI#21 Tried adjustment to select the heap bin for a mean as suggested by GC.
+                      There is a slight difference in that occasionally a bin to the righ will be selected.
+                      
+*/
+ let version = '0.3.55';
  
 
 'use strict';
@@ -398,6 +402,7 @@ $(function() {
   let audiomiddlehigh = new Audio('./audio/clarry2.wav');
   let audiohigh   = new Audio('./audio/trumpet1.wav');
 
+  let nobuckets;                   //the accurate value for number of buckets as a decimal
   //#endregion
 
   initialise();
@@ -1855,13 +1860,6 @@ $(function() {
     }
   }
 
-  //display p-value in the p-value block
-  function displaypvalue() {
-    if (pvalue) {
-
-    }
-  }
-
   //From change CI % - alpha, ,showPmoe, showSmoe, (showMoe), if change the CI % need to recalculate the same taken and missed to be what's displayed, as previous sample are removed.
   //variables to check change $N - the number of samples taken - should capturedArray.length()
 
@@ -1943,6 +1941,7 @@ $(function() {
 
   /*------------------------------------------do the heap------------------------------------------*/
   //when sample mean gets far enough, add to the heap display   -- from takeSample()
+
   function addToHeap(xbar, pmissed, smissed) {
     let hx, hy;
     let xb;
@@ -1955,10 +1954,12 @@ $(function() {
     }
     else {
       //increase the heap frequency. Remember that 50 is the middle bar
-      xint = parseInt( Math.floor(xbar/100 * heap.length ));  
+      //xint = parseInt( Math.floor(xbar/100 * heap.length ));  
+      xint = parseInt( Math.floor(xbar/100 * nobuckets )); //nobuckets might be a decimal
       //increase the frequency of the heap for that x value
       heap[xint].f += 1;
-
+      //l(heap.length + ' -- ' + nobuckets);
+      //l( parseInt( Math.floor(xbar/100 * heap.length )) + ' -- ' + xint );
       //now draw a bubble at co-ords xint and heap(xint)
       //color code the drops and add the pmissed and smissed attributes for recoluring depending on CI selecetd (on change)
       hx = (heap[xint].x * 2* sampleMeanSize) + (sampleMeanSize  + 2);
@@ -2201,13 +2202,7 @@ $(function() {
     }
   }
 
-  function removeSELines() {
-    d3.selectAll('.SELines').remove();
-    $showSELines.prop('checked', false)
-    showSELines = false;
-  }
-
-  //draw the +/- bars
+   //draw the +/- bars
   function drawPlusMinusMoe() {
 
     //make sure I've got correct parameters from distribution
@@ -2276,6 +2271,8 @@ $(function() {
     $capturedpercent.text('0.0%');
   }
   
+
+
   //create the bins for a histogram to hold frequency data for the heap
   function resetHeap() {
     let noOfBuckets;
@@ -2297,9 +2294,10 @@ $(function() {
     //reset the number of buckets in the heap
     //subtle issue here. I really need the middle bucket to correspond with 50. So I need an odd number of buckets
     //So check if noOfBuckets is odd, if not subtract 1 from it (or add 1?) 
+    nobuckets = xmax / (2 * sampleMeanSize);  //this will be used in selecting the bin
 
-    noOfBuckets = Math.round(xmax / (2 * sampleMeanSize));
-    if (noOfBuckets % 2 === 0) noOfBuckets -= 1;
+    noOfBuckets = Math.round(nobuckets);
+    if (noOfBuckets % 2 === 0) noOfBuckets -= 1;  
 
     for (let xx = 0; xx <= noOfBuckets; xx += 1) {  
       heap.push({x: xx, f: 0})

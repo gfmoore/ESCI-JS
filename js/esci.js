@@ -105,9 +105,10 @@ Start using version history now to record changes and fixes
 0.3.50    2020-07-12  CI#19 Fixed rectangle fill bug with new fill algorithm
 0.3.51    2020-07-12  CI#19 Fixed the fix - one day I might write code that works!
 0.3.52    2020-07-12  CI#26 Turn of scroll bars for touchable display
+0.3.53    2020-07-12  CI#17 Panel 5 aspects implemented
 
 */
- let version = '0.3.52';
+ let version = '0.3.53';
  
 
 'use strict';
@@ -1506,11 +1507,11 @@ $(function() {
 
     //add p-value rectangle
     calcpvalue();
-    if (pvz < 0.005) {
+    if (pvz < 0.001) {
       svgS.append('rect').attr('class', 'pvalue').attr('id', 'pvalue' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 6.5  )).attr('height', droppingMeanGap-2).attr('fill', 'red').attr('visibility', 'hidden');
       if (pvaluesound) audiohigh.play();
     }
-    if (pvz >= 0.005 && pvz < 0.01) {
+    if (pvz >= 0.001 && pvz < 0.01) {
       svgS.append('rect').attr('class', 'pvalue').attr('id', 'pvalue' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 6.5  )).attr('height', droppingMeanGap-2).attr('fill', 'orange').attr('visibility', 'hidden');
       if (pvaluesound) audiomiddlehigh.play();
     }
@@ -2331,6 +2332,7 @@ $(function() {
 
   //#region respond to all click and select events
 
+  /*-----------------------------------------Panel 1 Population----------------- */
   //change in mu textbox
   $mu.on('change', function() {
     mu = parseFloat($mu.val());
@@ -2453,6 +2455,8 @@ $(function() {
     //drawPopulationCurve();
   })
 
+  /*-----------------------------------------------Panel 2 Click to display ---------------*/
+
   //show population pdf curve
   $showPopulationCurve.on('change', function() {
     showPopulationCurve = $showPopulationCurve.is(':checked');
@@ -2506,6 +2510,7 @@ $(function() {
     }
   })
 
+  /*---------------------------------------------Panel 3 Controls   (Clear at top)-------------------*/
   //take one sample
   $takeSample.on('click', function() {
     if (runFreely) stop();
@@ -2550,6 +2555,7 @@ $(function() {
     }
   })
 
+  /*----------------------------------------------Panel 4 Samples ------------------------- */
   //size of sample
   $n.on('change', function() {
     n = parseInt( $('#samplesselected option:selected').val() );
@@ -2610,7 +2616,72 @@ $(function() {
     }
   })
 
+/*-------------------------------------------------Panel 5 Mean Heap ----------------------- */
 
+  $showMeanHeap.on('change', function() {
+    showMeanHeap = $showMeanHeap.is(':checked');
+
+    //clearAll();
+    d3.selectAll('.selines').attr('visibility', 'visible');
+    if (showMeanHeap) {
+      d3.selectAll('.heap').attr('visibility', 'visible');
+      if (showSELines) drawSELines(); // draws them at initial height if checked (order important!)
+    }
+    else {
+      d3.selectAll('.heap').attr('visibility', 'hidden');
+      d3.selectAll('.selines').attr('visibility', 'hidden');
+    }
+
+  })
+
+  //show sample distribution curve
+  $showMeanHeapCurve.on('change', function() {
+    if (!showMeanHeap) { //can only have a curve if there is a heap, if heap not checked there is no heap.
+      $showMeanHeapCurve.prop('checked', false); 
+      return;
+    }
+
+    showMeanHeapCurve = $showMeanHeapCurve.is(':checked');
+    if (showMeanHeapCurve) {
+      drawMeanHeapCurve();
+    }
+    else {
+      removeMeanHeapCurve();
+      //turn off SE Lines
+      $showSELines.prop('checked', false);
+      showSELines = false;
+      d3.selectAll('.selines').remove();
+    }
+  })
+
+  //show sample mean and sample error lines
+  $showSELines.on('change', function() {
+    if (!showMeanHeapCurve) {
+      $showSELines.prop('checked', false); 
+      return;
+    }
+    showSELines = $showSELines.is(':checked');
+    if (showSELines) {
+      d3.selectAll('.selines').attr('visibility', 'visible');
+      if (showMeanHeap) drawSELines();
+    }
+    else {
+      d3.selectAll('.selines').remove();
+    }
+  })
+
+  $plusminusmoe.on('change', function() {
+    plusminusmoe = $plusminusmoe.is(':checked');
+    if (plusminusmoe) {
+      drawPlusMinusMoe();
+    }
+    else {
+      removePlusMinusMoe();
+    }
+  })
+
+/*-------------------------------------------------Panel 6 Confidence Intervals --------------*/
+ 
   //Select confidence interval % and alpha
   $ci.on('change', function() {
     $ci
@@ -2663,58 +2734,7 @@ $(function() {
     recolourHeap();
   })
 
-
-  $showMeanHeap.on('change', function() {
-    showMeanHeap = $showMeanHeap.is(':checked');
-
-    clearAll();
-    if (showMeanHeap) {
-      if (showSELines) drawSELines(); // draws them at initial height if checked (order important!)
-    }
-    else {
-      d3.selectAll('.selines').attr('visibility', 'hidden');
-    }
-
-  })
-
-  //show sample distribution curve
-  $showMeanHeapCurve.on('change', function() {
-    if (!showMeanHeap) { //can only have a curve if there is a heap, if heap not checked there is no heap.
-      $showMeanHeapCurve.prop('checked', false); 
-      return;
-    }
-
-    showMeanHeapCurve = $showMeanHeapCurve.is(':checked');
-    if (showMeanHeapCurve) {
-      drawMeanHeapCurve();
-    }
-    else {
-      removeMeanHeapCurve();
-    }
-  })
-
-  //show sample mean and sample error lines
-  $showSELines.on('change', function() {
-    showSELines = $showSELines.is(':checked');
-    if (showSELines) {
-      d3.selectAll('.selines').attr('visibility', 'visible');
-      if (showMeanHeap) drawSELines();
-    }
-    else {
-      d3.selectAll('.selines').remove();
-    }
-  })
-
-  $plusminusmoe.on('change', function() {
-    plusminusmoe = $plusminusmoe.is(':checked');
-    if (plusminusmoe) {
-      drawPlusMinusMoe();
-    }
-    else {
-      removePlusMinusMoe();
-    }
-  })
-
+/*------------------------------------------------Panel 7 Capture of mu-----------------*/
 
   //show mu line in dropping means area
   $showCaptureMuLine.on('change', function() {
@@ -2749,7 +2769,9 @@ $(function() {
     }
   })
 
-  //Number capturing next mean  //TODO
+  /*----------------------------------------------Panel 8 Capture of next mean ---------------------*/
+  
+  //Number capturing next mean  
   $captureNextMean.on('change', function() {
     captureNextMean = $captureNextMean.is(':checked');
     if (captureNextMean) {
@@ -2766,7 +2788,8 @@ $(function() {
     }
   })
 
-
+  /*----------------------------------------------Panel 9 Dance of the p-values -----------------------*/
+  
   //show the p-values
   $pvalue.on('change', function() {
     pvalue = $pvalue.is(':checked');
@@ -2787,6 +2810,7 @@ $(function() {
     pvaluesound = $pvaluesound.is(':checked');
   })
 
+  /*---------------------------------------------Footer ---------------------------------*/
 
   $('#footer').on('click', function() {
     window.location.href = "https://thenewstatistics.com/";

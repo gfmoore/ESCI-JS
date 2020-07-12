@@ -106,9 +106,9 @@ Start using version history now to record changes and fixes
 0.3.51    2020-07-12  CI#19 Fixed the fix - one day I might write code that works!
 0.3.52    2020-07-12  CI#26 Turn of scroll bars for touchable display
 0.3.53    2020-07-12  CI#17 Panel 5 aspects implemented
-
+0.3.54    2020-07-12  CI#25 Increased number of points that makes up heappdf and removed d3 curve interpolation.  
 */
- let version = '0.3.53';
+ let version = '0.3.54';
  
 
 'use strict';
@@ -2121,7 +2121,8 @@ $(function() {
       let curveSE = sigma/Math.sqrt(n);
       $curveHeapSE.text(curveSE.toFixed(2));
       heappdf = [];
-      for (let k = 0; k < 200; k++) { 
+
+      for (let k = 0; k < 100; k += 0.01) { 
          //heappdf.push( {x: k, y: jStat.normal.pdf(k, heapxbar, heapse) } );  
          heappdf.push( {x: k, y: jStat.normal.pdf( k, mu, curveSE ) } ); 
       }
@@ -2136,7 +2137,8 @@ $(function() {
       lineh = d3.line()
                 .x(function(d, i) { return x(d.x); })
                 .y(function(d, i) { return heightS - d.y - 40; })
-                .curve(d3.curveCardinal);  //curve it more as too pointy
+                //.curve(d3.curveCardinal);  //curve it more as too pointy
+                //.curve(d3.curveBundle.beta(0.5));
 
       //display the curve
       svgS.append('path').attr('class', 'heapcurve').attr('d', lineh(heappdf)).attr('stroke', 'brown').attr('stroke-width', '2').attr('fill', 'none').attr('visibility', 'hidden');

@@ -103,9 +103,10 @@ Start using version history now to record changes and fixes
 0.3.49    2020-07-12  CI#19 Drawing a custom curve too fast doesn't fill - not enough data points
                       Yet another algorithm!
 0.3.50    2020-07-12  CI#19 Fixed rectangle fill bug with new fill algorithm
+0.3.51    2020-07-12  CI#19 Fixed the fix - one day I might write code that works!
 
 */
- let version = '0.3.50';
+ let version = '0.3.51';
  
 
 'use strict';
@@ -650,7 +651,8 @@ $(function() {
     h = mu+sigma * Math.sqrt(3);
 
     c = 10 * heightP / sigma;
-    if (c > pdfDisplayAreaHeight) c = pdfDisplayAreaHeight;
+    if (c > heightP) c = heightP;
+    c = c / heightP * pdfDisplayAreaHeight;
 
     let rise = false;
     let fall = false;

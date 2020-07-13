@@ -110,9 +110,9 @@ Start using version history now to record changes and fixes
 0.3.54    2020-07-12  CI#25 Increased number of points that makes up heappdf and removed d3 curve interpolation.  
 0.3.55    2020-07-12  CI#21 Tried adjustment to select the heap bin for a mean as suggested by GC.
                       There is a slight difference in that occasionally a bin to the righ will be selected.
-                      
+0.3.56    2020-07-13  CI#15 Dance of means adjust intervals and text                     
 */
- let version = '0.3.55';
+ let version = '0.3.56';
  
 
 'use strict';
@@ -1513,28 +1513,31 @@ $(function() {
     //add p-value rectangle
     calcpvalue();
     if (pvz < 0.001) {
-      svgS.append('rect').attr('class', 'pvalue').attr('id', 'pvalue' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 6.5  )).attr('height', droppingMeanGap-2).attr('fill', 'red').attr('visibility', 'hidden');
+      svgS.append('rect').attr('class', 'pvalue').attr('id', 'pvalue' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'red').attr('visibility', 'hidden');
+      svgS.append('text').text('  ***' + (pvz.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtext').attr('id', 'pvtext' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').attr('fill', 'black').attr('visibility', 'hidden');
       if (pvaluesound) audiohigh.play();
     }
     if (pvz >= 0.001 && pvz < 0.01) {
-      svgS.append('rect').attr('class', 'pvalue').attr('id', 'pvalue' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 6.5  )).attr('height', droppingMeanGap-2).attr('fill', 'orange').attr('visibility', 'hidden');
+      svgS.append('rect').attr('class', 'pvalue').attr('id', 'pvalue' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'orange').attr('visibility', 'hidden');
+      svgS.append('text').text('   **'+ (pvz.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtext').attr('id', 'pvtext' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').attr('fill', 'black').attr('visibility', 'hidden');
       if (pvaluesound) audiomiddlehigh.play();
     }
     if (pvz >= 0.01 && pvz < 0.05) {
-      svgS.append('rect').attr('class', 'pvalue').attr('id', 'pvalue' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 6.5  )).attr('height', droppingMeanGap-2).attr('fill', 'lemonchiffon').attr('visibility', 'hidden');
+      svgS.append('rect').attr('class', 'pvalue').attr('id', 'pvalue' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'lemonchiffon').attr('visibility', 'hidden');
+      svgS.append('text').text('    \u2022' + (pvz.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtext').attr('id', 'pvtext' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').attr('fill', 'black').attr('visibility', 'hidden');
       if (pvaluesound) audiomiddle.play();
     }
     if (pvz >= 0.05 && pvz < 0.1) {
-      svgS.append('rect').attr('class', 'pvalue').attr('id', 'pvalue' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 6.5  )).attr('height', droppingMeanGap-2).attr('fill', 'lightskyblue').attr('visibility', 'hidden');
+      svgS.append('rect').attr('class', 'pvalue').attr('id', 'pvalue' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'lightskyblue').attr('visibility', 'hidden');
+      svgS.append('text').text('    ?' + (pvz.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtext').attr('id', 'pvtext' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').attr('fill', 'black').attr('visibility', 'hidden');
       if (pvaluesound) audiolowmiddle.play();
     }
     if (pvz >= 0.1) {
-      svgS.append('rect').attr('class', 'pvalue').attr('id', 'pvalue' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 6.5  )).attr('height', droppingMeanGap-2).attr('fill', 'dodgerblue').attr('visibility', 'hidden');
+      svgS.append('rect').attr('class', 'pvalue').attr('id', 'pvalue' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'blue').attr('visibility', 'hidden');
+      svgS.append('text').text('     ' + (pvz.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtext').attr('id', 'pvtext' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').attr('fill', 'black').attr('visibility', 'hidden');
       if (pvaluesound) audiolow.play();
     }
 
-    //svgS.append('rect').attr('class', 'pvalue').attr('id', 'pvalue' + +id).attr('x', x( 2 )).attr('y', ypos).attr('width', x( 7  )).attr('height', droppingMeanGap-2).attr('fill', 'yellow').attr('visibility', 'hidden');
-    svgS.append('text').text(pvz.toFixed(3)).attr('class', 'pvtext').attr('id', 'pvtext' + +id).attr('x', x( 1 )).attr('y', ypos+4).attr('fill', 'black').attr('visibility', 'hidden');
     showpvalues();
 
 

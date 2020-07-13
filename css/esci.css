@@ -34,7 +34,7 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
 0.3.40    2020-07-08  Add css for capture of next mean line stroke
 0.3.41    2020-07-09  Add css for footer link, for p-values panel
 0.3.46    2020-07-11  Moved population bubble attributes to javascript
-0.3.55
+0.3.56    2020-07-13  Preserve whitespace in svg text (pre) and fixed font
 */
 
 /*default fon size*/
@@ -49,7 +49,6 @@ html {
 }
 
 body {
-ba
   background-color: lightyellow;
   font-family: Verdana, sans-serif;
   font-size: var(--fontsize);
@@ -477,6 +476,13 @@ span {
 
 /*--------------------------------------------------------svg codes ---------------------------------------------------------*/
 /* Note that some are embedded in drawing codes as putting say a stroke colour here overrides anything in code*/
+
+/* this preserves whitespace in svg text*/
+text { 
+  white-space: pre; 
+  font-family: 'Courier New', Courier, monospace;
+}
+
 
 .axisline {
   stroke: blue;

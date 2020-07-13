@@ -109,10 +109,12 @@ Start using version history now to record changes and fixes
 
 0.3.54    2020-07-12  CI#25 Increased number of points that makes up heappdf and removed d3 curve interpolation.  
 0.3.55    2020-07-12  CI#21 Tried adjustment to select the heap bin for a mean as suggested by GC.
-                      There is a slight difference in that occasionally a bin to the righ will be selected.
+                      There is a slight difference in that occasionally a bin to the right will be selected.
 0.3.56    2020-07-13  CI#15 Dance of means adjust intervals and text                     
+0.3.57    2020-07-13  CI#17 Revert the Mean heap to Stop Clear Action
+0.3.58    2020-07-13  CI#17 Added F flag so that on C alpha change, it stops, reclaculates MoEs, recalculates the heap and recolours.
 */
- let version = '0.3.56';
+ let version = '0.3.58';
  
 
 'use strict';
@@ -403,6 +405,8 @@ $(function() {
   let audiohigh   = new Audio('./audio/trumpet1.wav');
 
   let nobuckets;                   //the accurate value for number of buckets as a decimal
+  
+  let Fhalt = false;                //used to Fhalt operation in Stop Clear Action now F flag
   //#endregion
 
   initialise();
@@ -555,6 +559,8 @@ $(function() {
 
   //clear everything.
   function clearAll() {
+    Fhalt = false;
+
     //remove sample points from DOM
     d3.selectAll('.samplepoint').remove();
     
@@ -1294,6 +1300,7 @@ $(function() {
     //need to use these for when I loop through each dropping mean blob
     let ixbar;  //integer version of xbar from dropping blob
     let fxbar;  //floating point version of xbar from dropping blob
+    let fssd;   //floating point cersion of sdd from dropping blob (passed to addtoheap)
     let barHeight;
 
     N += 1; //increase the number of times I take a sample
@@ -1372,9 +1379,10 @@ $(function() {
           letDrop = false;
           if (showMeanHeap) {  //if the mean heap is visible look at the sample mean. Compare it with the height of the heap  frequency at that point
 
-            //get the sample mean from the dropping blob
+            //get the sample mean and ssd from the dropping blob
             ixbar = parseInt($(this).attr('xbar'));
             fxbar = parseFloat($(this).attr('xbar'));
+            fssd = parseFloat($(this).attr('ssd'));
 
             //if xbar outside viewable area 0-100 then cannot add to heap display
             if ((ixbar < 0 || ixbar >= 100)) {
@@ -1446,7 +1454,7 @@ $(function() {
             d3.select('#pvalue'+meanid).remove();
             d3.select('#pvtext'+meanid).remove();
 
-            if (showMeanHeap) addToHeap(fxbar, pmissed, smissed); 
+            if (showMeanHeap) addToHeap(fxbar, fssd, pmissed, smissed); 
             break;  //no point in moving anymore
           }
 
@@ -1589,6 +1597,12 @@ $(function() {
     pci = jStat.normalci( parseFloat(mblob.attr('xbar')), alpha, parseFloat(mblob.attr('sigma')), n );  //n is just the no of items in the sample, if that changes need to start counting again
     sci = jStat.tci( parseFloat(mblob.attr('xbar')), alpha, parseFloat(mblob.attr('ssd')), n);   
     
+    //If the C has changed, i.e the alpha, then I need to update the moe wings
+    pwing.attr( 'x1', x(pci[0]) );
+    pwing.attr( 'x2', x(pci[1]) );
+    swing.attr( 'x1', x(sci[0]) );
+    swing.attr( 'x2', x(sci[1]) );
+
     //do the pmoe count
     missedTheMean = false;
     if (pci[0] > mu) missedTheMean = true;
@@ -1830,7 +1844,7 @@ $(function() {
 
     //display stats
     $N.text(N);
-    $N2.text(N);
+    if (!captureOfMu) $N2.text(N); else $N2.text(0);
     $xbar.text(xbar.toFixed(2));
     $ssd.text(ssd.toFixed(2));
     $pmoe.text(pmoe.toFixed(2));
@@ -1844,7 +1858,7 @@ $(function() {
     if (showMoe && captureOfMu && showCaptureMuLine) {
       //given that N is the number of samples
       $N.text(N);
-      $N2.text(N);
+      if (captureOfMu) $N2.text(N); else $N2.text(0);
       //should be able to use showPmoe only
       if ($showPmoe.is(':checked')) {
         //should recalculate the number of samples taken
@@ -1945,20 +1959,20 @@ $(function() {
   /*------------------------------------------do the heap------------------------------------------*/
   //when sample mean gets far enough, add to the heap display   -- from takeSample()
 
-  function addToHeap(xbar, pmissed, smissed) {
+  function addToHeap(fxbar, fssd, pmissed, smissed) {
     let hx, hy;
     let xb;
 
      if (!showMeanHeap  && !captureOfMu && !showCaptureMuLine) return;
     
     //if samplemean is too small or too large don't do anything. 
-    if (xbar < 0 || xbar >= 100) {
+    if (fxbar < 0 || fxbar >= 100) {
       //don't do anything to visible part of heap
     }
     else {
       //increase the heap frequency. Remember that 50 is the middle bar
       //xint = parseInt( Math.floor(xbar/100 * heap.length ));  
-      xint = parseInt( Math.floor(xbar/100 * nobuckets )); //nobuckets might be a decimal
+      xint = parseInt( Math.floor(fxbar/100 * nobuckets )); //nobuckets might be a decimal
       //increase the frequency of the heap for that x value
       heap[xint].f += 1;
       //l(heap.length + ' -- ' + nobuckets);
@@ -1969,20 +1983,20 @@ $(function() {
       hy = heightS - (heap[xint].f * sampleMeanSize * 2) - dropLimit + 3;
       if (showMoe && captureOfMu && showCaptureMuLine) {
         if (showPmoe && pmissed === 'true') {
-          svgS.append('circle').attr('class', 'heap').attr('cx', hx ).attr('cy', hy).attr('r', sampleMeanSize).attr('stroke', 'black').attr('stroke-width', 1).attr('fill', 'red').attr('visibility', 'visible').attr('pmissed', pmissed).attr('smissed', smissed);
+          svgS.append('circle').attr('class', 'heap').attr('cx', hx ).attr('cy', hy).attr('r', sampleMeanSize).attr('stroke', 'black').attr('stroke-width', 1).attr('fill', 'red').attr('visibility', 'visible').attr('xbar', fxbar).attr('sigma', sigma).attr('ssd', fssd).attr('pmissed', pmissed).attr('smissed', smissed);
         }
         if (showPmoe && pmissed === 'false') {
-          svgS.append('circle').attr('class', 'heap').attr('cx', hx ).attr('cy', hy).attr('r', sampleMeanSize).attr('stroke', 'black').attr('stroke-width', 1).attr('fill', darkGreen).attr('visibility', 'visible').attr('pmissed', pmissed).attr('smissed', smissed);
+          svgS.append('circle').attr('class', 'heap').attr('cx', hx ).attr('cy', hy).attr('r', sampleMeanSize).attr('stroke', 'black').attr('stroke-width', 1).attr('fill', darkGreen).attr('visibility', 'visible').attr('xbar', fxbar).attr('sigma', sigma).attr('ssd', fssd).attr('pmissed', pmissed).attr('smissed', smissed);
         }
         if (showSmoe && smissed === 'true') {
-          svgS.append('circle').attr('class', 'heap').attr('cx', hx ).attr('cy', hy).attr('r', sampleMeanSize).attr('stroke', 'black').attr('stroke-width', 1).attr('fill', 'red').attr('visibility', 'visible').attr('pmissed', pmissed).attr('smissed', smissed);
+          svgS.append('circle').attr('class', 'heap').attr('cx', hx ).attr('cy', hy).attr('r', sampleMeanSize).attr('stroke', 'black').attr('stroke-width', 1).attr('fill', 'red').attr('visibility', 'visible').attr('xbar', fxbar).attr('sigma', sigma).attr('ssd', fssd).attr('pmissed', pmissed).attr('smissed', smissed);
         }
         if (showSmoe && smissed === 'false') {
-          svgS.append('circle').attr('class', 'heap').attr('cx', hx ).attr('cy', hy).attr('r', sampleMeanSize).attr('stroke', 'black').attr('stroke-width', 1).attr('fill', darkGreen).attr('visibility', 'visible').attr('pmissed', pmissed).attr('smissed', smissed);
+          svgS.append('circle').attr('class', 'heap').attr('cx', hx ).attr('cy', hy).attr('r', sampleMeanSize).attr('stroke', 'black').attr('stroke-width', 1).attr('fill', darkGreen).attr('visibility', 'visible').attr('xbar', fxbar).attr('sigma', sigma).attr('ssd', fssd).attr('pmissed', pmissed).attr('smissed', smissed);
         }
       }
       else {
-        svgS.append('circle').attr('class', 'heap').attr('cx', hx ).attr('cy', hy).attr('r', sampleMeanSize).attr('stroke', 'black').attr('stroke-width', 1).attr('fill', lightGreen).attr('visibility', 'visible').attr('pmissed', pmissed).attr('smissed', smissed);
+        svgS.append('circle').attr('class', 'heap').attr('cx', hx ).attr('cy', hy).attr('r', sampleMeanSize).attr('stroke', 'black').attr('stroke-width', 1).attr('fill', lightGreen).attr('visibility', 'visible').attr('xbar', xbar).attr('sigma', sigma).attr('ssd', fssd).attr('pmissed', pmissed).attr('smissed', smissed);
       }
 
 /************************TESTING************************* */
@@ -2017,18 +2031,48 @@ $(function() {
   }
 
   //recolour heap if CI checked and mu known unknown checked && showCaptureMuLine
+  //also now if CI has been changed need to recalculate pmissed smissed with new alpha
   function recolourHeap() {
+    let xbar, sigma, ssd, pmoe, smoe;
     let pmissed, smissed;
     
     d3.selectAll('.heap').each( function(h) {
-      pmissed = $(this).attr('pmissed');
-      smissed = $(this).attr('smissed');
+      xbar = parseFloat($(this).attr('xbar'));
+      sigma = parseFloat($(this).attr('sigma'));
+      ssd = parseFloat($(this).attr('ssd'));
 
+      //work out CIs and whether missed or not
+      pci = jStat.normalci( xbar, alpha, sigma, n );  //n is just the no of items in the sample, if that changes need to start counting again
+      sci = jStat.tci( xbar, alpha, ssd, n);   
+
+      //do the pmoe count
+      pmissed = false;
+      if (pci[0] > mu) pmissed = true;
+      if (pci[1] < mu) pmissed = true;
+      if (pmissed) {
+        $(this).attr('pmissed', 'true');  //check whether these are needed with this refactoring, all needs recalcing anyway if CI changes
+      }
+      else {
+        $(this).attr('pmissed', 'false'); 
+        capturedP += 1;
+      }
+
+      //smoe
+      smissed = false;
+      if (sci[0] > mu) smissed = true;
+      if (sci[1] < mu) smissed = true;
+      if (smissed) {
+        $(this).attr('smissed', 'true');
+      }
+      else {
+        capturedS += 1;
+        $(this).attr('smissed', 'false');
+      }      
 
       //1 1 1
       if (showMoe && captureOfMu && showCaptureMuLine) {   //show dark green and red blobs and moes
         if (showPmoe) {
-          if (pmissed === 'true') {
+          if (pmissed) {
             $(this).attr('fill', 'red');
           }
           else {
@@ -2036,7 +2080,7 @@ $(function() {
           }
         }
         if (showSmoe) {
-          if (smissed === 'true') {
+          if (smissed) {
             $(this).attr('fill', 'red');
           }
           else {
@@ -2091,22 +2135,30 @@ $(function() {
     $heapse.text(heapse.toFixed(2));
     $noInHeap.text(heapN);
 
-
-    //alternative  to calculating heap statistics - seems to compare really well with above. DON'T  delete yet.
-    // xbardata.push(fxbar);
-    // let hpm = 0, hps = 0, hn = 0;
-    // xbardata.forEach( v => {
-    //   hpm += v;
-    //   hn  += 1;
-    // })
-    // hpm = hpm/hn;
-
-    // xbardata.forEach( v => {
-    //   hps += (v - hpm) * (v - hpm);
-    // })
-    // hps = Math.sqrt( hps/(hn-1) );
-
   }  
+
+  //not sure I actually need this, but hey leave it for now.
+  function recalculateHeapStatistics() {
+
+    let hpm = 0, hps = 0, hn = 0;
+    heap.forEach( h => {
+      hpm += h.x * h.f;
+      hn  += h.f;
+    })
+    hpm = hpm/hn;
+
+    heap.forEach( h => {
+      hps += (h.x - hpm) * (h.x - hpm) * h.f;
+    })
+    hps = Math.sqrt( hps/(hn-1) );
+
+    //display values
+    if (showMeanHeap) {
+      $heapxbar.text(heapxbar.toFixed(2));
+      $heapse.text(heapse.toFixed(2));
+      $noInHeap.text(heapN);
+    }
+  }
 
 
   //draw a normal curve to the heap
@@ -2517,11 +2569,13 @@ $(function() {
   //take one sample
   $takeSample.on('click', function() {
     if (runFreely) stop();
+    if (Fhalt) clearAll();  //Fhalt reset in clear()
     takeSample();
   })
 
   //run freely
   $runFreely.on('click', function() {
+    if (Fhalt) clearAll();  //Fhalt reset in clear()
     if (!runFreely) {
       start();
     }
@@ -2624,7 +2678,7 @@ $(function() {
   $showMeanHeap.on('change', function() {
     showMeanHeap = $showMeanHeap.is(':checked');
 
-    //clearAll();
+    clearAll();
     d3.selectAll('.selines').attr('visibility', 'visible');
     if (showMeanHeap) {
       d3.selectAll('.heap').attr('visibility', 'visible');
@@ -2687,14 +2741,20 @@ $(function() {
  
   //Select confidence interval % and alpha
   $ci.on('change', function() {
-    $ci
+     
     stop();
-    clearAll();
+    Fhalt = true;
+    //clearAll();
 
     alpha = parseFloat($('#CI').val());
     displaySampleAppearanceAll();
-
     recalculateSamplemeanStatistics();
+
+    // //I know mu and sigma so I know pmoe so redisplay it
+    pmoe = jStat.normal.inv( 1-alpha/2.0, 0, 1 ) * sigma/Math.sqrt(n);
+    if (showPopulationCurve) $pmoe.text(pmoe.toFixed(2));
+
+    recolourHeap();
 
     if (plusminusmoe) drawPlusMinusMoe();
     if (showSELines) drawSELines();

@@ -109,8 +109,9 @@ Start using version history now to record changes and fixes
 0.3.57    2020-07-13  CI#17 Revert the Mean heap to Stop Clear Action
 0.3.58    2020-07-13  CI#17 Added F flag so that on C alpha change, it stops, reclaculates MoEs, recalculates the heap and recolours.
 0.3.59    2020-07-13  CI#17 Reinstate coloured heap when Capture of Mu checked regardless of showMoE. 
+0.3.60    2007-07-13  CI#15 italic p, extra space, larger font, SCA on check off.
 */
-let version = '0.3.59';
+let version = '0.3.60';
  
 
 'use strict';
@@ -1518,27 +1519,27 @@ $(function() {
     calcpvalue();
     if (pvz < 0.001) {
       svgS.append('rect').attr('class', 'pvalue').attr('id', 'pvalue' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'red').attr('visibility', 'hidden');
-      svgS.append('text').text('  ***' + (pvz.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtext').attr('id', 'pvtext' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').attr('fill', 'black').attr('visibility', 'hidden');
+      svgS.append('text').text('   ***' + (pvz.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtext').attr('id', 'pvtext' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').attr('fill', 'black').attr('visibility', 'hidden');
       if (pvaluesound) audiohigh.play();
     }
     if (pvz >= 0.001 && pvz < 0.01) {
       svgS.append('rect').attr('class', 'pvalue').attr('id', 'pvalue' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'orange').attr('visibility', 'hidden');
-      svgS.append('text').text('   **'+ (pvz.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtext').attr('id', 'pvtext' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').attr('fill', 'black').attr('visibility', 'hidden');
+      svgS.append('text').text('    **'+ (pvz.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtext').attr('id', 'pvtext' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').attr('fill', 'black').attr('visibility', 'hidden');
       if (pvaluesound) audiomiddlehigh.play();
     }
     if (pvz >= 0.01 && pvz < 0.05) {
       svgS.append('rect').attr('class', 'pvalue').attr('id', 'pvalue' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'lemonchiffon').attr('visibility', 'hidden');
-      svgS.append('text').text('    \u2022' + (pvz.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtext').attr('id', 'pvtext' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').attr('fill', 'black').attr('visibility', 'hidden');
+      svgS.append('text').text('     \u2022' + (pvz.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtext').attr('id', 'pvtext' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').attr('fill', 'black').attr('visibility', 'hidden');
       if (pvaluesound) audiomiddle.play();
     }
     if (pvz >= 0.05 && pvz < 0.1) {
       svgS.append('rect').attr('class', 'pvalue').attr('id', 'pvalue' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'lightskyblue').attr('visibility', 'hidden');
-      svgS.append('text').text('    ?' + (pvz.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtext').attr('id', 'pvtext' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').attr('fill', 'black').attr('visibility', 'hidden');
+      svgS.append('text').text('     ?' + (pvz.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtext').attr('id', 'pvtext' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').attr('fill', 'black').attr('visibility', 'hidden');
       if (pvaluesound) audiolowmiddle.play();
     }
     if (pvz >= 0.1) {
       svgS.append('rect').attr('class', 'pvalue').attr('id', 'pvalue' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'blue').attr('visibility', 'hidden');
-      svgS.append('text').text('     ' + (pvz.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtext').attr('id', 'pvtext' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').attr('fill', 'black').attr('visibility', 'hidden');
+      svgS.append('text').text('      ' + (pvz.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtext').attr('id', 'pvtext' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').attr('fill', 'black').attr('visibility', 'hidden');
       if (pvaluesound) audiolow.play();
     }
 
@@ -2812,6 +2813,8 @@ $(function() {
     }
     else {
       $('#pvaluesoundblock').hide();
+      stop();
+      clearAll();
       hidepvalues();
       $pvaluesound.prop('checked', false);
       pvaluesound = false;

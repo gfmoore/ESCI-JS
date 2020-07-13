@@ -9,6 +9,7 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
 // #region Version history
 /*
 0.1.0                 Initial version
+
 0.2.0                 Refactored totally and uses D3.js rather than svgjs. Some jquery used to access the dom in dropping means.
 Start using version history now to record changes and fixes
 0.2.1     2020-05-18  Sort out sharp point on heap curve - fixed with curve interpolation .curveCardinal - others are available 
@@ -24,6 +25,7 @@ Start using version history now to record changes and fixes
 0.2.10    2020-05-20  Just made the display a bit smaller, especially the bottom of the dropping means window and allow vertical resize
 0.2.11    2020-05-22  It was quite a job. Also needed to change plus minus moe if sample size changes. Refactored the display code, it was a mess. Sortd out capture rates again
 0.2.12    2020-05-23  Add rectangle and skew distribution. Also just shifted the tick mark at 100 on the axes slightly left to make it visible
+
 0.3.0
 0.3.1     2020-05-29  Resize the display area, change some text sizes and change character names. Try to improve
                       responsiveness od display size, made means smaller and reduced gap.
@@ -41,6 +43,8 @@ Start using version history now to record changes and fixes
 0.3.9     2020-06-20  Extreme means now do not join heap, but values do get added to stats
                       Looked at what is stored for a sample mean in relation to ssd. Currently NaN, but changed to 0, not sure if makes a difference, but at least consistent.
 0.3.10    2020-06-20  Started preliminary work on tooltips
+
+
 0.3.11    2020-06-21  Try to sort out skew distribution and touch/mouse to draw. Added a tooltips on off button
                       Can draw, adjust and fill, but haven't got a random sample yet from skew or custom, nor do stats
                       Also changed the auto scale. This means manually scaling the pdf[] values - probably better anyway.
@@ -102,15 +106,17 @@ Start using version history now to record changes and fixes
 */
 //#endregion 
 /*
+
 0.3.54    2020-07-12  CI#25 Increased number of points that makes up heappdf and removed d3 curve interpolation.  
 0.3.55    2020-07-12  CI#21 Tried adjustment to select the heap bin for a mean as suggested by GC.
                       There is a slight difference in that occasionally a bin to the right will be selected.
 0.3.56    2020-07-13  CI#15 Dance of means adjust intervals and text                     
 0.3.57    2020-07-13  CI#17 Revert the Mean heap to Stop Clear Action
 0.3.58    2020-07-13  CI#17 Added F flag so that on C alpha change, it stops, reclaculates MoEs, recalculates the heap and recolours.
-0.3.59    2020-07-13  CI#17 Reinstate coloured heap when Capture of Mu checked regardless of showMoE. 
+0.3.59    2020-07-13  CI#17 Reinstated coloured means dropping.
+0.3.60
 */
-let version = '0.3.59';
+ let version = '0.3.59';
  
 
 'use strict';
@@ -1649,15 +1655,6 @@ $(function() {
       if (showSampleMeans) mblob.attr('visibility', 'visible');
     }
 
-    //0 1 1 
-    // if (!showMoe && captureOfMu && showCaptureMuLine) {   //show lightgreen blobs but no moe lines
-    //   mblob.attr('fill', lightGreen);
-    //   pwing.attr('visibility', 'hidden');
-    //   swing.attr('visibility', 'hidden');
-    //   if (showSampleMeans) mblob.attr('visibility', 'visible');
-    // }    
-
-
     //0 1 1
     if (!showMoe && captureOfMu && showCaptureMuLine) {   //show dark green and red blobs and moes
       if (showPmoe) {
@@ -1686,7 +1683,6 @@ $(function() {
         mblob.attr('visibility', 'visible');
       }
     }
-
 
     //1 0 0
     if (showMoe && !captureOfMu && !showCaptureMuLine) {    //show light green blobs and moe
@@ -1956,37 +1952,57 @@ $(function() {
 
   function addToHeap(fxbar, fssd, pmissed, smissed) {
     let hx, hy;
-    let h;
+    let xb;
 
-    //if (!showMeanHeap  && !captureOfMu && !showCaptureMuLine) return;  //why?
+     if (!showMeanHeap  && !captureOfMu && !showCaptureMuLine) return;
     
-    if (fxbar >= 0 && fxbar <= 100) {
+    //if samplemean is too small or too large don't do anything. 
+    if (fxbar < 0 || fxbar >= 100) {
+      //don't do anything to visible part of heap
+    }
+    else {
       //increase the heap frequency. Remember that 50 is the middle bar
+      //xint = parseInt( Math.floor(xbar/100 * heap.length ));  
       xint = parseInt( Math.floor(fxbar/100 * nobuckets )); //nobuckets might be a decimal
+      //increase the frequency of the heap for that x value
       heap[xint].f += 1;
-
+      //l(heap.length + ' -- ' + nobuckets);
+      //l( parseInt( Math.floor(xbar/100 * heap.length )) + ' -- ' + xint );
       //now draw a bubble at co-ords xint and heap(xint)
-      //color code the drops and add attributes for when recoluring if C (alpha) changed later
+      //color code the drops and add the pmissed and smissed attributes for recoluring depending on CI selecetd (on change)
       hx = (heap[xint].x * 2* sampleMeanSize) + (sampleMeanSize  + 2);
       hy = heightS - (heap[xint].f * sampleMeanSize * 2) - dropLimit + 3;
-
-    //   //0 1 1 showMoe captureofmu showcapturemuline
-      if (captureOfMu && showCaptureMuLine) {
+     
+      if (showMoe && captureOfMu && showCaptureMuLine) {
         if (showPmoe && pmissed === 'true') {
-          svgS.append('circle').attr('class', 'heap').attr('cx', hx ).attr('cy', hy).attr('r', sampleMeanSize).attr('stroke', 'black').attr('stroke-width', 1).attr('fill', 'red').attr('visibility', 'visible').attr('xbar', fxbar).attr('sigma', sigma).attr('ssd', fssd).attr('pmissed', pmissed).attr('smissed', smissed);
+          svgS.append('circle').attr('class', 'heap').attr('cx', hx ).attr('cy', hy).attr('r', sampleMeanSize).attr('stroke', 'black').attr('stroke-width', 1).attr('fill', 'red').attr('visibility', 'visible').attr('pmissed', pmissed).attr('smissed', smissed);
         }
         if (showPmoe && pmissed === 'false') {
-          svgS.append('circle').attr('class', 'heap').attr('cx', hx ).attr('cy', hy).attr('r', sampleMeanSize).attr('stroke', 'black').attr('stroke-width', 1).attr('fill', darkGreen).attr('visibility', 'visible').attr('xbar', fxbar).attr('sigma', sigma).attr('ssd', fssd).attr('pmissed', pmissed).attr('smissed', smissed);
+          svgS.append('circle').attr('class', 'heap').attr('cx', hx ).attr('cy', hy).attr('r', sampleMeanSize).attr('stroke', 'black').attr('stroke-width', 1).attr('fill', darkGreen).attr('visibility', 'visible').attr('pmissed', pmissed).attr('smissed', smissed);
         }
         if (showSmoe && smissed === 'true') {
-          svgS.append('circle').attr('class', 'heap').attr('cx', hx ).attr('cy', hy).attr('r', sampleMeanSize).attr('stroke', 'black').attr('stroke-width', 1).attr('fill', 'red').attr('visibility', 'visible').attr('xbar', fxbar).attr('sigma', sigma).attr('ssd', fssd).attr('pmissed', pmissed).attr('smissed', smissed);
+          svgS.append('circle').attr('class', 'heap').attr('cx', hx ).attr('cy', hy).attr('r', sampleMeanSize).attr('stroke', 'black').attr('stroke-width', 1).attr('fill', 'red').attr('visibility', 'visible').attr('pmissed', pmissed).attr('smissed', smissed);
         }
         if (showSmoe && smissed === 'false') {
-          svgS.append('circle').attr('class', 'heap').attr('cx', hx ).attr('cy', hy).attr('r', sampleMeanSize).attr('stroke', 'black').attr('stroke-width', 1).attr('fill', darkGreen).attr('visibility', 'visible').attr('xbar', fxbar).attr('sigma', sigma).attr('ssd', fssd).attr('pmissed', pmissed).attr('smissed', smissed);
+          svgS.append('circle').attr('class', 'heap').attr('cx', hx ).attr('cy', hy).attr('r', sampleMeanSize).attr('stroke', 'black').attr('stroke-width', 1).attr('fill', darkGreen).attr('visibility', 'visible').attr('pmissed', pmissed).attr('smissed', smissed);
+        }
+      }
+      else if (!showMoe && captureOfMu && showCaptureMuLine) {
+        if (showPmoe && pmissed === 'true') {
+          svgS.append('circle').attr('class', 'heap').attr('cx', hx ).attr('cy', hy).attr('r', sampleMeanSize).attr('stroke', 'black').attr('stroke-width', 1).attr('fill', 'red').attr('visibility', 'visible').attr('pmissed', pmissed).attr('smissed', smissed);
+        }
+        if (showPmoe && pmissed === 'false') {
+          svgS.append('circle').attr('class', 'heap').attr('cx', hx ).attr('cy', hy).attr('r', sampleMeanSize).attr('stroke', 'black').attr('stroke-width', 1).attr('fill', darkGreen).attr('visibility', 'visible').attr('pmissed', pmissed).attr('smissed', smissed);
+        }
+        if (showSmoe && smissed === 'true') {
+          svgS.append('circle').attr('class', 'heap').attr('cx', hx ).attr('cy', hy).attr('r', sampleMeanSize).attr('stroke', 'black').attr('stroke-width', 1).attr('fill', 'red').attr('visibility', 'visible').attr('pmissed', pmissed).attr('smissed', smissed);
+        }
+        if (showSmoe && smissed === 'false') {
+          svgS.append('circle').attr('class', 'heap').attr('cx', hx ).attr('cy', hy).attr('r', sampleMeanSize).attr('stroke', 'black').attr('stroke-width', 1).attr('fill', darkGreen).attr('visibility', 'visible').attr('pmissed', pmissed).attr('smissed', smissed);
         }
       }
       else {
-        svgS.append('circle').attr('class', 'heap').attr('cx', hx ).attr('cy', hy).attr('r', sampleMeanSize).attr('stroke', 'black').attr('stroke-width', 1).attr('fill', lightGreen).attr('visibility', 'visible').attr('xbar', fxbar).attr('sigma', sigma).attr('ssd', fssd).attr('pmissed', pmissed).attr('smissed', smissed);
+        svgS.append('circle').attr('class', 'heap').attr('cx', hx ).attr('cy', hy).attr('r', sampleMeanSize).attr('stroke', 'black').attr('stroke-width', 1).attr('fill', lightGreen).attr('visibility', 'visible').attr('xbar', xbar).attr('sigma', sigma).attr('ssd', fssd).attr('pmissed', pmissed).attr('smissed', smissed);
       }
     }
 
@@ -2012,7 +2028,7 @@ $(function() {
 
       //work out CIs and whether missed or not
       pci = jStat.normalci( xbar, alpha, sigma, n );  //n is just the no of items in the sample, if that changes need to start counting again
-      sci = jStat.tci( xbar, alpha, ssd, n );   
+      sci = jStat.tci( xbar, alpha, ssd, n);   
 
       //do the pmoe count
       pmissed = false;
@@ -2038,12 +2054,13 @@ $(function() {
         $(this).attr('smissed', 'false');
       }      
 
+      //now colour the heap
 
-      //showMoe captureOfMu showCaptureMuLine conditions
+      //Default 
+      $(this).attr('fill', lightGreen);
 
-      //1 1 1
-      //0 1 1
-      if (captureOfMu && showCaptureMuLine) {   //show dark green and red blobs and moes        
+      //0 1 1 
+      if (!showMoe && captureOfMu && showCaptureMuLine) {   //show dark green and red blobs and moes
         if (showPmoe) {
           if (pmissed) {
             $(this).attr('fill', 'red');
@@ -2061,8 +2078,26 @@ $(function() {
           }
         }
       }
-      else {  //000, 001, 010, 100, 101, 110
-        $(this).attr('fill', lightGreen);
+
+
+      //1 1 1
+      if (showMoe && captureOfMu && showCaptureMuLine) { //show dark green and red blobs and moes
+        if (showPmoe) {
+          if (pmissed) {
+            $(this).attr('fill', 'red');
+          }
+          else {
+            $(this).attr('fill', darkGreen);
+          }
+        }
+        if (showSmoe) {
+          if (smissed) {
+            $(this).attr('fill', 'red');
+          }
+          else {
+            $(this).attr('fill', darkGreen);
+          }
+        }
       }
 
 
@@ -2715,8 +2750,8 @@ $(function() {
     showMoe = $showMoe.is(':checked');
     if (!showMoe) {
       //set capture of mu off
-      //$captureOfMu.prop('checked', false);
-      //captureOfMu = false;
+      $captureOfMu.prop('checked', false);
+      captureOfMu = false;
     }
     //clearAll();
     showCapturelines();
@@ -2769,16 +2804,16 @@ $(function() {
   //show the mean as not captured if known, uknown checked
   $captureOfMu.on('change', function() {
     captureOfMu = $captureOfMu.is(':checked');
-    if (!showCaptureMuLine) {
-      $captureOfMu.prop('checked', false);
-      showCapturelines();
-    }
-    else {
+    recolourHeap();
+    if (showCaptureMuLine) {
       //clearAll();
       hideCapturelines();
       displaySampleAppearanceAll();
       recalculateSamplemeanStatistics(); //which turns on display of captured stats
-      recolourHeap();
+    }
+    else {
+      $captureOfMu.prop('checked', false);
+      showCapturelines();
     }
   })
 

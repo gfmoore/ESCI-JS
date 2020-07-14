@@ -109,9 +109,10 @@ Start using version history now to record changes and fixes
 0.3.57    2020-07-13  CI#17 Revert the Mean heap to Stop Clear Action
 0.3.58    2020-07-13  CI#17 Added F flag so that on C alpha change, it stops, reclaculates MoEs, recalculates the heap and recolours.
 0.3.59    2020-07-13  CI#17 Reinstate coloured heap when Capture of Mu checked regardless of showMoE. 
-0.3.60    2007-07-13  CI#15 italic p, extra space, larger font, SCA on check off.
+0.3.60    2020-07-13  CI#15 italic p, extra space, larger font, SCA on check off.
+0.3.61    2020-07-14  CI$20 Added number capturing next mean div and logic
 */
-let version = '0.3.60';
+let version = '0.3.61';
  
 
 'use strict';
@@ -368,10 +369,6 @@ $(function() {
 
   let pdfDisplayAreaHeight = 250;  //250 is just some number that seems to be reasonable for the pdf y height
 
-  let fillBubbles = true;      //I need to be able to drawPDF over the bubbles when filling with bubbles. This controls that.
-  let dontDrawBubbles = false;  //when recalculating mu sigma for skew and custom don't want to draw bubbles when filling pdf
-
-
   let rightclick = false;                   //mouse control
   let drawingPDF = false;                   //mouse control
   let oldxm, oldym, xm, ym, mdown = false;  //mouse control
@@ -380,11 +377,12 @@ $(function() {
   let oldpmoe = 0;
   let oldsmoe = 0;
 
+  let $noofnextmeans;             //number of next means div (one less than number of samples)
   let $nocapturingnextmean;       //capture of next mean panel
   let $pccapturingnextmean;
   let nocapturingnextmeanP = 0;
   let nocapturingnextmeanS = 0;
-  let pccapturingnextmean = 0;
+
 
   let $pvalue;                    //show the pvalues dance
   let pvalue;
@@ -392,14 +390,13 @@ $(function() {
   let $pvaluesound;               //p-value sounds
   let pvaluesound;
 
-  let pv;                         //p-value calculations
-  let z, t, pvz, pvt;
+  let z, t, pvz;                  //p-value calculations
 
   let audiolow        = new Audio('./audio/trom1.wav');
   let audiolowmiddle  = new Audio('./audio/trom2.wav');
   let audiomiddle     = new Audio('./audio/clarry1.wav');
   let audiomiddlehigh = new Audio('./audio/clarry2.wav');
-  let audiohigh   = new Audio('./audio/trumpet1.wav');
+  let audiohigh       = new Audio('./audio/trumpet1.wav');
 
   let nobuckets;                   //the accurate value for number of buckets as a decimal
   
@@ -1931,10 +1928,12 @@ $(function() {
 
   function displayCaptureOfNextMeanStats() {
     if (captureNextMean && showMoe && showPmoe) {
+      $noofnextmeans.text( N-1 );
       $nocapturingnextmean.text( parseInt(nocapturingnextmeanP) );
       $pccapturingnextmean.text( parseFloat(nocapturingnextmeanP / (N-1) * 100).toFixed(1) +'%');
     }
     if (showMoe && showSmoe) {
+      $noofnextmeans.text( N-1 );
       $nocapturingnextmean.text( parseInt(nocapturingnextmeanS) );
       $pccapturingnextmean.text( parseFloat(nocapturingnextmeanS / (N-1) * 100).toFixed(1) +'%');
     }
@@ -2321,10 +2320,17 @@ $(function() {
     d3.selectAll('.scaptureline').remove();
   }
 
+  function clearNumberCapturingNextMeanDisplay() {
+    $noofnextmeans.text(0);
+    $nocapturingnextmean.text(0);
+    $pccapturingnextmean.text('0.0%');
+  }
+
   function resetNumberCapturingNextMean() {
     nocapturingnextmeanP = 0;
     nocapturingnextmeanS = 0;
     pccapturingnextmean = 0;
+    $noofnextmeans.text(0);
     $nocapturingnextmean.text(0);
     $pccapturingnextmean.text('0.0%');
   }
@@ -2709,6 +2715,7 @@ $(function() {
 
     if (plusminusmoe) drawPlusMinusMoe();
     if (showSELines) drawSELines();
+
   })
 
   //show/hide the CI Moe bars?
@@ -2718,11 +2725,14 @@ $(function() {
       //set capture of mu off
       //$captureOfMu.prop('checked', false);
       //captureOfMu = false;
+      clearNumberCapturingNextMeanDisplay();
     }
     //clearAll();
     showCapturelines();
     displaySampleAppearanceAll();
     recalculateSamplemeanStatistics(); //which turns on display of captured stats
+    if (captureNextMean) displayCaptureOfNextMeanStats();
+
     recolourHeap();
   })
 
@@ -2896,6 +2906,7 @@ $(function() {
 
     $captureNextMean      = $('#capturenextmean');
 
+    $noofnextmeans        = $('#noofnextmeans');
     $nocapturingnextmean  = $('#nocapturingnextmean');
     $pccapturingnextmean  = $('#pccapturingnextmean');
 

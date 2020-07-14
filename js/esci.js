@@ -113,8 +113,10 @@ Start using version history now to record changes and fixes
 /*
 0.3.61    2020-07-14  CI$20 Added number capturing next mean div and logic
 0.3.62    2020-07-14  CI$22 Yet another algorithm for curve filling - and I think it works?
+0.3.63    2020-07-14  CI$22 Added more points to skew pdf, but slower, but can't see any fill poking through.
+0.3.64
 */
-let version = '0.3.62';
+let version = '0.3.63';
  
 
 'use strict';
@@ -704,7 +706,7 @@ $(function() {
 
     //lognormal version
     let k = Math.abs(skewAmount);
-    for (let x = -5; x < 10; x += 0.005) {
+    for (let x = -5; x < 10; x += 0.002) {
       pdf.push( {x: x, y: jStat.lognormal.pdf(x, 0, k) } );
     }
 

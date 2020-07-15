@@ -114,9 +114,9 @@ Start using version history now to record changes and fixes
 0.3.61    2020-07-14  CI$20 Added number capturing next mean div and logic
 0.3.62    2020-07-14  CI$22 Yet another algorithm for curve filling - and I think it works?
 0.3.63    2020-07-14  CI$22 Added more points to skew pdf, but slower, but can't see any fill poking through.
-0.3.64
+0.3.64    2020-07-15  CI$3  Used a tooltip library - Tipped - to enhance tooltips.
 */
-let version = '0.3.63';
+let version = '0.3.64';
  
 
 'use strict';
@@ -139,8 +139,8 @@ $(function() {
  
 
   //dialog box to display version
-  $('#dialogversion').hide();
-  $('#dialogversion').html(`Version : ${version}`);
+  // $('#dialogversion').hide();
+  // $('#dialogversion').html(`Version : ${version}`);
   
   //need to relook at this
   // $('#logoimg').on('mouseenter', function() {
@@ -432,6 +432,8 @@ $(function() {
   //#endregion
 
   function initialise() {
+
+    setTooltips();
 
     $('#mainheading').text('esci-web'); //was D3
     getInterfaceElements()     //get the jquery references to items on the user interface
@@ -2977,86 +2979,118 @@ $(function() {
   //add a data-tooltip attribute to all tooltippable elements and then figure out which one was hovered over?
   //It's a first go and I don't like it!!! Still go the text at any rate.
 
+  function setTooltips() {
+    Tipped.setDefaultSkin('esci');
+
+    //heading section
+    Tipped.create('#logo', 'Version: '+version, { skin: 'red', size: 'xlarge' });
+    Tipped.create('#tooltipsonoff', 'Allow tooltips on or off, default is off!', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#mainheading', 'From The New Statistics: ', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#subheading', 'https://thenewstatistics.com', { skin: 'esci', size: 'xlarge' });
+
+    //1. The population section
+    Tipped.create('#populationdisplaydiv', 'Choose the parameters of the population and its shape. ', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#muvaluediv', 'Population mean.  Use slider, or type in value.  Min 0, max 100. ', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#sigmavaluediv', 'Standard deviation of the population.  Use slider or type in value.  Min 1, max 50. ', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#shapediv', 'Click to choose the shape of the population distribution: Normal, rectangular, or skewed to the right. For the skewed population, the degree of skew is controlled by the spinner at the right. Min = 0.1 (minimal skew), max = 1 (strong skew). The skewed distribution is a lognormal distribution, with the number displayed being the SD of the underlying normal distribution. ', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#normal', 'The normal distribution ', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#rectangular', 'A rectangular distribution ', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#skew', 'A skew distribution based on lognormal ', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#skewvalue', 'Use the dropdown to set the degree of right skew, when Skew is chosen as the shape of the population distribution. Min 0.1, max 1. ', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#custom', ' Draw your own distribution.', { skin: 'esci', size: 'xlarge' });
+
+    //2. Click to display section
+    Tipped.create('#displayoptionsdiv', 'Click the three buttons to control sampling. ', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#popn', 'Display the population curve. ', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#sdlines', 'Display verticals to mark the mean, and s units either side of the mean.  These lines mark z=0, z=-1, z=1, etc. ', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#fillpopn', 'Click to fill under the population curve.  A large number of data circles are placed randomly in the area. \nA new randomisation is made each time Fill Random is clicked on. ', { skin: 'esci', size: 'xlarge' });
+
+    //3. Run controls section
+    Tipped.create('#runcontrolsdiv', ' ', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#clearsample', "'Clear' clears all samples.", { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#takesample', 'Click to take another random, independent sample from the population. ', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#runfreely', 'Click to start and stop a sequence of samples. ', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#speed', ' ', { skin: 'esci', size: 'xlarge' });
+
+    //4. Samples section
+    Tipped.create('#samplelabel', 'Choose sample size, see information about the latest sample, and see the number of samples in the current set of samples. ', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#Ndiv', 'Sample size.  Min 1, max 100. ', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#nosamples ', "Number of samples in the current set of samples. A new set is started after 'Clear', or whenever a major parameter (e.g., m, s, N), or display setting is changed.", { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#Mdiv', 'The mean of the latest sample. ', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#sdiv', 'The standard deviation of the latest sample. ', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#moep', 'Margin of error (MoE) of the population CI around the mean of the latest sample. The MoE is the length of either arm of the latest CI, so is half the total length of this CI. ', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#moes', 'Margin of error (MoE) of the sample CI around the mean of the latest sample. The MoE is the length of either arm of the latest CI, so is half the total length of this CI. ', { skin: 'esci', size: 'xlarge' });
+
+
+    Tipped.create('#datapointslabel', 'Click to display data points (ooo) of the latest sample. ', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#samplemeanslabel', 'Display sample means as green dots. ', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#droppingmeanslabel', 'Click to display means as they drop. When mean heap is displayed, unclick here to see just the means in the mean heap. ', { skin: 'esci', size: 'xlarge' });
+
+    //5. Mean heap section
+    Tipped.create('#heapsectionspan', 'The mean heap is a pile of the sample means in the current set of samples. ', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#meanheapdiv', 'Click to show the mean heap, a dot plot of sample means. ', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#samplecurvediv', 'When the mean heap is displayed: The sampling distribution curve is the shape of the mean heap expected if we took an infinite number of samples, and the population is normal.  The sampling distribution curve is a normal distribution.  It is scaled vertically to match the number of samples in the current set of samples. When the population is rectangular, the displayed normal sampling distribution curve is usually a good fit to the mean heap for a large number of samples, because of the central limit theorem. For a skewed population the fit is sometimes not so close, especially for small samples and a highly skewed population. ', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#samplelinesdiv', 'When the mean heap is displayed: Display verticals to mark m , and SE units either side of m.  These lines mark z=0, z=-1, z=1, etc, for the sampling distribution curve. ', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#plusminusmoediv', 'This interval marks the central C% area under the sampling distribution curve.  It is marked by a green bar along the X axis, with green verticals to mark its ends. When s is assumed known, this interval gives the width of every CI. ', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#meanheapMdiv', 'The mean of the heap at after each sample ', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#meanheapsediv', 'The standard error of the heap after each sample. ', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#curveheapsediv', 'The standard error of the sampling distribution curve. ', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#nomeansinheapdiv', 'Number of samples in the current set of samples for which the CI captures μ ', { skin: 'esci', size: 'xlarge' });
+
+    //6. CI section
+    Tipped.create('#confidenceintervalsdiv', 'CIs can be displayed on every mean in the dance of the means, to give the dance of the confidence intervals ', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#cipcntdiv', 'Confidence level (%) for CIs displayed on the sample means.  Use spinner or type in a value.  Min 0, max 99.9 ', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#showmoediv>', 'Display a CI on every mean in the dance of the means, to see the dance of the confidence intervals ', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#labelformoepopn', 'The population sd is known. ', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#labelformoesample', 'The population sd is unknown. ', { skin: 'esci', size: 'xlarge' });
+
+    //7. Capture of mean
+    Tipped.create('#captureofmupanel', 'When the mean heap is not displayed: Explore capture of μ by CIs. Click both checkboxes to mark the population mean μ, and see red when a CI does not capture μ. ', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#captureofmulinelabel', 'A vertical line to mark the population mean in the lower figure ', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#captureofmulabel', 'When the mean heap is not displayed: Click to indicate capture by the CIs of μ.  Red indicates non-capture. ', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#numbercapturingdiv ', 'The number of samples that capture the population mean. ', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#nosamplesydiv', 'Total number of sample taken (re-displayed from section 4)   ', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#capturedpercentdiv', 'Percent of samples in the current set of samples for which the CI captures μ.  This proportion is expected in the long run to equal % confidence (C). ', { skin: 'esci', size: 'xlarge' });
+
+    //8.Capture of next mean
+    Tipped.create('#capturenextmeanlabel', 'When the mean heap is not displayed: Explore capture by CIs of the next mean, which is the mean just above a CI in the dance. When the checkbox is clicked on, then cases where the next mean falls outside the CI are indicated by a pink diagonal line joining the closer limit of the CI to that next mean just above. ', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#numberofnextmeansdiv', 'The number of means that is being tested for capture. ', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#numbercapturingnextmeandiv', 'Number of samples in the current set of samples for which the CI captures the next mean, which is the mean just above it in the dance. ', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#percentcapturingnextmeandiv', 'When the mean heap is not displayed: Click to show a pink diagonal line joining the  closer limit of the CI to the next mean, which is the mean just above, in all cases in which the CI does not capture that next mean. In the long run, we expect about 83% of 95% CIs to capture the next mean. ', { skin: 'esci', size: 'xlarge' });
+    
+    //9. p values
+    Tipped.create('#pvaluelabel', 'Show the dance of the p values. ', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#pvaluesoundlabel', 'Turn on the music! to enhance the dance of the p values! ', { skin: 'esci', size: 'xlarge' });
+    
+    //footer
+    Tipped.create('#footerlink', 'Return to the New Statistics website. ', { skin: 'esci', size: 'xlarge' });
+
+    //display section
+    Tipped.create('#displaypdf', 'This section displays the population curve. ', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#displaysample', 'This section displays the dance of the means and the mean heap. ', { skin: 'esci', size: 'xlarge' });
+    
+    //  
+    //Tipped.create('#', ' ', { skin: 'esci', size: 'xlarge' });
+    //Tipped.create('#', ' ', { skin: 'esci', size: 'xlarge' });
+
+    //get all tooltips with a data-tooltip attribute
+    Tipped.disable('[data-tooltip]');
+  }
+
   $tooltipsonoff.on('click', function() {
     if (tooltipsonoff) {
       tooltipsonoff = false;
       $tooltipsonoff.css('background-color', 'lightgrey');
+      Tipped.disable('[data-tooltip');
     }
     else {
       tooltipsonoff = true;
       $tooltipsonoff.css('background-color', 'lightgreen');
-    }
-  })
+      Tipped.enable('[data-tooltip');
 
-  $('[data-tooltip]').on({ 
-    mouseenter: function(e) {
-
-      // e.preventDefault();
-      // e.stopPropagation();
-      $('#tooltip').hide();
-      position = $(this).position();
-
-      if (tooltipsonoff) {  //if tooltips allowed
-        tooltipText = '';
-        if ($(this).text().includes('1. The Population'))           tooltipText = 'Choose the parameters of the population and its shape.';
-        if ($(this).text().includes('μ'))                           tooltipText = 'Population mean.  Use slider, or type in value.  Min 0, max 100.';
-        if ($(this).text().includes('σ'))                           tooltipText = 'Standard deviation of the population.  Use slider or type in value.  Min 1, max 50.';
-        if ($(this).text().includes('Shape'))                       tooltipText = 'Click to choose the shape of the population distribution: Normal, rectangular, or skewed to the right. For the skewed population, the degree of skew is controlled by the spinner at the right. Min = 0.1 (minimal skew), max = 1 (strong skew). The skewed distribution is a lognormal distribution, with the number displayed being the SD of the underlying normal distribution.';
-        if ($(this).text().includes('Skew'))                        tooltipText = 'Use the spinner to set the degree of right skew, when Skew is chosen as the shape of the population distribution. Min 0.1, max 1.';
-        if ($(this).text().includes('Custom'))                      tooltipText = 'Draw your own distribution.';
-        if ($(this).text() === 'SD Lines')                          tooltipText = 'Display verticals to mark the mean, and s units either side of the mean.  These lines mark z=0, z=-1, z=1, etc.';
-        if ($(this).text() === 'Fill Random')                       tooltipText = 'Click to fill under the population curve.  A large number of data circles are placed randomly in the area. \nA new randomisation is made each time Fill Random is clicked on.';
-        if ($(this).text().includes('Controls'))                    tooltipText = "Click the three buttons to control sampling.";
-        //I don't like tooltips appearing on buttons, must be a better way - hover for a second or two?
-        // if ($(this).text().includes('Clear'))                       tooltipText = "'Clear' clears all samples.";
-        // if ($(this).text().includes('Take Sample'))                 tooltipText = "Click to take another random, independent sample from the population.";
-        // if ($(this).text().includes('Run Stop'))                    tooltipText = "Click to start and stop a sequence of samples.";
-        if ($(this).text().includes('Samples'))                     tooltipText = 'Choose sample size, see information about the latest sample, and see the number of samples in the current set of samples.';
-        if ($(this).text() === 'N')                                 tooltipText = 'Sample size.  Min 1, max 100.';
-        if ($(this).text().includes('Number of samples'))           tooltipText = "Number of samples in the current set of samples. A new set is started after 'Clear', or whenever a major parameter (e.g., m, s, N), or display setting is changed.";
-        if ($(this).text().includes('Mean'))                        tooltipText = 'The mean of the latest sample.';
-        if ($(this).text().includes('SD'))                          tooltipText = 'The standard deviation of the latest sample.';
-        if ($(this).text().includes('MoE (population)'))            tooltipText = 'Margin of error (MoE) of the population CI around the mean of the latest sample. The MoE is the length of either arm of the latest CI, so is half the total length of this CI.';
-        if ($(this).text().includes('MoE (sample)'))                tooltipText = 'Margin of error (MoE) of the sample CI around the mean of the latest sample. The MoE is the length of either arm of the latest CI, so is half the total length of this CI.';
-        if ($(this).text().includes('Data points'))                 tooltipText = 'Click to display data points (ooo) of the latest sample.';
-        if ($(this).text().includes('Sample means'))                tooltipText = 'Display sample means as green dots.';
-        if ($(this).text().includes('Dropping means'))              tooltipText = 'Click to display means as they drop. When mean heap is displayed, unclick here to see just the means in the mean heap.';
-        if ($(this).text().includes('5. Mean Heap'))                tooltipText = 'The mean heap is a pile of the sample means in the current set of samples. Only the most recent ??? means are displayed.';
-        if ($(this).text().includes('Mean heap'))                   tooltipText = 'Click to show the mean heap, a dot plot of sample means. Only the most recent ??? means in the current set of samples are displayed.';
-        if ($(this).text().includes('Sampling distribution curve')) tooltipText = 'When the mean heap is displayed: The sampling distribution curve is the shape of the mean heap expected if we took an infinite number of samples, and the population is normal.  The sampling distribution curve is a normal distribution.  It is scaled vertically to match the number of samples in the current set of samples. When the population is rectangular, the displayed normal sampling distribution curve is usually a good fit to the mean heap for a large number of samples, because of the central limit theorem. For a skewed population the fit is sometimes not so close, especially for small samples and a highly skewed population.';
-        if ($(this).text().includes('SE lines'))                    tooltipText = 'When the mean heap is displayed: Display verticals to mark m , and SE units either side of m.  These lines mark z=0, z=-1, z=1, etc, for the sampling distribution curve.';
-        if ($(this).text().includes('MoE around μ'))                tooltipText = 'This interval marks the central C% area under the sampling distribution curve.  It is marked by a green bar along the X axis, with green verticals to mark its ends. When s is assumed known, this interval gives the width of every CI.';
-        if ($(this).text().includes('6. Confidence Intervals'))     tooltipText = 'CIs can be displayed on every mean in the dance of the means, to give the dance of the confidence intervals';
-        if ($(this).text().includes('CI%'))                         tooltipText = 'Confidence level (%) for CIs displayed on the sample means.  Use spinner or type in a value.  Min 0, max 99.9';
-        if ($(this).text().includes('CIs'))                         tooltipText = 'Display a CI on every mean in the dance of the means, to see the dance of the confidence intervals';
-        if ($(this).text().includes('Known'))                       tooltipText = 'The population sd is known.';
-        if ($(this).text().includes('Unknown'))                     tooltipText = 'The population sd is unknown.';
-        if ($(this).text().includes('7. Capture of μ'))             tooltipText = 'When the mean heap is not displayed: Explore capture of μ by CIs. Click both checkboxes to mark the population mean μ, and see red when a CI does not capture μ.';
-        if ($(this).text().includes('μ line'))                      tooltipText = 'A vertical line to mark the population mean in the lower figure';
-        if ($(this).text().includes('Capture of μ'))                tooltipText = 'When the mean heap is not displayed: Click to indicate capture by the CIs of μ.  Red indicates non-capture.';
-        if ($(this).text().includes('Heap mean'))                   tooltipText = 'The mean of the heap at after each sample';
-        if ($(this).text().includes('Heap se'))                     tooltipText = 'The standard error of the heap after each sample';
-        if ($(this).text().includes('Number capturing μ'))          tooltipText = 'Number of samples in the current set of samples for which the CI captures μ';
-        if ($(this).text().includes('Samples taken'))               tooltipText = 'Total number of sample taken (re-displayed from section 4)';
-        if ($(this).text().includes('Percent capturing μ'))         tooltipText = 'Percent of samples in the current set of samples for which the CI captures μ.  This proportion is expected in the long run to equal % confidence (C).  ';
-        if ($(this).text().includes('8. Capture of next mean'))     tooltipText = 'NOT IMPLEMENTED YET!! When the mean heap is not displayed: Explore capture by CIs of the next mean, which is the mean just above a CI in the dance. When the checkbox is clicked on, then cases where the next mean falls outside the CI are indicated by a pink diagonal line joining the closer limit of the CI to that next mean just above.';
-        if ($(this).text().includes('Number capturing next mean'))  tooltipText = 'Number of samples in the current set of samples for which the CI captures the next mean, which is the mean just above it in the dance.';
-        if ($(this).text().includes('Percent capturing next mean')) tooltipText = 'When the mean heap is not displayed: Click to show a pink diagonal line joining the  closer limit of the CI to the next mean, which is the mean just above, in all cases in which the CI does not capture that next mean. In the long run, we expect about 83% of 95% CIs to capture the next mean.';
-        // if ($(this).text().includes('')) tooltipText = '';
-        // if ($(this).text().includes('')) tooltipText = '';
-
-        $('#tooltip').css( { left: position.left + 20, top: position.top +20 } )
-        $('#tooltip').text(tooltipText).show(500);
-      }
-    },
-    mouseleave: function() {
-      $('#tooltip').hide();
-    },
-    click: function() {
-      $('#tooltip').hide();
-    },
-    touch: function() {
-      $('#tooltip').hide();
+      Tipped.delegate('#subheading', {
+        skin: 'blue'
+      })
     }
   })
 

@@ -33,6 +33,7 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
 0.3.60  2020-07-13  p value, the p is italic
 0.3.61  2020-07-14  CI$20 Added div for noofnextmeans
 0.3.64  2020-07-15  CI$3  Used a tooltip library - Tipped - to enhance tooltips.
+0.3.65
 -->
 
 
@@ -147,9 +148,9 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
             <!--------------------------------------Section 2 Click to Display Popn, sd lines, fill random------------------------>
             <div id=displayoptions>
               <div id=displayoptionsdiv data-tooltip>2. Click to display</div>
-              <input type=checkbox id=popn name=popn value=popn><label for=popn>Population</label>
-              <input type=checkbox id=sdlines name=sdlines value=sdlines><label for=sdlines data-tooltip>SD Lines</label>
-              <input type=checkbox id=fillpopn name=fillpopn value=fillpopn><label for=fillpopn data-tooltip>Fill Random</label>
+              <input type=checkbox id=popn name=popn value=popn><label id=popnlabel for=popn data-tooltip>Population</label>
+              <input type=checkbox id=sdlines name=sdlines value=sdlines><label id=sdlineslabel for=sdlines data-tooltip>SD Lines</label>
+              <input type=checkbox id=fillpopn name=fillpopn value=fillpopn><label id=fillpopnlabel for=fillpopn data-tooltip>Fill Random</label>
             </div>
 
             <!------------------------------------------Section 3 Controls Clear, Take Sample, Run Freely-------------------------------------------------------->
@@ -248,7 +249,7 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
                 </select>
               </div>
               <div id=CIcontrol>
-                <div id=showmoediv><input type=checkbox id=showmoe name=showmoe value=showmoe><label for=showmoe><span>CIs </span></label></div>
+                <div id=showmoediv><input type=checkbox id=showmoe name=showmoe value=showmoe><label id=showmoelabel for=showmoe data-tooltip><span>CIs </span></label></div>
                 <div id=knownunknown data-tooltip>Assume <span class=greek>&sigma;</span> is </div>
                 <div><input type=radio id=moepopn   name=moe value=moepopn checked=checked><label id=labelformoepopn for=moepopn data-tooltip><span>Known </span></label></div>
                 <div><input type=radio id=moesample name=moe value=moesample><label id=labelformoesample for=moesample data-tooltip><span>Unknown</span></label></div>

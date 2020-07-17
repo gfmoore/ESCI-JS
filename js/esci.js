@@ -115,11 +115,14 @@ Start using version history now to record changes and fixes
 0.3.62    2020-07-14  CI$22 Yet another algorithm for curve filling - and I think it works?
 0.3.63    2020-07-14  CI$22 Added more points to skew pdf, but slower, but can't see any fill poking through.
 0.3.64    2020-07-15  CI$3  Used a tooltip library - Tipped - to enhance tooltips.
+0.3.65    2020-07-17  CI#20 Added fix to magenta capture lines not disappearing at top. - They were looking for already captured mean, so don't display, but still count them.
 */
-let version = '0.3.64';
+let version = '0.3.65';
  
 
 'use strict';
+
+// #region touchable
 //$(window).load(function () { //doesn't work anyway need to wait for everything to load, not just jquery, though I didn't experience any problems?
 $(function() {
   console.log('jQuery here!');  //just to make sure everything is working
@@ -137,32 +140,7 @@ $(function() {
   else {
   }
  
-
-  //dialog box to display version
-  // $('#dialogversion').hide();
-  // $('#dialogversion').html(`Version : ${version}`);
-  
-  //need to relook at this
-  // $('#logoimg').on('mouseenter', function() {
-  //   $('#dialogversion').show(500);
-  // })
-
-  // $('#dialogversion').on('mouseleave click touch', function() {
-  //   event.stopPropagation();
-  //   event.preventDefault();
-  //   $('#dialogversion').hide(500);
-  // })
-
-  $('#logoimg').on('click', function() {
-    $('#dialogversion').show(500);
-  })
-
-  $('#dialogversion').on('click', function() {
-    event.stopPropagation();
-    event.preventDefault();
-    $('#dialogversion').hide(500);
-  })
-
+  //#endregion
 
   //#region for variable definitions (just allows code folding)
   let $muslider;                //muslider
@@ -405,12 +383,17 @@ $(function() {
   let nobuckets;                   //the accurate value for number of buckets as a decimal
   
   let Fhalt = false;                //used to Fhalt operation in Stop Clear Action now F flag
+
+  let previousmeanexists;
   //#endregion
 
   initialise();
 
 //TESTING
   //#region TESTING Set some checkboxes for when testing. 
+    $showMoe.prop('checked', true);
+    showMoe = true;
+
    // $showSDLines.prop('checked', true);  
     // showSDLines = true;
     // drawSDLines();
@@ -421,9 +404,9 @@ $(function() {
     // $('#samplesselected option[value=2]').prop('selected', true);
     // n = parseInt( $('#samplesselected option:selected').val() );
 
-    // $captureNextMean.prop('checked', true);
-    // captureNextMean = true;
-    // $('#capturenextmeangrid').show();
+    $captureNextMean.prop('checked', true);
+    captureNextMean = true;
+    $('#capturenextmeangrid').show();
 
     // $pvalue.prop('checked', true);
     // pvalue = true;
@@ -1272,6 +1255,7 @@ $(function() {
 
 
   //------------------------------------------------Get Samples--------------------------------------*/
+  let meanidx;
 
   //take a sample from the population
   function takeSample() {
@@ -1343,9 +1327,6 @@ $(function() {
 
     //Now at this point I have to get the means to DANCE!!!. If droppingMeans true  - shift down the older samplemeans.
     if (dropSampleMeans) {
-      //should change this to an D3 function now, but can't get it to work on individual items???
-      //e.g. d3.selectAll('.smean').each(function(d, i) {    d3.select(this).attr('cy')  }) does all of them at once 
-
       $('.smean').each(function() { //get an array of all smean svg elements - circles
         
         meanid = $(this).attr('id').substring(5); 
@@ -1359,12 +1340,12 @@ $(function() {
           if (showMeanHeap) {  //if the mean heap is visible look at the sample mean. Compare it with the height of the heap  frequency at that point
 
             //get the sample mean and ssd from the dropping blob
-            ixbar = parseInt($(this).attr('xbar'));
+            //ixbar = parseInt($(this).attr('xbar'));
             fxbar = parseFloat($(this).attr('xbar'));
             fssd = parseFloat($(this).attr('ssd'));
 
             //if xbar outside viewable area 0-100 then cannot add to heap display
-            if ((ixbar < 0 || ixbar >= 100)) {
+            if ((fxbar < 0 || fxbar >= 100)) {
               //well even though we cannot see it, need to keep it dropping, so treat it as though no heap visible
               if (ypos <= heightS - dropLimit - sampleMeanSize) {
                 letDrop = true;
@@ -1374,8 +1355,11 @@ $(function() {
               }              
             }
             else {
-              //the sample mean is inside the viewable area so check against the heap height
-              heapIndex = parseInt(ixbar/100 * heap.length);
+              //from add to heap routine the sample mean is inside the viewable area so check against the heap height
+              heapIndex = parseInt( Math.floor(fxbar/100 * nobuckets )); //nobuckets might be a decimal
+        
+              //original
+              // heapIndex = parseInt(ixbar/100 * heap.length);
               heapIndexFreq = heap[heapIndex].f;
 
               //this should be the height or position of top of bar at heapIndex
@@ -1408,6 +1392,7 @@ $(function() {
             d3.select('#smoe'+meanid).attr('y2', ypos); 
 
             //move capture of next mean
+
             d3.select('#pcapture'+meanid).attr('y1', ypos);
             d3.select('#pcapture'+meanid).attr('y2', yposs); 
 
@@ -1417,18 +1402,21 @@ $(function() {
             //move p-value
             d3.select('#pvalue'+meanid).attr('y', ypos-6);
             d3.select('#pvtext'+meanid).attr('y', ypos+4);
-
-            let qq=1;
           }
           else {  // gone too far remove it and the moe wings and any capturelines
             let pmissed = $(this).attr('pmissed');  //for use in colouring the heap, text value 'true' 'false'
             let smissed = $(this).attr('smissed');
-            $(this).remove();
+
+            //$(this).remove();
+            d3.select('#smean'+meanid).remove(); 
+
             d3.select('#pmoe'+meanid).remove();  
             d3.select('#smoe'+meanid).remove();
 
+
             d3.select('#pcapture'+meanid).remove();  
             d3.select('#scapture'+meanid).remove();
+
 
             d3.select('#pvalue'+meanid).remove();
             d3.select('#pvtext'+meanid).remove();
@@ -1473,23 +1461,28 @@ $(function() {
       nocapturingnextmeanP += 1;
       nocapturingnextmeanS += 1;
 
-      idnext = id - 1;  //the previous one is lower
+      idnext = id - 1;  //the previous one is lower in the diagram
+      //what if there is no previous mean because it's been captured?
+      //can't draw line, but need to count it (otherwise pink lines get isolated at top)
+      previousmeanexists = true;
+      if ($('#smean' + idnext).length == 0) previousmeanexists = false;
+
       //I know the current xbar, but need the xbar and moe of the previous mean
       if ( oldxbar + oldpmoe < xbar ) {
-        svgS.append('line').attr('class', 'pcaptureline').attr('id', 'pcapture' + +idnext).attr('x1', x(oldxbar + oldpmoe)).attr('y1', ypos + droppingMeanGap).attr('x2', x(xbar)).attr('y2', ypos).attr('visibility', 'hidden');
+        if (previousmeanexists) svgS.append('line').attr('class', 'pcaptureline').attr('id', 'pcapture' + +idnext).attr('x1', x(oldxbar + oldpmoe)).attr('y1', ypos + droppingMeanGap).attr('x2', x(xbar)).attr('y2', ypos).attr('visibility', 'hidden');
         nocapturingnextmeanP -= 1;
       }
       if ( oldxbar - oldpmoe > xbar ) {
-        svgS.append('line').attr('class', 'pcaptureline').attr('id', 'pcapture' + +idnext).attr('x1', x(oldxbar - oldpmoe)).attr('y1', ypos + droppingMeanGap).attr('x2', x(xbar)).attr('y2', ypos).attr('visibility', 'hidden');
+        if (previousmeanexists) svgS.append('line').attr('class', 'pcaptureline').attr('id', 'pcapture' + +idnext).attr('x1', x(oldxbar - oldpmoe)).attr('y1', ypos + droppingMeanGap).attr('x2', x(xbar)).attr('y2', ypos).attr('visibility', 'hidden');
         nocapturingnextmeanP -= 1;
       }
       
       if ( oldxbar + oldsmoe < xbar ) {
-        svgS.append('line').attr('class', 'scaptureline').attr('id', 'scapture' + +idnext).attr('x1', x(oldxbar + oldsmoe)).attr('y1', ypos + droppingMeanGap).attr('x2', x(xbar)).attr('y2', ypos).attr('visibility', 'hidden');
+        if (previousmeanexists) svgS.append('line').attr('class', 'scaptureline').attr('id', 'scapture' + +idnext).attr('x1', x(oldxbar + oldsmoe)).attr('y1', ypos + droppingMeanGap).attr('x2', x(xbar)).attr('y2', ypos).attr('visibility', 'hidden');
         nocapturingnextmeanS -= 1;
       }
       if ( oldxbar - oldsmoe > xbar ) {
-        svgS.append('line').attr('class', 'scaptureline').attr('id', 'scapture' + +idnext).attr('x1', x(oldxbar - oldsmoe)).attr('y1', ypos + droppingMeanGap).attr('x2', x(xbar)).attr('y2', ypos).attr('visibility', 'hidden');
+        if (previousmeanexists) svgS.append('line').attr('class', 'scaptureline').attr('id', 'scapture' + +idnext).attr('x1', x(oldxbar - oldsmoe)).attr('y1', ypos + droppingMeanGap).attr('x2', x(xbar)).attr('y2', ypos).attr('visibility', 'hidden');
         nocapturingnextmeanS -= 1;
       }
 
@@ -2969,7 +2962,7 @@ $(function() {
   });
 
   //helper function for testing
-  function log(s) {
+  function lg(s) {
     console.log(s);
   }
 
@@ -3001,9 +2994,9 @@ $(function() {
 
     //2. Click to display section
     Tipped.create('#displayoptionsdiv', 'Click the three buttons to control sampling. ', { skin: 'esci', size: 'xlarge' });
-    Tipped.create('#popn', 'Display the population curve. ', { skin: 'esci', size: 'xlarge' });
-    Tipped.create('#sdlines', 'Display verticals to mark the mean, and s units either side of the mean.  These lines mark z=0, z=-1, z=1, etc. ', { skin: 'esci', size: 'xlarge' });
-    Tipped.create('#fillpopn', 'Click to fill under the population curve.  A large number of data circles are placed randomly in the area. \nA new randomisation is made each time Fill Random is clicked on. ', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#popnlabel', 'Display the population curve. ', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#sdlineslabel', 'Display verticals to mark the mean, and s units either side of the mean.  These lines mark z=0, z=-1, z=1, etc. ', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#fillpopnlabel', 'Click to fill under the population curve.  A large number of data circles are placed randomly in the area. \nA new randomisation is made each time Fill Random is clicked on. ', { skin: 'esci', size: 'xlarge' });
 
     //3. Run controls section
     Tipped.create('#runcontrolsdiv', ' ', { skin: 'esci', size: 'xlarge' });
@@ -3040,7 +3033,7 @@ $(function() {
     //6. CI section
     Tipped.create('#confidenceintervalsdiv', 'CIs can be displayed on every mean in the dance of the means, to give the dance of the confidence intervals ', { skin: 'esci', size: 'xlarge' });
     Tipped.create('#cipcntdiv', 'Confidence level (%) for CIs displayed on the sample means.  Use spinner or type in a value.  Min 0, max 99.9 ', { skin: 'esci', size: 'xlarge' });
-    Tipped.create('#showmoediv>', 'Display a CI on every mean in the dance of the means, to see the dance of the confidence intervals ', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#showmoelabel', 'Display a CI on every mean in the dance of the means, to see the dance of the confidence intervals ', { skin: 'esci', size: 'xlarge' });
     Tipped.create('#labelformoepopn', 'The population sd is known. ', { skin: 'esci', size: 'xlarge' });
     Tipped.create('#labelformoesample', 'The population sd is unknown. ', { skin: 'esci', size: 'xlarge' });
 
@@ -3081,12 +3074,12 @@ $(function() {
     if (tooltipsonoff) {
       tooltipsonoff = false;
       $tooltipsonoff.css('background-color', 'lightgrey');
-      Tipped.disable('[data-tooltip');
+      Tipped.disable('[data-tooltip]');
     }
     else {
       tooltipsonoff = true;
       $tooltipsonoff.css('background-color', 'lightgreen');
-      Tipped.enable('[data-tooltip');
+      Tipped.enable('[data-tooltip]');
 
       Tipped.delegate('#subheading', {
         skin: 'blue'

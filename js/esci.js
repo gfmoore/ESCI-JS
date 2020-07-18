@@ -117,9 +117,10 @@ Start using version history now to record changes and fixes
 0.3.64    2020-07-15  CI$3  Used a tooltip library - Tipped - to enhance tooltips.
 0.3.65    2020-07-17  CI#20 Added fix to magenta capture lines not disappearing at top. - They were looking for already captured mean, so don't display, but still count them.
 0.3.66    2020-07-18  CI#15 P value enhancements. Strip out common css for use in future programs
-
+0.3.67    2020-07-18  Dances#22 Tweak for Rectangular to reduce bubbles showing through
+0.3.68
 */
-let version = '0.3.66';
+let version = '0.3.67';
  
 
 'use strict';
@@ -1242,6 +1243,15 @@ $(function() {
           drawit = false;
           break; //we're done
         } 
+
+        //rectangular seems to need a slight tweak for the top
+        if (rectangular) {
+          if (d2 <= s2 + 10) {
+            drawit = false;
+            break;
+          }
+        }
+
       }
       //break to here
 

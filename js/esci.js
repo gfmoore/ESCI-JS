@@ -116,13 +116,15 @@ Start using version history now to record changes and fixes
 0.3.63    2020-07-14  CI$22 Added more points to skew pdf, but slower, but can't see any fill poking through.
 0.3.64    2020-07-15  CI$3  Used a tooltip library - Tipped - to enhance tooltips.
 0.3.65    2020-07-17  CI#20 Added fix to magenta capture lines not disappearing at top. - They were looking for already captured mean, so don't display, but still count them.
+0.3.66    2020-07-18  CI#15 P value enhancements. Strip out common css for use in future programs
+
 */
-let version = '0.3.65';
+let version = '0.3.66';
  
 
 'use strict';
 
-// #region touchable
+  // #region touchable
 //$(window).load(function () { //doesn't work anyway need to wait for everything to load, not just jquery, though I didn't experience any problems?
 $(function() {
   console.log('jQuery here!');  //just to make sure everything is working
@@ -385,14 +387,17 @@ $(function() {
   let Fhalt = false;                //used to Fhalt operation in Stop Clear Action now F flag
 
   let previousmeanexists;
+
+  let mu0 = 50;
+  let cohensd = 0;
   //#endregion
 
   initialise();
 
 //TESTING
   //#region TESTING Set some checkboxes for when testing. 
-    $showMoe.prop('checked', true);
-    showMoe = true;
+    // $showMoe.prop('checked', true);
+    // showMoe = true;
 
    // $showSDLines.prop('checked', true);  
     // showSDLines = true;
@@ -404,13 +409,14 @@ $(function() {
     // $('#samplesselected option[value=2]').prop('selected', true);
     // n = parseInt( $('#samplesselected option:selected').val() );
 
-    $captureNextMean.prop('checked', true);
-    captureNextMean = true;
-    $('#capturenextmeangrid').show();
+    // $captureNextMean.prop('checked', true);
+    // captureNextMean = true;
+    // $('#capturenextmeangrid').show();
 
     // $pvalue.prop('checked', true);
     // pvalue = true;
     // $('#pvaluesoundblock').show();
+    // $('#pvaluehypothesisblock').show();
 
   //#endregion
 
@@ -419,6 +425,8 @@ $(function() {
     setTooltips();
 
     $('#mainheading').text('esci-web'); //was D3
+    $('#subheading').text('dances'); //was D3
+
     getInterfaceElements()     //get the jquery references to items on the user interface
     getInterfaceValues();      //get current values of all checkboxes, radio-buttons and text-boxes etc.
 
@@ -447,6 +455,8 @@ $(function() {
 
     $('#capturenextmeangrid').hide();
     $('#pvaluesoundblock').hide();
+    $('#pvaluehypothesisblock').hide();
+
     //#endregion    
 
     setDisplay();              //set up initial display and items (which responds to screen resizes)
@@ -560,6 +570,7 @@ $(function() {
     clearCapturelines();
     resetNumberCapturingNextMean();
     clearpvalues();  
+    displayCohend();
 
     drawPopulationCurve();  //includes redrawing of mean and sd lines and fill
   }
@@ -578,8 +589,6 @@ $(function() {
       if (skew)         drawSkewCurve();
       if (custom)       drawCustomCurve();
     }
-
-    //if (showCaptureMuLine) drawMuLine();  done in drawPDF
   }
 
   //remove the population curve
@@ -1061,6 +1070,7 @@ $(function() {
 
     //when switching distributions especially on custom
     if (showCaptureMuLine) drawMuLine(); else removeMuLine();
+    if (pvalue) drawMu0Line(); else removeMu0Line();
     if (plusminusmoe) drawPlusMinusMoe(); 
 
     //I know mu and sigma so I know pmoe
@@ -1109,6 +1119,19 @@ $(function() {
   function removeMuLine() {
     d3.selectAll('.muline').remove();
     d3.selectAll('.mutext').remove();
+  }
+
+  function drawMu0Line() {
+    removeMu0Line(); //remove any previous one
+    if (!isNaN(mu0)) {
+      svgS.append('line').attr('class', 'mu0line').attr('x1', x(mu0)).attr('y1', 25).attr('x2', x(mu0)).attr('y2', heightS-dropLimit);  
+      svgS.append('text').text('\u00B5'+'0').attr('class', 'mu0text').attr('x', x(mu0)-4).attr('y', heightS-10);
+    }
+  }
+
+  function removeMu0Line() {
+    d3.selectAll('.mu0line').remove();
+    d3.selectAll('.mu0text').remove();
   }
 
  
@@ -1400,26 +1423,30 @@ $(function() {
             d3.select('#scapture'+meanid).attr('y2', yposs); 
 
             //move p-value
-            d3.select('#pvalue'+meanid).attr('y', ypos-6);
-            d3.select('#pvtext'+meanid).attr('y', ypos+4);
+            d3.select('#pvaluez'+meanid).attr('y', ypos-6);
+            d3.select('#pvtextz'+meanid).attr('y', ypos+4);
+
+            d3.select('#pvaluet'+meanid).attr('y', ypos-6);
+            d3.select('#pvtextt'+meanid).attr('y', ypos+4);
+
           }
           else {  // gone too far remove it and the moe wings and any capturelines
             let pmissed = $(this).attr('pmissed');  //for use in colouring the heap, text value 'true' 'false'
             let smissed = $(this).attr('smissed');
 
-            //$(this).remove();
             d3.select('#smean'+meanid).remove(); 
 
             d3.select('#pmoe'+meanid).remove();  
             d3.select('#smoe'+meanid).remove();
 
-
             d3.select('#pcapture'+meanid).remove();  
             d3.select('#scapture'+meanid).remove();
 
+            d3.select('#pvaluez'+meanid).remove();  
+            d3.select('#pvtextz'+meanid).remove();
+            d3.select('#pvaluez'+meanid).remove();  
+            d3.select('#pvtextt'+meanid).remove();
 
-            d3.select('#pvalue'+meanid).remove();
-            d3.select('#pvtext'+meanid).remove();
 
             if (showMeanHeap) addToHeap(fxbar, fssd, pmissed, smissed); 
             break;  //no point in moving anymore
@@ -1492,32 +1519,10 @@ $(function() {
 
     //add p-value rectangle
     calcpvalue();
-    if (pvz < 0.001) {
-      svgS.append('rect').attr('class', 'pvalue').attr('id', 'pvalue' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'red').attr('visibility', 'hidden');
-      svgS.append('text').text('   ***' + (pvz.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtext').attr('id', 'pvtext' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').attr('fill', 'black').attr('visibility', 'hidden');
-      if (pvaluesound) audiohigh.play();
-    }
-    if (pvz >= 0.001 && pvz < 0.01) {
-      svgS.append('rect').attr('class', 'pvalue').attr('id', 'pvalue' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'orange').attr('visibility', 'hidden');
-      svgS.append('text').text('    **'+ (pvz.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtext').attr('id', 'pvtext' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').attr('fill', 'black').attr('visibility', 'hidden');
-      if (pvaluesound) audiomiddlehigh.play();
-    }
-    if (pvz >= 0.01 && pvz < 0.05) {
-      svgS.append('rect').attr('class', 'pvalue').attr('id', 'pvalue' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'lemonchiffon').attr('visibility', 'hidden');
-      svgS.append('text').text('     \u2022' + (pvz.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtext').attr('id', 'pvtext' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').attr('fill', 'black').attr('visibility', 'hidden');
-      if (pvaluesound) audiomiddle.play();
-    }
-    if (pvz >= 0.05 && pvz < 0.1) {
-      svgS.append('rect').attr('class', 'pvalue').attr('id', 'pvalue' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'lightskyblue').attr('visibility', 'hidden');
-      svgS.append('text').text('     ?' + (pvz.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtext').attr('id', 'pvtext' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').attr('fill', 'black').attr('visibility', 'hidden');
-      if (pvaluesound) audiolowmiddle.play();
-    }
-    if (pvz >= 0.1) {
-      svgS.append('rect').attr('class', 'pvalue').attr('id', 'pvalue' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'blue').attr('visibility', 'hidden');
-      svgS.append('text').text('      ' + (pvz.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtext').attr('id', 'pvtext' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').attr('fill', 'black').attr('visibility', 'hidden');
-      if (pvaluesound) audiolow.play();
-    }
 
+    //create the svg for the p-values
+    createpvalues();
+    
     showpvalues();
 
 
@@ -1537,13 +1542,6 @@ $(function() {
   }
 
 
-  function calcpvalue() {
-    z = Math.abs((xbar-mu)/(sigma/Math.sqrt(n)));
-    t = Math.abs((xbar-mu)/(ssd/Math.sqrt(n)));
-
-    pvz = (1-jStat.normal.cdf(z, 0, 1)) * 2; //for 2-tailed
-    pvt = (1-jStat.studentt.cdf(t, n-1)) * 2;
-  }
 
   function displaySampleAppearanceAll() {
     //hide all wings
@@ -1917,16 +1915,115 @@ $(function() {
     }
   }
 
+  
+  function calcpvalue() {
+    z = Math.abs((xbar-mu)/(sigma/Math.sqrt(n)));
+    t = Math.abs((xbar-mu)/(ssd/Math.sqrt(n)));
+
+    pvz = (1-jStat.normal.cdf(z, 0, 1)) * 2; //for 2-tailed
+    pvt = (1-jStat.studentt.cdf(t, n-1)) * 2;
+  }
+
+  function createpvalues() {
+    //pmoe
+    if (pvz < 0.001) {
+      svgS.append('rect').attr('class', 'pvaluez').attr('id', 'pvaluez' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'red').attr('visibility', 'hidden');
+      svgS.append('text').text('   ***' + (pvz.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextz').attr('id', 'pvtextz' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').attr('fill', 'black').attr('visibility', 'hidden');
+      if (pvaluesound) audiohigh.play();
+    }
+    if (pvz >= 0.001 && pvz < 0.01) {
+      svgS.append('rect').attr('class', 'pvaluez').attr('id', 'pvaluez' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'orange').attr('visibility', 'hidden');
+      svgS.append('text').text('    **'+ (pvz.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextz').attr('id', 'pvtextz' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').attr('fill', 'black').attr('visibility', 'hidden');
+      if (pvaluesound) audiomiddlehigh.play();
+    }
+    if (pvz >= 0.01 && pvz < 0.05) {
+      svgS.append('rect').attr('class', 'pvaluez').attr('id', 'pvaluez' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'lemonchiffon').attr('visibility', 'hidden');
+      svgS.append('text').text('     \u2022' + (pvz.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextz').attr('id', 'pvtextz' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').attr('fill', 'black').attr('visibility', 'hidden');
+      if (pvaluesound) audiomiddle.play();
+    }
+    if (pvz >= 0.05 && pvz < 0.1) {
+      svgS.append('rect').attr('class', 'pvaluez').attr('id', 'pvaluez' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'lightskyblue').attr('visibility', 'hidden');
+      svgS.append('text').text('     ?' + (pvz.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextz').attr('id', 'pvtextz' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').attr('fill', 'black').attr('visibility', 'hidden');
+      if (pvaluesound) audiolowmiddle.play();
+    }
+    if (pvz >= 0.1) {
+      svgS.append('rect').attr('class', 'pvaluez').attr('id', 'pvaluez' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'blue').attr('visibility', 'hidden');
+      svgS.append('text').text('      ' + (pvz.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextz').attr('id', 'pvtextz' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').attr('fill', 'black').attr('visibility', 'hidden');
+      if (pvaluesound) audiolow.play();
+    }
+   
+    //smoe
+    if (pvt < 0.001) {
+      svgS.append('rect').attr('class', 'pvaluet').attr('id', 'pvaluet' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'red').attr('visibility', 'hidden');
+      svgS.append('text').text('   ***' + (pvt.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextt').attr('id', 'pvtextt' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').attr('fill', 'black').attr('visibility', 'hidden');
+      if (pvaluesound) audiohigh.play();
+    }
+    if (pvt >= 0.001 && pvt < 0.01) {
+      svgS.append('rect').attr('class', 'pvaluet').attr('id', 'pvaluet' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'orange').attr('visibility', 'hidden');
+      svgS.append('text').text('    **'+ (pvt.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextt').attr('id', 'pvtextt' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').attr('fill', 'black').attr('visibility', 'hidden');
+      if (pvaluesound) audiomiddlehigh.play();
+    }
+    if (pvt >= 0.01 && pvt < 0.05) {
+      svgS.append('rect').attr('class', 'pvaluet').attr('id', 'pvaluet' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'lemonchiffon').attr('visibility', 'hidden');
+      svgS.append('text').text('     \u2022' + (pvt.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextt').attr('id', 'pvtextt' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').attr('fill', 'black').attr('visibility', 'hidden');
+      if (pvaluesound) audiomiddle.play();
+    }
+    if (pvt >= 0.05 && pvt < 0.1) {
+      svgS.append('rect').attr('class', 'pvaluet').attr('id', 'pvaluet' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'lightskyblue').attr('visibility', 'hidden');
+      svgS.append('text').text('     ?' + (pvt.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextt').attr('id', 'pvtextt' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').attr('fill', 'black').attr('visibility', 'hidden');
+      if (pvaluesound) audiolowmiddle.play();
+    }
+    if (pvt >= 0.1) {
+      svgS.append('rect').attr('class', 'pvaluet').attr('id', 'pvaluet' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'blue').attr('visibility', 'hidden');
+      svgS.append('text').text('      ' + (pvt.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextt').attr('id', 'pvtextt' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').attr('fill', 'black').attr('visibility', 'hidden');
+      if (pvaluesound) audiolow.play();
+    }
+
+  }
+
+  function displayCohend() {
+    $('#hypothesismu0').text(mu0);
+
+    cohensd = (mu - mu0)/sigma;
+    $('#cohensd').text(cohensd.toFixed(2));
+  }
+
+  function clearCohend() {
+    $('#hypothesismu0').text(mu0);
+    $('#cohensd').text('0.0');
+  }
+
   function showpvalues() {
     if (pvalue) {
-      d3.selectAll('.pvalue').attr('visibility', 'visible');
-      d3.selectAll('.pvtext').attr('visibility', 'visible');
+      hidepvalues();
+      if (showPmoe) {
+        d3.selectAll('.pvaluez').attr('visibility', 'visible');
+        d3.selectAll('.pvtextz').attr('visibility', 'visible');
+      }
+      if (showSmoe) {
+        d3.selectAll('.pvaluet').attr('visibility', 'visible');
+        d3.selectAll('.pvtextt').attr('visibility', 'visible');
+      }
+      displayCohend();
     }
   }
 
   function hidepvalues() {
-    d3.selectAll('.pvalue').attr('visibility', 'hidden');
-    d3.selectAll('.pvtext').attr('visibility', 'hidden');
+    d3.selectAll('.pvaluez').attr('visibility', 'hidden');
+    d3.selectAll('.pvtextz').attr('visibility', 'hidden');
+    d3.selectAll('.pvaluet').attr('visibility', 'hidden');
+    d3.selectAll('.pvtextt').attr('visibility', 'hidden');
+
+    clearCohend()
+  }
+
+  function clearpvalues() {
+    d3.selectAll('.pvaluez').remove();
+    d3.selectAll('.pvtextz').remove();
+
+    d3.selectAll('.pvaluet').remove();
+    d3.selectAll('.pvtextt').remove();
+    clearCohend()
   }
 
   /*------------------------------------------do the heap------------------------------------------*/
@@ -1974,6 +2071,7 @@ $(function() {
     drawSELines()       //dynamic and now fixed to population sd.
     drawMeanHeapCurve() // this will be dynamic as well
     if (showCaptureMuLine) drawMuLine();       //need to keep it on top
+    if (pvalue) drawMu0Line();
     if (plusminusmoe) drawPlusMinusMoe();      //need to keep it on top
   }
 
@@ -2288,7 +2386,7 @@ $(function() {
 
     d3.selectAll('.heap').remove();
     drawSELines();
-    //d3.selectAll('.selines').remove();
+    d3.selectAll('.selines').remove();   //can this be in the drawSELines()??
     removeMeanHeapCurve();
 
   }
@@ -2313,10 +2411,6 @@ $(function() {
     $pccapturingnextmean.text('0.0%');
   }
 
-  function clearpvalues() {
-    d3.selectAll('.pvalue').remove();
-    d3.selectAll('.pvtext').remove();
-  }
 
   /*-------------------------------------------elements and values---------------------------------*/
 
@@ -2616,7 +2710,7 @@ $(function() {
     clearAll();
     d3.selectAll('.selines').attr('visibility', 'visible');
     if (showMeanHeap) {
-      d3.selectAll('.heap').attr('visibility', 'visible');
+      //d3.selectAll('.heap').attr('visibility', 'visible');
       if (showSELines) drawSELines(); // draws them at initial height if checked (order important!)
     }
     else {
@@ -2654,7 +2748,7 @@ $(function() {
     }
     showSELines = $showSELines.is(':checked');
     if (showSELines) {
-      d3.selectAll('.selines').attr('visibility', 'visible');
+      //d3.selectAll('.selines').attr('visibility', 'visible');
       if (showMeanHeap) drawSELines();
     }
     else {
@@ -2681,7 +2775,7 @@ $(function() {
     Fhalt = true;
     //clearAll();
 
-    alpha = parseFloat($('#CI').val());
+    alpha = parseFloat($ci.val());   
     displaySampleAppearanceAll();
     recalculateSamplemeanStatistics();
 
@@ -2723,6 +2817,7 @@ $(function() {
     displaySampleAppearanceAll();
     recalculateSamplemeanStatistics();
     recolourHeap();
+    if (showpvalues) showpvalues();
   })
 
   //show moe wings for sample
@@ -2734,6 +2829,7 @@ $(function() {
     displaySampleAppearanceAll();
     recalculateSamplemeanStatistics();
     recolourHeap();
+    if (showpvalues) showpvalues();
   })
 
 /*------------------------------------------------Panel 7 Capture of mu-----------------*/
@@ -2796,16 +2892,46 @@ $(function() {
   $pvalue.on('change', function() {
     pvalue = $pvalue.is(':checked');
     if (pvalue) {
+      mu = 60;
+      setMuSigmaSliderVal(mu, sigma);
+      stop();
+      setOldMu();
+      changedDistribution = true;
+      clearAll();
+
+      $showSDLines.prop('checked', 'true');
+      showSDlines = true;
+      drawSDLines();
+
+      n = 16;
+      $('#samplesselected').val(n);
+
+      $showMoe.prop('checked', 'true');
+      showMoe = true;
+      alpha = parseFloat($ci.val());
+      // //I know mu and sigma so I know pmoe so redisplay it
+      pmoe = jStat.normal.inv( 1-alpha/2.0, 0, 1 ) * sigma/Math.sqrt(n);
+      if (showPopulationCurve) $pmoe.text(pmoe.toFixed(2));
+
+      drawMu0Line();
+
       $('#pvaluesoundblock').show();
+      $('#pvaluehypothesisblock').show();
+
       showpvalues();
+      displayCohend();
     }
     else {
       $('#pvaluesoundblock').hide();
+      $('#pvaluehypothesisblock').hide();
+
       stop();
       clearAll();
+ 
       hidepvalues();
       $pvaluesound.prop('checked', false);
       pvaluesound = false;
+      clearCohend()
     }
   })
 
@@ -3054,6 +3180,8 @@ $(function() {
     //9. p values
     Tipped.create('#pvaluelabel', 'Show the dance of the p values. ', { skin: 'esci', size: 'xlarge' });
     Tipped.create('#pvaluesoundlabel', 'Turn on the music! to enhance the dance of the p values! ', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#nullhypothesislabel', 'The null hypothesis.', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#cohensdlabel', "Cohen's d statistic for effect size.", { skin: 'esci', size: 'xlarge' });
     
     //footer
     Tipped.create('#footerlink', 'Return to the New Statistics website. ', { skin: 'esci', size: 'xlarge' });

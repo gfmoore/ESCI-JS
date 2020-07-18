@@ -33,7 +33,7 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
 0.3.60  2020-07-13  p value, the p is italic
 0.3.61  2020-07-14  CI$20 Added div for noofnextmeans
 0.3.64  2020-07-15  CI$3  Used a tooltip library - Tipped - to enhance tooltips.
-0.3.65
+0.3.66  2020-07-18  CI#15 P value enhancements.
 -->
 
 
@@ -59,6 +59,7 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
     <link rel="stylesheet" type="text/css" href="./css/tipped.css"/>
 
     <link href=./css/esci.css rel=stylesheet>
+    <link href=./css/esci-dances.css rel=stylesheet>
 
     <!-- scripts -->
     <script src=https://code.jquery.com/jquery-3.5.0.js
@@ -181,7 +182,9 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
                   <option value=9>9</option>
                   <option value=10>10</option>
                   <option value=12>12</option>
-                  <option value=15>15</option>
+                  <option value=14>14</option>
+                  <option value=16>16</option>
+                  <option value=18>18</option>
                   <option value=20 selected=selected>20</option>  
                   <option value=25>25</option>
                   <option value=30>30</option>
@@ -281,9 +284,15 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
 
             <!----------------------------------------9. p-values ---------------------------------------------------------->
             <div id=pvaluesection>
-              <div><label id=pvaluelabel for=pvalue data-tooltip>9. Dance of the <span class=italic>p</span> values</label><input type=checkbox id=pvalue name=pvalue value=pvalue></div>
-              <div id=pvaluesoundblock>
-                <div><label id=pvaluesoundlabel for=pvaluesound data-tooltip> Sound</label><input type=checkbox id=pvaluesound name=pvaluesound value=pvaluesound></div>              
+              <div id=pvaluesectiondiv>
+                <div><label id=pvaluelabel for=pvalue data-tooltip>9. Dance of the <span class=italic>p</span> values</label><input type=checkbox id=pvalue name=pvalue value=pvalue></div>
+                <div id=pvaluesoundblock>
+                  <div><label id=pvaluesoundlabel for=pvaluesound data-tooltip> Sound</label><input type=checkbox id=pvaluesound name=pvaluesound value=pvaluesound></div>              
+                </div>
+              </div>
+              <div id=pvaluehypothesisblock>
+                <div id=nullhypothesislable data-tooltip>Null hypothesis H0: <span class=greek2 >&mu;</span>0 = <span id=hypothesismu0>50</span></div>
+                <div id=cohensdlabel data-tooltip>Population effect size, Cohen's <span class=greek >&delta;</span> <span id=cohensd>0</span></div>
               </div>
             </div>
 

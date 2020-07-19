@@ -118,9 +118,9 @@ Start using version history now to record changes and fixes
 0.3.65    2020-07-17  CI#20 Added fix to magenta capture lines not disappearing at top. - They were looking for already captured mean, so don't display, but still count them.
 0.3.66    2020-07-18  CI#15 P value enhancements. Strip out common css for use in future programs
 0.3.67    2020-07-18  Dances#22 Tweak for Rectangular to reduce bubbles showing through
-0.3.68
+0.3.68    2020-07-19  CI#15 Fixed bugs in p values and added delay to popups. CI#22 Another go at Rectangular
 */
-let version = '0.3.67';
+let version = '0.3.68';
  
 
 'use strict';
@@ -1044,7 +1044,7 @@ $(function() {
     if ((normal || rectangular) && fillPopulation) {
       if (changedDistribution) {
         fillPopnBubbles(); //fill the popnBubbles array
-        drawPopnBubbles();
+        //drawPopnBubbles();
         changedDistribution = false;
       }
       if (fillPopulation) drawPopnBubbles();
@@ -1208,7 +1208,7 @@ $(function() {
       for (let p = 0; p < pdf.length; p += 1) {  //start at left
         px = x(pdf[p].x);
         py = y(pdf[p].y);
-        if (py > 0) {
+        if (py < heightP - 5) {  //just make sure???
           l = x(pdf[p].x);
           break;
         }
@@ -1216,7 +1216,7 @@ $(function() {
       for (let p = pdf.length - 1; p > 0 ; p -= 1) {  //start at right
         px = x(pdf[p].x);
         py = y(pdf[p].y);
-        if (py > 0) {
+        if (py < heightP - 5) {
           r = x(pdf[p].x);
           break;
         }
@@ -1243,15 +1243,6 @@ $(function() {
           drawit = false;
           break; //we're done
         } 
-
-        //rectangular seems to need a slight tweak for the top
-        if (rectangular) {
-          if (d2 <= s2 + 10) {
-            drawit = false;
-            break;
-          }
-        }
-
       }
       //break to here
 
@@ -1927,8 +1918,8 @@ $(function() {
 
   
   function calcpvalue() {
-    z = Math.abs((xbar-mu)/(sigma/Math.sqrt(n)));
-    t = Math.abs((xbar-mu)/(ssd/Math.sqrt(n)));
+    z = Math.abs((xbar-mu0)/(sigma/Math.sqrt(n)));
+    t = Math.abs((xbar-mu0)/(ssd/Math.sqrt(n)));
 
     pvz = (1-jStat.normal.cdf(z, 0, 1)) * 2; //for 2-tailed
     pvt = (1-jStat.studentt.cdf(t, n-1)) * 2;
@@ -2906,12 +2897,13 @@ $(function() {
       setMuSigmaSliderVal(mu, sigma);
       stop();
       setOldMu();
+      
       changedDistribution = true;
-      clearAll();
-
+      
       $showSDLines.prop('checked', 'true');
-      showSDlines = true;
-      drawSDLines();
+      showSDLines = true;
+
+      clearAll();
 
       n = 16;
       $('#samplesselected').val(n);
@@ -3112,93 +3104,95 @@ $(function() {
     Tipped.setDefaultSkin('esci');
 
     //heading section
-    Tipped.create('#logo', 'Version: '+version, { skin: 'red', size: 'xlarge' });
-    Tipped.create('#tooltipsonoff', 'Allow tooltips on or off, default is off!', { skin: 'esci', size: 'xlarge' });
-    Tipped.create('#mainheading', 'From The New Statistics: ', { skin: 'esci', size: 'xlarge' });
-    Tipped.create('#subheading', 'https://thenewstatistics.com', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#logo', 'Version: '+version, { skin: 'red', size: 'xlarge'  });
+    Tipped.create('#tooltipsonoff', 'Allow tooltips on or off, default is off!', { skin: 'esci', size: 'xlarge', showDelay: 750 });
+
+
+    Tipped.create('#mainheading', 'From The New Statistics: ', { skin: 'esci', size: 'xlarge', showDelay: 1500 });
+    Tipped.create('#subheading', 'https://thenewstatistics.com', { skin: 'esci', size: 'xlarge', showDelay: 750 });
 
     //1. The population section
-    Tipped.create('#populationdisplaydiv', 'Choose the parameters of the population and its shape. ', { skin: 'esci', size: 'xlarge' });
-    Tipped.create('#muvaluediv', 'Population mean.  Use slider, or type in value.  Min 0, max 100. ', { skin: 'esci', size: 'xlarge' });
-    Tipped.create('#sigmavaluediv', 'Standard deviation of the population.  Use slider or type in value.  Min 1, max 50. ', { skin: 'esci', size: 'xlarge' });
-    Tipped.create('#shapediv', 'Click to choose the shape of the population distribution: Normal, rectangular, or skewed to the right. For the skewed population, the degree of skew is controlled by the spinner at the right. Min = 0.1 (minimal skew), max = 1 (strong skew). The skewed distribution is a lognormal distribution, with the number displayed being the SD of the underlying normal distribution. ', { skin: 'esci', size: 'xlarge' });
-    Tipped.create('#normal', 'The normal distribution ', { skin: 'esci', size: 'xlarge' });
-    Tipped.create('#rectangular', 'A rectangular distribution ', { skin: 'esci', size: 'xlarge' });
-    Tipped.create('#skew', 'A skew distribution based on lognormal ', { skin: 'esci', size: 'xlarge' });
-    Tipped.create('#skewvalue', 'Use the dropdown to set the degree of right skew, when Skew is chosen as the shape of the population distribution. Min 0.1, max 1. ', { skin: 'esci', size: 'xlarge' });
-    Tipped.create('#custom', ' Draw your own distribution.', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#populationdisplaydiv', 'Choose the parameters of the population and its shape. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
+    Tipped.create('#muvaluediv', 'Population mean.  Use slider, or type in value.  Min 0, max 100. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
+    Tipped.create('#sigmavaluediv', 'Standard deviation of the population.  Use slider or type in value.  Min 1, max 50. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
+    Tipped.create('#shapediv', 'Click to choose the shape of the population distribution: Normal, rectangular, or skewed to the right. For the skewed population, the degree of skew is controlled by the spinner at the right. Min = 0.1 (minimal skew), max = 1 (strong skew). The skewed distribution is a lognormal distribution, with the number displayed being the SD of the underlying normal distribution. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
+    Tipped.create('#normal', 'The normal distribution ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
+    Tipped.create('#rectangular', 'A rectangular distribution ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
+    Tipped.create('#skew', 'A skew distribution based on lognormal ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
+    Tipped.create('#skewvalue', 'Use the dropdown to set the degree of right skew, when Skew is chosen as the shape of the population distribution. Min 0.1, max 1. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
+    Tipped.create('#custom', ' Draw your own distribution.', { skin: 'esci', size: 'xlarge', showDelay: 750 });
 
     //2. Click to display section
-    Tipped.create('#displayoptionsdiv', 'Click the three buttons to control sampling. ', { skin: 'esci', size: 'xlarge' });
-    Tipped.create('#popnlabel', 'Display the population curve. ', { skin: 'esci', size: 'xlarge' });
-    Tipped.create('#sdlineslabel', 'Display verticals to mark the mean, and s units either side of the mean.  These lines mark z=0, z=-1, z=1, etc. ', { skin: 'esci', size: 'xlarge' });
-    Tipped.create('#fillpopnlabel', 'Click to fill under the population curve.  A large number of data circles are placed randomly in the area. \nA new randomisation is made each time Fill Random is clicked on. ', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#displayoptionsdiv', 'Click the three buttons to control sampling. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
+    Tipped.create('#popnlabel', 'Display the population curve. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
+    Tipped.create('#sdlineslabel', 'Display verticals to mark the mean, and s units either side of the mean.  These lines mark z=0, z=-1, z=1, etc. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
+    Tipped.create('#fillpopnlabel', 'Click to fill under the population curve.  A large number of data circles are placed randomly in the area. \nA new randomisation is made each time Fill Random is clicked on. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
 
     //3. Run controls section
-    Tipped.create('#runcontrolsdiv', ' ', { skin: 'esci', size: 'xlarge' });
-    Tipped.create('#clearsample', "'Clear' clears all samples.", { skin: 'esci', size: 'xlarge' });
-    Tipped.create('#takesample', 'Click to take another random, independent sample from the population. ', { skin: 'esci', size: 'xlarge' });
-    Tipped.create('#runfreely', 'Click to start and stop a sequence of samples. ', { skin: 'esci', size: 'xlarge' });
-    Tipped.create('#speed', ' ', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#runcontrolsdiv', ' ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
+    Tipped.create('#clearsample', "'Clear' clears all samples.", { skin: 'esci', size: 'xlarge', showDelay: 750 });
+    Tipped.create('#takesample', 'Click to take another random, independent sample from the population. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
+    Tipped.create('#runfreely', 'Click to start and stop a sequence of samples. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
+    Tipped.create('#speed', ' ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
 
     //4. Samples section
-    Tipped.create('#samplelabel', 'Choose sample size, see information about the latest sample, and see the number of samples in the current set of samples. ', { skin: 'esci', size: 'xlarge' });
-    Tipped.create('#Ndiv', 'Sample size.  Min 1, max 100. ', { skin: 'esci', size: 'xlarge' });
-    Tipped.create('#nosamples ', "Number of samples in the current set of samples. A new set is started after 'Clear', or whenever a major parameter (e.g., m, s, N), or display setting is changed.", { skin: 'esci', size: 'xlarge' });
-    Tipped.create('#Mdiv', 'The mean of the latest sample. ', { skin: 'esci', size: 'xlarge' });
-    Tipped.create('#sdiv', 'The standard deviation of the latest sample. ', { skin: 'esci', size: 'xlarge' });
-    Tipped.create('#moep', 'Margin of error (MoE) of the population CI around the mean of the latest sample. The MoE is the length of either arm of the latest CI, so is half the total length of this CI. ', { skin: 'esci', size: 'xlarge' });
-    Tipped.create('#moes', 'Margin of error (MoE) of the sample CI around the mean of the latest sample. The MoE is the length of either arm of the latest CI, so is half the total length of this CI. ', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#samplelabel', 'Choose sample size, see information about the latest sample, and see the number of samples in the current set of samples. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
+    Tipped.create('#Ndiv', 'Sample size.  Min 1, max 100. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
+    Tipped.create('#nosamples ', "Number of samples in the current set of samples. A new set is started after 'Clear', or whenever a major parameter (e.g., m, s, N), or display setting is changed.", { skin: 'esci', size: 'xlarge', showDelay: 750 });
+    Tipped.create('#Mdiv', 'The mean of the latest sample. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
+    Tipped.create('#sdiv', 'The standard deviation of the latest sample. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
+    Tipped.create('#moep', 'Margin of error (MoE) of the population CI around the mean of the latest sample. The MoE is the length of either arm of the latest CI, so is half the total length of this CI. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
+    Tipped.create('#moes', 'Margin of error (MoE) of the sample CI around the mean of the latest sample. The MoE is the length of either arm of the latest CI, so is half the total length of this CI. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
 
 
-    Tipped.create('#datapointslabel', 'Click to display data points (ooo) of the latest sample. ', { skin: 'esci', size: 'xlarge' });
-    Tipped.create('#samplemeanslabel', 'Display sample means as green dots. ', { skin: 'esci', size: 'xlarge' });
-    Tipped.create('#droppingmeanslabel', 'Click to display means as they drop. When mean heap is displayed, unclick here to see just the means in the mean heap. ', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#datapointslabel', 'Click to display data points (ooo) of the latest sample. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
+    Tipped.create('#samplemeanslabel', 'Display sample means as green dots. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
+    Tipped.create('#droppingmeanslabel', 'Click to display means as they drop. When mean heap is displayed, unclick here to see just the means in the mean heap. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
 
     //5. Mean heap section
-    Tipped.create('#heapsectionspan', 'The mean heap is a pile of the sample means in the current set of samples. ', { skin: 'esci', size: 'xlarge' });
-    Tipped.create('#meanheapdiv', 'Click to show the mean heap, a dot plot of sample means. ', { skin: 'esci', size: 'xlarge' });
-    Tipped.create('#samplecurvediv', 'When the mean heap is displayed: The sampling distribution curve is the shape of the mean heap expected if we took an infinite number of samples, and the population is normal.  The sampling distribution curve is a normal distribution.  It is scaled vertically to match the number of samples in the current set of samples. When the population is rectangular, the displayed normal sampling distribution curve is usually a good fit to the mean heap for a large number of samples, because of the central limit theorem. For a skewed population the fit is sometimes not so close, especially for small samples and a highly skewed population. ', { skin: 'esci', size: 'xlarge' });
-    Tipped.create('#samplelinesdiv', 'When the mean heap is displayed: Display verticals to mark m , and SE units either side of m.  These lines mark z=0, z=-1, z=1, etc, for the sampling distribution curve. ', { skin: 'esci', size: 'xlarge' });
-    Tipped.create('#plusminusmoediv', 'This interval marks the central C% area under the sampling distribution curve.  It is marked by a green bar along the X axis, with green verticals to mark its ends. When s is assumed known, this interval gives the width of every CI. ', { skin: 'esci', size: 'xlarge' });
-    Tipped.create('#meanheapMdiv', 'The mean of the heap at after each sample ', { skin: 'esci', size: 'xlarge' });
-    Tipped.create('#meanheapsediv', 'The standard error of the heap after each sample. ', { skin: 'esci', size: 'xlarge' });
-    Tipped.create('#curveheapsediv', 'The standard error of the sampling distribution curve. ', { skin: 'esci', size: 'xlarge' });
-    Tipped.create('#nomeansinheapdiv', 'Number of samples in the current set of samples for which the CI captures μ ', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#heapsectionspan', 'The mean heap is a pile of the sample means in the current set of samples. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
+    Tipped.create('#meanheapdiv', 'Click to show the mean heap, a dot plot of sample means. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
+    Tipped.create('#samplecurvediv', 'When the mean heap is displayed: The sampling distribution curve is the shape of the mean heap expected if we took an infinite number of samples, and the population is normal.  The sampling distribution curve is a normal distribution.  It is scaled vertically to match the number of samples in the current set of samples. When the population is rectangular, the displayed normal sampling distribution curve is usually a good fit to the mean heap for a large number of samples, because of the central limit theorem. For a skewed population the fit is sometimes not so close, especially for small samples and a highly skewed population. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
+    Tipped.create('#samplelinesdiv', 'When the mean heap is displayed: Display verticals to mark m , and SE units either side of m.  These lines mark z=0, z=-1, z=1, etc, for the sampling distribution curve. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
+    Tipped.create('#plusminusmoediv', 'This interval marks the central C% area under the sampling distribution curve.  It is marked by a green bar along the X axis, with green verticals to mark its ends. When s is assumed known, this interval gives the width of every CI. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
+    Tipped.create('#meanheapMdiv', 'The mean of the heap at after each sample ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
+    Tipped.create('#meanheapsediv', 'The standard error of the heap after each sample. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
+    Tipped.create('#curveheapsediv', 'The standard error of the sampling distribution curve. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
+    Tipped.create('#nomeansinheapdiv', 'Number of samples in the current set of samples for which the CI captures μ ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
 
     //6. CI section
-    Tipped.create('#confidenceintervalsdiv', 'CIs can be displayed on every mean in the dance of the means, to give the dance of the confidence intervals ', { skin: 'esci', size: 'xlarge' });
-    Tipped.create('#cipcntdiv', 'Confidence level (%) for CIs displayed on the sample means.  Use spinner or type in a value.  Min 0, max 99.9 ', { skin: 'esci', size: 'xlarge' });
-    Tipped.create('#showmoelabel', 'Display a CI on every mean in the dance of the means, to see the dance of the confidence intervals ', { skin: 'esci', size: 'xlarge' });
-    Tipped.create('#labelformoepopn', 'The population sd is known. ', { skin: 'esci', size: 'xlarge' });
-    Tipped.create('#labelformoesample', 'The population sd is unknown. ', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#confidenceintervalsdiv', 'CIs can be displayed on every mean in the dance of the means, to give the dance of the confidence intervals ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
+    Tipped.create('#cipcntdiv', 'Confidence level (%) for CIs displayed on the sample means.  Use spinner or type in a value.  Min 0, max 99.9 ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
+    Tipped.create('#showmoelabel', 'Display a CI on every mean in the dance of the means, to see the dance of the confidence intervals ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
+    Tipped.create('#labelformoepopn', 'The population sd is known. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
+    Tipped.create('#labelformoesample', 'The population sd is unknown. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
 
     //7. Capture of mean
-    Tipped.create('#captureofmupanel', 'When the mean heap is not displayed: Explore capture of μ by CIs. Click both checkboxes to mark the population mean μ, and see red when a CI does not capture μ. ', { skin: 'esci', size: 'xlarge' });
-    Tipped.create('#captureofmulinelabel', 'A vertical line to mark the population mean in the lower figure ', { skin: 'esci', size: 'xlarge' });
-    Tipped.create('#captureofmulabel', 'When the mean heap is not displayed: Click to indicate capture by the CIs of μ.  Red indicates non-capture. ', { skin: 'esci', size: 'xlarge' });
-    Tipped.create('#numbercapturingdiv ', 'The number of samples that capture the population mean. ', { skin: 'esci', size: 'xlarge' });
-    Tipped.create('#nosamplesydiv', 'Total number of sample taken (re-displayed from section 4)   ', { skin: 'esci', size: 'xlarge' });
-    Tipped.create('#capturedpercentdiv', 'Percent of samples in the current set of samples for which the CI captures μ.  This proportion is expected in the long run to equal % confidence (C). ', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#captureofmupanel', 'When the mean heap is not displayed: Explore capture of μ by CIs. Click both checkboxes to mark the population mean μ, and see red when a CI does not capture μ. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
+    Tipped.create('#captureofmulinelabel', 'A vertical line to mark the population mean in the lower figure ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
+    Tipped.create('#captureofmulabel', 'When the mean heap is not displayed: Click to indicate capture by the CIs of μ.  Red indicates non-capture. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
+    Tipped.create('#numbercapturingdiv ', 'The number of samples that capture the population mean. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
+    Tipped.create('#nosamplesydiv', 'Total number of sample taken (re-displayed from section 4)   ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
+    Tipped.create('#capturedpercentdiv', 'Percent of samples in the current set of samples for which the CI captures μ.  This proportion is expected in the long run to equal % confidence (C). ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
 
     //8.Capture of next mean
-    Tipped.create('#capturenextmeanlabel', 'When the mean heap is not displayed: Explore capture by CIs of the next mean, which is the mean just above a CI in the dance. When the checkbox is clicked on, then cases where the next mean falls outside the CI are indicated by a pink diagonal line joining the closer limit of the CI to that next mean just above. ', { skin: 'esci', size: 'xlarge' });
-    Tipped.create('#numberofnextmeansdiv', 'The number of means that is being tested for capture. ', { skin: 'esci', size: 'xlarge' });
-    Tipped.create('#numbercapturingnextmeandiv', 'Number of samples in the current set of samples for which the CI captures the next mean, which is the mean just above it in the dance. ', { skin: 'esci', size: 'xlarge' });
-    Tipped.create('#percentcapturingnextmeandiv', 'When the mean heap is not displayed: Click to show a pink diagonal line joining the  closer limit of the CI to the next mean, which is the mean just above, in all cases in which the CI does not capture that next mean. In the long run, we expect about 83% of 95% CIs to capture the next mean. ', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#capturenextmeanlabel', 'When the mean heap is not displayed: Explore capture by CIs of the next mean, which is the mean just above a CI in the dance. When the checkbox is clicked on, then cases where the next mean falls outside the CI are indicated by a pink diagonal line joining the closer limit of the CI to that next mean just above. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
+    Tipped.create('#numberofnextmeansdiv', 'The number of means that is being tested for capture. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
+    Tipped.create('#numbercapturingnextmeandiv', 'Number of samples in the current set of samples for which the CI captures the next mean, which is the mean just above it in the dance. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
+    Tipped.create('#percentcapturingnextmeandiv', 'When the mean heap is not displayed: Click to show a pink diagonal line joining the  closer limit of the CI to the next mean, which is the mean just above, in all cases in which the CI does not capture that next mean. In the long run, we expect about 83% of 95% CIs to capture the next mean. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
     
     //9. p values
-    Tipped.create('#pvaluelabel', 'Show the dance of the p values. ', { skin: 'esci', size: 'xlarge' });
-    Tipped.create('#pvaluesoundlabel', 'Turn on the music! to enhance the dance of the p values! ', { skin: 'esci', size: 'xlarge' });
-    Tipped.create('#nullhypothesislabel', 'The null hypothesis.', { skin: 'esci', size: 'xlarge' });
-    Tipped.create('#cohensdlabel', "Cohen's d statistic for effect size.", { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#pvaluelabel', 'Show the dance of the p values. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
+    Tipped.create('#pvaluesoundlabel', 'Turn on the music! to enhance the dance of the p values! ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
+    Tipped.create('#nullhypothesislabel', 'The null hypothesis.', { skin: 'esci', size: 'xlarge', showDelay: 750 });
+    Tipped.create('#cohensdlabel', "Cohen's d statistic for effect size.", { skin: 'esci', size: 'xlarge', showDelay: 750 });
     
     //footer
-    Tipped.create('#footerlink', 'Return to the New Statistics website. ', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#footerlink', 'Return to the New Statistics website. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
 
     //display section
-    Tipped.create('#displaypdf', 'This section displays the population curve. ', { skin: 'esci', size: 'xlarge' });
-    Tipped.create('#displaysample', 'This section displays the dance of the means and the mean heap. ', { skin: 'esci', size: 'xlarge' });
+    Tipped.create('#displaypdf', 'This section displays the population curve. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
+    Tipped.create('#displaysample', 'This section displays the dance of the means and the mean heap. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
     
     //  
     //Tipped.create('#', ' ', { skin: 'esci', size: 'xlarge' });

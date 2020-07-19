@@ -107,10 +107,6 @@ Start using version history now to record changes and fixes
 0.3.58    2020-07-13  CI#17 Added F flag so that on C alpha change, it stops, reclaculates MoEs, recalculates the heap and recolours.
 0.3.59    2020-07-13  CI#17 Reinstate coloured heap when Capture of Mu checked regardless of showMoE. 
 0.3.60    2020-07-13  CI#15 italic p, extra space, larger font, SCA on check off.
-
-*/
-//#endregion 
-/*
 0.3.61    2020-07-14  CI$20 Added number capturing next mean div and logic
 0.3.62    2020-07-14  CI$22 Yet another algorithm for curve filling - and I think it works?
 0.3.63    2020-07-14  CI$22 Added more points to skew pdf, but slower, but can't see any fill poking through.
@@ -118,6 +114,9 @@ Start using version history now to record changes and fixes
 0.3.65    2020-07-17  CI#20 Added fix to magenta capture lines not disappearing at top. - They were looking for already captured mean, so don't display, but still count them.
 0.3.66    2020-07-18  CI#15 P value enhancements. Strip out common css for use in future programs
 0.3.67    2020-07-18  Dances#22 Tweak for Rectangular to reduce bubbles showing through
+*/
+//#endregion 
+/*
 0.3.68    2020-07-19  CI#15 Fixed bugs in p values and added delay to popups. CI#22 Another go at Rectangular
 */
 let version = '0.3.68';

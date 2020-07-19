@@ -27,8 +27,6 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
 0.3.16     2020-06-25 Make axis font and mu line text a little bigger. Slight increase in width of left fram and adjusted space for Mean M in 4. Samples
 0.3.18     2020-06-25 Slight tweaks on moving items from panel 7 to panel 5 and adding new spans
 0.3.19     2020-06-26 Adjusted colour of panel 5 and 8 slightly to match ESCI Classic.
-#endregion */
-/*
 0.3.28    2020-06-30  Increased width of left hand panel for mobiles.
 0.3.32    2020-07-03  Changed colours of samples and sd/mean lines
 0.3.40    2020-07-08  Add css for capture of next mean line stroke
@@ -38,6 +36,8 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
 0.3.60    2020-07-13  Increase font size for p value text
 0.3.61    2020-07-14  CI$20 Added font-color for noofnextmeans div
 0.3.64    2020-07-15  CI$3  Used a tooltip library - Tipped - to enhance tooltips.
+#endregion */
+/*
 0.3.66    2020-07-18  CI#15 P value enhancements. Stripped out common css
 0.3.68    
 */

@@ -119,9 +119,10 @@ Start using version history now to record changes and fixes
 /*
 0.3.68    2020-07-19  CI#15 Fixed bugs in p values and added delay to popups. CI#22 Another go at Rectangular
 0.3.69    2020-07-20  CI#15 Added more control to dance of p values check on. Added a volume control as well. (Seems to be a delay issue in playing sound too fast?)
+0.3.70    2020-07-20  CI#22 Fixed bubbles above rectangle - spelling dwawit and drwaIt - doh
 
 */
-let version = '0.3.69';
+let version = '0.3.70';
  
 
 'use strict';
@@ -133,8 +134,8 @@ $(function() {
 
   //am I on a touchable device? If so probably mobile or touch laptop display for laptop - add a scroll bar
   let deviceType = (('ontouchstart' in window)
-  || (navigator.maxTouchPoints > 0)
-  || (navigator.msMaxTouchPoints > 0)
+    || (navigator.maxTouchPoints > 0)
+    || (navigator.msMaxTouchPoints > 0)
   ) ? 'touchable' : 'nonTouchable';
  
   if (deviceType === 'touchable') {
@@ -1213,6 +1214,8 @@ $(function() {
     let d2;
     let bx, by, px, py;
     let l = 0, r = 0;
+    let recth = heightP;
+
 
     //find where pdf ceases to be 0 from left and where it is 0 to the right for the vertical lines.
     if (custom || rectangular) {
@@ -1220,30 +1223,33 @@ $(function() {
         px = x(pdf[p].x);
         py = y(pdf[p].y);
         if (py < heightP - 5) {  //just make sure???
-          l = x(pdf[p].x);
+          l = px;
           break;
         }
       }
-      for (let p = pdf.length - 1; p > 0 ; p -= 1) {  //start at right
+      for (let p = pdf.length - 1; p >= 0 ; p -= 1) {  //start at right
         px = x(pdf[p].x);
         py = y(pdf[p].y);
         if (py < heightP - 5) {
-          r = x(pdf[p].x);
+          r = px;
+          recth = py; //should be the height of the rectangle (in pixels so from 0 at the top down)
           break;
         }
       }
     }      
-
+    
 
     //Main routine - basic idea. For every bubble, go through the entire pdf looking to see if any coordinate is inside the bubble by ytahgoras' theorem
-    //this could conceivably take a long long tiem,but is guaranteed to work!
+    //this could conceivably take a long long tiem,but is not!!! guaranteed to work!
     //Have to do it in pixels as using real just doesn't work.
+   
+
     for (let b = 0; b < popnBubbles.length; b += 1) {
+      drawit = true; // draw it unless we have reason not to
 
       bx = x(popnBubbles[b].x);
       by = y(popnBubbles[b].y);
 
-      let drawit = true; // draw it unless we have reason not to
       for (let p = 0; p < pdf.length; p += 1) {
 
         px = x(pdf[p].x);
@@ -1254,6 +1260,8 @@ $(function() {
           drawit = false;
           break; //we're done
         } 
+
+
       }
       //break to here
 
@@ -1261,6 +1269,13 @@ $(function() {
       if (custom || rectangular) {
         if (bx < l + sampleMeanSize + 1) drawit = false;
         if (bx > r - sampleMeanSize - 1) drawit = false;
+      }
+
+      //extra check for rectangle as algorithm doesn't work for bubbles above line and I don't know why?
+      if (drawit && rectangular) {
+        if (by < recth+sampleMeanSize) {
+          drawit = false;
+        }
       }
 
       //draw the bubble

@@ -40,20 +40,13 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
 /*
 0.3.66    2020-07-18  CI#15 P value enhancements. Stripped out common css
 0.3.69    2020-07-20  CI#15 Added sound volume control
+0.3.70    2020-07-
 */
 
 
 span {
   user-select: none;
 }
-
-/* #dialogversion {
-  background-color: pink;
-  margin-left: 5px;
-  position: absolute;
-  top: 1.0rem;
-  left: 0.5rem;
-} */
 
 
 .greek2 {  /*for p-values labels*/ 

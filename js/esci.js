@@ -1,5 +1,5 @@
 /*
-Program       esci.js
+Program       esci-dances.js
 Author        Gordon Moore
 Date          15 May 2020
 Description   The JavaScript code for ESCI
@@ -118,8 +118,9 @@ Start using version history now to record changes and fixes
 //#endregion 
 /*
 0.3.68    2020-07-19  CI#15 Fixed bugs in p values and added delay to popups. CI#22 Another go at Rectangular
+0.3.69
 */
-let version = '0.3.68';
+let version = '0.3.69';
  
 
 'use strict';

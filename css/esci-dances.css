@@ -39,7 +39,7 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
 #endregion */
 /*
 0.3.66    2020-07-18  CI#15 P value enhancements. Stripped out common css
-0.3.69    
+0.3.69    2020-07-20  CI#15 Added sound volume control
 */
 
 
@@ -344,8 +344,20 @@ span {
   padding: 0.3rem;
 }
 
-#pvaluesectiondiv {
+#pvaluesoundblock {
+  display: grid;
+  grid-template-columns: 7rem 3rem auto;
+}
 
+#vollabel {
+  padding-top: 2px;  /*weird why I need this*/
+}
+
+#volslider {
+  width: 8rem;
+}
+
+#pvaluesectiondiv {
   display: grid;
   grid-template-columns: 20rem auto;
 }

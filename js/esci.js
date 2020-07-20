@@ -118,7 +118,8 @@ Start using version history now to record changes and fixes
 //#endregion 
 /*
 0.3.68    2020-07-19  CI#15 Fixed bugs in p values and added delay to popups. CI#22 Another go at Rectangular
-0.3.69
+0.3.69    2020-07-20  CI#15 Added more control to dance of p values check on. Added a volume control as well. (Seems to be a delay issue in playing sound too fast?)
+
 */
 let version = '0.3.69';
  
@@ -375,6 +376,8 @@ $(function() {
   let $pvaluesound;               //p-value sounds
   let pvaluesound;
 
+  let volume = 0.1;               //volume for dance of the p values
+
   let z, t, pvz;                  //p-value calculations
 
   let audiolow        = new Audio('./audio/trom1.wav');
@@ -382,6 +385,8 @@ $(function() {
   let audiomiddle     = new Audio('./audio/clarry1.wav');
   let audiomiddlehigh = new Audio('./audio/clarry2.wav');
   let audiohigh       = new Audio('./audio/trumpet1.wav');
+
+
 
   let nobuckets;                   //the accurate value for number of buckets as a decimal
   
@@ -463,6 +468,12 @@ $(function() {
     setDisplay();              //set up initial display and items (which responds to screen resizes)
 
     //if (showPopulationCurve) drawPopulationCurve();  //includes call to drawPDF and fillPopnBubbles
+
+    audiolow.volume = volume;
+    audiolowmiddle.volume = volume;
+    audiomiddle.volume = volume;
+    audiomiddlehigh.volume = volume;
+    audiohigh.volume = volume;
 
   }
 
@@ -2899,9 +2910,57 @@ $(function() {
       setOldMu();
       
       changedDistribution = true;
+
+      //make sure these are on
+      $showPopulationCurve.prop('checked', true);
+      showPopulationCurve = true;
+  
+      $fillPopulation.prop('checked', true);    
+      fillPopulation = true;
       
       $showSDLines.prop('checked', 'true');
       showSDLines = true;
+
+      $showSamplePoints.prop('checked', true);
+      showSamplePoints = true;
+  
+      $showSampleMeans.prop('checked', true);
+      showSampleMeans = true;
+      
+      $dropSampleMeans.prop('checked', true);
+      dropSampleMeans = true;
+
+      $showMeanHeap.prop('checked', false);
+      showMeanHeap = false;
+
+      $showMeanHeapCurve.prop('checked', false);
+      showMeanHeap = false;
+
+      $showSELines.prop('checked', false);
+      showSELines = false;
+
+      $plusminusmoe.prop('checked', false);
+      plusminusmoe = false;
+
+      $ci.val('0.05');  //95% CI
+      alpha = 0.05;
+
+      $showMoe.prop('checked', true);
+      showMoe = true;
+      $showPmoe.prop('checked', true);
+      showPmoe = true;
+      showSmoe = false;
+
+      $showCaptureMuLine.prop('checked', true);
+      showCaptureMuLine = true;
+
+      $captureOfMu.prop('checked', false);
+      captureOfMu = false;
+
+      $captureNextMean.prop('checked', false);
+      $('#capturenextmeangrid').hide();
+      captureNextMean = false;
+
 
       clearAll();
 
@@ -2940,6 +2999,15 @@ $(function() {
   //p-value sound
   $pvaluesound.on('change', function() {
     pvaluesound = $pvaluesound.is(':checked');
+  })
+
+  $('#volslider').on('change', function() {
+    volume = parseFloat($('#volslider').val()/100);
+    audiolow.volume = volume;
+    audiolowmiddle.volume = volume;
+    audiomiddle.volume = volume;
+    audiomiddlehigh.volume = volume;
+    audiohigh.volume = volume;
   })
 
   /*---------------------------------------------Footer ---------------------------------*/

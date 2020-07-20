@@ -35,7 +35,7 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
 <!--
 0.3.68  2020-07-18  changed name to esci-web
 0.3.69  2020-07-20  Change to organisation, added new index.html which transfers control to esci-dances.html (the old index.html)
-                    
+                    CI#15 Added sound volume control                    
 -->
 
 
@@ -288,6 +288,8 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
                 <div><label id=pvaluelabel for=pvalue data-tooltip>9. Dance of the <span class=italic>p</span> values</label><input type=checkbox id=pvalue name=pvalue value=pvalue></div>
                 <div id=pvaluesoundblock>
                   <div><label id=pvaluesoundlabel for=pvaluesound data-tooltip> Sound</label><input type=checkbox id=pvaluesound name=pvaluesound value=pvaluesound></div>              
+                  <div id=vollabel data-tooltip>Vol</div>
+                  <input type="range" min="0" max="100" value="10"  id=volslider>
                 </div>
               </div>
               <div id=pvaluehypothesisblock>

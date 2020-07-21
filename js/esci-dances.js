@@ -114,15 +114,15 @@ Start using version history now to record changes and fixes
 0.3.65    2020-07-17  CI#20 Added fix to magenta capture lines not disappearing at top. - They were looking for already captured mean, so don't display, but still count them.
 0.3.66    2020-07-18  CI#15 P value enhancements. Strip out common css for use in future programs
 0.3.67    2020-07-18  Dances#22 Tweak for Rectangular to reduce bubbles showing through
-*/
-//#endregion 
-/*
 0.3.68    2020-07-19  CI#15 Fixed bugs in p values and added delay to popups. CI#22 Another go at Rectangular
 0.3.69    2020-07-20  CI#15 Added more control to dance of p values check on. Added a volume control as well. (Seems to be a delay issue in playing sound too fast?)
 0.3.70    2020-07-20  CI#22 Fixed bubbles above rectangle - spelling dwawit and drwaIt - doh
-
 */
-let version = '0.3.70';
+//#endregion 
+/*
+0.9.0 Beta  2020-07-22 Beta version
+*/
+let version = '0.9.0 Beta';
  
 
 'use strict';

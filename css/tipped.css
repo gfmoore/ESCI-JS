@@ -610,7 +610,7 @@
 .tpd-size-large .tpd-content,
 .tpd-size-large .tpd-title {
   padding: 3px;  /*was 10*/
-  font-size: 13px;
+  font-size: 1.0rem; /*13px;*/
   line-height: 18px;
 }
 .tpd-size-large .tpd-background {

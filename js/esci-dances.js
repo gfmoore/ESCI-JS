@@ -123,7 +123,7 @@ Start using version history now to record changes and fixes
 0.9.0 Beta  2020-07-22 Beta version
 0.9.1       2020-07-23 Edited tooltips, added P value options
 0.9.2       2020-07-23 Dances#15 New sound library - Howler - used.
-0.9.3
+0.9.3       2020-07-23 Tooltip font size increase slightly, looked far too small
 */
 let version = '0.9.3 Beta';
  

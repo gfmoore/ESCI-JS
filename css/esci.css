@@ -171,7 +171,7 @@ input[type=text] {
 /* text size xlarge */
 .tpd-size-xlarge .tpd-content,
 .tpd-size-xlarge .tpd-title {
-  padding: 15px;
+  padding: 5px;  /*GM changed from 15*/
   font-size: 1.4rem;
   line-height: 20px;
 }

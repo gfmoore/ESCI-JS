@@ -609,7 +609,7 @@
 /* large */
 .tpd-size-large .tpd-content,
 .tpd-size-large .tpd-title {
-  padding: 10px;
+  padding: 3px;  /*was 10*/
   font-size: 13px;
   line-height: 18px;
 }

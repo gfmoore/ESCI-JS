@@ -121,8 +121,9 @@ Start using version history now to record changes and fixes
 //#endregion 
 /*
 0.9.0 Beta  2020-07-22 Beta version
+0.9.1       2020-07-23 Edited tooltips, added P value options
 */
-let version = '0.9.0 Beta';
+let version = '0.9.1 Beta';
  
 
 'use strict';
@@ -2923,7 +2924,18 @@ $(function() {
       setMuSigmaSliderVal(mu, sigma);
       stop();
       setOldMu();
+
+      $normal.prop('checked', true);
+      $rectangular.prop('checked', false);
+      $skew.prop('checked', false);
+      $custom.prop('checked', false);
       
+      normal = true
+      rectangular = false;
+      skew = false;
+      custom = false;
+      changedDistribution = true;
+
       changedDistribution = true;
 
       //make sure these are on
@@ -3004,6 +3016,10 @@ $(function() {
       stop();
       clearAll();
  
+      $plusminusmoe.prop('checked', false);
+      plusminusmoe = false;
+      removePlusMinusMoe();
+
       hidepvalues();
       $pvaluesound.prop('checked', false);
       pvaluesound = false;
@@ -3186,100 +3202,95 @@ $(function() {
   function setTooltips() {
     Tipped.setDefaultSkin('esci');
 
+    Tipped.create('#logo', 'Version: '+version, { skin: 'red', size: 'xlarge', behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+
     //heading section
-    Tipped.create('#logo', 'Version: '+version, { skin: 'red', size: 'xlarge'  });
-    Tipped.create('#tooltipsonoff', 'Allow tooltips on or off, default is off!', { skin: 'esci', size: 'xlarge', showDelay: 750 });
+    Tipped.create('#tooltipsonoff',        'Tips on/off, default is off!',                                  { skin: 'esci', size: 'medium', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
 
 
-    Tipped.create('#mainheading', 'From The New Statistics: ', { skin: 'esci', size: 'xlarge', showDelay: 1500 });
-    Tipped.create('#subheading', 'https://thenewstatistics.com', { skin: 'esci', size: 'xlarge', showDelay: 750 });
+    Tipped.create('.headingtip',           'https://thenewstatistics.com ',                                 { skin: 'esci', size: 'medium', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
 
     //1. The population section
-    Tipped.create('#populationdisplaydiv', 'Choose the parameters of the population and its shape. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
-    Tipped.create('#muvaluediv', 'Population mean.  Use slider, or type in value.  Min 0, max 100. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
-    Tipped.create('#sigmavaluediv', 'Standard deviation of the population.  Use slider or type in value.  Min 1, max 50. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
-    Tipped.create('#shapediv', 'Click to choose the shape of the population distribution: Normal, rectangular, or skewed to the right. For the skewed population, the degree of skew is controlled by the spinner at the right. Min = 0.1 (minimal skew), max = 1 (strong skew). The skewed distribution is a lognormal distribution, with the number displayed being the SD of the underlying normal distribution. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
-    Tipped.create('#normal', 'The normal distribution ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
-    Tipped.create('#rectangular', 'A rectangular distribution ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
-    Tipped.create('#skew', 'A skew distribution based on lognormal ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
-    Tipped.create('#skewvalue', 'Use the dropdown to set the degree of right skew, when Skew is chosen as the shape of the population distribution. Min 0.1, max 1. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
-    Tipped.create('#custom', ' Draw your own distribution.', { skin: 'esci', size: 'xlarge', showDelay: 750 });
+    Tipped.create('#populationdisplaydiv', 'The Population: Choose population parameters and shape',        { skin: 'esci', size: 'medium', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+    Tipped.create('.mutip',                'Mean. Use slider or type in value, min 0, max 100',             { skin: 'esci', size: 'medium', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+    Tipped.create('.sigmatip',             'SD Use slider or type in value',                                { skin: 'esci', size: 'medium', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+    Tipped.create('.skewtip',              'Use dropdown to select amount of skew',                         { skin: 'esci', size: 'medium', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+    Tipped.create('.customtip',            'Click and drag from left to right to draw your own shape',      { skin: 'esci', size: 'medium', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+
 
     //2. Click to display section
-    Tipped.create('#displayoptionsdiv', 'Click the three buttons to control sampling. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
-    Tipped.create('#popnlabel', 'Display the population curve. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
-    Tipped.create('#sdlineslabel', 'Display verticals to mark the mean, and s units either side of the mean.  These lines mark z=0, z=-1, z=1, etc. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
-    Tipped.create('#fillpopnlabel', 'Click to fill under the population curve.  A large number of data circles are placed randomly in the area. \nA new randomisation is made each time Fill Random is clicked on. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
+    Tipped.create('#displayoptionsdiv',    'Choose what’s displayed in upper panel',                        { skin: 'esci', size: 'medium', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+    Tipped.create('.popntip',              'Display the curve',                                             { skin: 'esci', size: 'medium', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+    Tipped.create('.sdlinestip',           'Display lines to mark &mu;, and SD units either side of &mu;',  { skin: 'esci', size: 'medium', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+    Tipped.create('.fillpopntip',          'Display circles to mark some population data points',           { skin: 'esci', size: 'medium', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
 
     //3. Run controls section
-    Tipped.create('#runcontrolsdiv', ' ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
-    Tipped.create('#clearsample', "'Clear' clears all samples.", { skin: 'esci', size: 'xlarge', showDelay: 750 });
-    Tipped.create('#takesample', 'Click to take another random, independent sample from the population. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
-    Tipped.create('#runfreely', 'Click to start and stop a sequence of samples. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
-    Tipped.create('#speed', ' ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
+    Tipped.create('#runcontrolsdiv',       'Buttons control sampling',                                      { skin: 'esci', size: 'medium', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+    Tipped.create('#clearsample',          'Clear samples, ready for new run',                              { skin: 'esci', size: 'medium', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+    Tipped.create('#takesample',           'Take one independent random sample',                            { skin: 'esci', size: 'medium', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+    Tipped.create('#runfreely',            'Start or stop sampling',                                        { skin: 'esci', size: 'medium', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+    Tipped.create('#speed',                'Set sampling speed',                                            { skin: 'esci', size: 'medium', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
 
     //4. Samples section
-    Tipped.create('#samplelabel', 'Choose sample size, see information about the latest sample, and see the number of samples in the current set of samples. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
-    Tipped.create('#Ndiv', 'Sample size.  Min 1, max 100. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
-    Tipped.create('#nosamples ', "Number of samples in the current set of samples. A new set is started after 'Clear', or whenever a major parameter (e.g., m, s, N), or display setting is changed.", { skin: 'esci', size: 'xlarge', showDelay: 750 });
-    Tipped.create('#Mdiv', 'The mean of the latest sample. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
-    Tipped.create('#sdiv', 'The standard deviation of the latest sample. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
-    Tipped.create('#moep', 'Margin of error (MoE) of the population CI around the mean of the latest sample. The MoE is the length of either arm of the latest CI, so is half the total length of this CI. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
-    Tipped.create('#moes', 'Margin of error (MoE) of the sample CI around the mean of the latest sample. The MoE is the length of either arm of the latest CI, so is half the total length of this CI. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
+    Tipped.create('#samplelabel',          'Choose sample size, see number of samples in current run, see information about latest sample', { skin: 'esci', size: 'medium', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+    Tipped.create('.ntip',                 'Use dropdown to select sample size',                            { skin: 'esci', size: 'medium', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+    Tipped.create('#nosamples',            'Number in current run',                                         { skin: 'esci', size: 'medium', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+    Tipped.create('.musampletip',          'Mean of latest sample',                                         { skin: 'esci', size: 'medium', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+    Tipped.create('.sdsampletip',          'SD of latest sample',                                           { skin: 'esci', size: 'medium', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+
+    Tipped.create('.moeptip',              'Calculated assuming &sigma; known',                             { skin: 'esci', size: 'medium', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+    Tipped.create('.moestip',              'Calculated using <em>s</em> of latest sample',                  { skin: 'esci', size: 'medium', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
 
 
-    Tipped.create('#datapointslabel', 'Click to display data points (ooo) of the latest sample. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
-    Tipped.create('#samplemeanslabel', 'Display sample means as green dots. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
-    Tipped.create('#droppingmeanslabel', 'Click to display means as they drop. When mean heap is displayed, unclick here to see just the means in the mean heap. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
+    Tipped.create('.datapointstip',        'Display dot plot of latest sample',                             { skin: 'esci', size: 'medium', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+    Tipped.create('.samplemeanstip',       'Display mean of latest sample',                                 { skin: 'esci', size: 'medium', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+    Tipped.create('.droppingmeanstip',     'Display dance of the means',                                    { skin: 'esci', size: 'medium', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
 
     //5. Mean heap section
-    Tipped.create('#heapsectionspan', 'The mean heap is a pile of the sample means in the current set of samples. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
-    Tipped.create('#meanheapdiv', 'Click to show the mean heap, a dot plot of sample means. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
-    Tipped.create('#samplecurvediv', 'When the mean heap is displayed: The sampling distribution curve is the shape of the mean heap expected if we took an infinite number of samples, and the population is normal.  The sampling distribution curve is a normal distribution.  It is scaled vertically to match the number of samples in the current set of samples. When the population is rectangular, the displayed normal sampling distribution curve is usually a good fit to the mean heap for a large number of samples, because of the central limit theorem. For a skewed population the fit is sometimes not so close, especially for small samples and a highly skewed population. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
-    Tipped.create('#samplelinesdiv', 'When the mean heap is displayed: Display verticals to mark m , and SE units either side of m.  These lines mark z=0, z=-1, z=1, etc, for the sampling distribution curve. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
-    Tipped.create('#plusminusmoediv', 'This interval marks the central C% area under the sampling distribution curve.  It is marked by a green bar along the X axis, with green verticals to mark its ends. When s is assumed known, this interval gives the width of every CI. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
-    Tipped.create('#meanheapMdiv', 'The mean of the heap at after each sample ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
-    Tipped.create('#meanheapsediv', 'The standard error of the heap after each sample. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
-    Tipped.create('#curveheapsediv', 'The standard error of the sampling distribution curve. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
-    Tipped.create('#nomeansinheapdiv', 'Number of samples in the current set of samples for which the CI captures μ ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
+    Tipped.create('#heapsectionspan',      'Heap of sample means in the current run',                       { skin: 'esci', size: 'medium', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+    Tipped.create('.meanheaptip',          'Display heap',                                                  { skin: 'esci', size: 'medium', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+    Tipped.create('.samplecurvetip',       'Sampling distribution curve: Display the normal distribution that is the theoretically expected sampling distribution of means, in the long run, according to the central limit theorem. Curve is scaled vertically for approximate fit to current heap', { skin: 'esci', size: 'medium', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+    Tipped.create('.samplelinestip',       'Display lines to mark &mu; and SE units either side of &mu;',   { skin: 'esci', size: 'medium', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+    Tipped.create('.plusminusmoetip',      'Display stripe at bottom and vertical lines to mark this interval, which is the length of CIs when &sigma; is known', { skin: 'esci', size: 'medium', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+    Tipped.create('.meanheapMtip',         'Mean of means in the heap  ',                                   { skin: 'esci', size: 'medium', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+    Tipped.create('.meanheapsetip',        'SD of means in the heap',                                       { skin: 'esci', size: 'medium', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+
+    Tipped.create('.curveheapsetip',       'SD of the sampling distribution curve',                         { skin: 'esci', size: 'medium', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+    Tipped.create('.nomeansinheaptip',     'Number that have dropped down into the heap',                   { skin: 'esci', size: 'medium', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
 
     //6. CI section
-    Tipped.create('#confidenceintervalsdiv', 'CIs can be displayed on every mean in the dance of the means, to give the dance of the confidence intervals ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
-    Tipped.create('#cipcntdiv', 'Confidence level (%) for CIs displayed on the sample means.  Use spinner or type in a value.  Min 0, max 99.9 ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
-    Tipped.create('#showmoelabel', 'Display a CI on every mean in the dance of the means, to see the dance of the confidence intervals ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
-    Tipped.create('#labelformoepopn', 'The population sd is known. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
-    Tipped.create('#labelformoesample', 'The population sd is unknown. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
+    Tipped.create('#confidenceintervalsdiv', 'CIs on sample means',                                         { skin: 'esci', size: 'medium', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+    Tipped.create('.cipcnttip',            'Use dropdown to select confidence level',                       { skin: 'esci', size: 'medium', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+    Tipped.create('.showmoetip',           'Display CIs on means',                                          { skin: 'esci', size: 'medium', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+
+    Tipped.create('.moeknowntip',          'Assume $sigma; is known ',                                      { skin: 'esci', size: 'medium', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+    Tipped.create('.moeunknowntip',        'Assume &sigma; is not known',                                   { skin: 'esci', size: 'medium', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
 
     //7. Capture of mean
-    Tipped.create('#captureofmupanel', 'When the mean heap is not displayed: Explore capture of μ by CIs. Click both checkboxes to mark the population mean μ, and see red when a CI does not capture μ. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
-    Tipped.create('#captureofmulinelabel', 'A vertical line to mark the population mean in the lower figure ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
-    Tipped.create('#captureofmulabel', 'When the mean heap is not displayed: Click to indicate capture by the CIs of μ.  Red indicates non-capture. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
-    Tipped.create('#numbercapturingdiv ', 'The number of samples that capture the population mean. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
-    Tipped.create('#nosamplesydiv', 'Total number of sample taken (re-displayed from section 4)   ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
-    Tipped.create('#capturedpercentdiv', 'Percent of samples in the current set of samples for which the CI captures μ.  This proportion is expected in the long run to equal % confidence (C). ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
+    Tipped.create('#captureofmupanel',     'Explore the capture of  by CIs',                               { skin: 'esci', size: 'medium', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+    Tipped.create('.capturemulinetip',     'Display line to mark &mu;',                                     { skin: 'esci', size: 'medium', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+    Tipped.create('.capturemutip',         'Turn on colours to indicate capture, red CIs do not capture &mu;', { skin: 'esci', size: 'medium', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+    
+    
+    Tipped.create('#numbercapturingdiv',   'Number of CIs in current run that capture &mu;',                { skin: 'esci', size: 'medium', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+    Tipped.create('#nosamplesydiv',        'Total number of samples in current run',                        { skin: 'esci', size: 'medium', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+    Tipped.create('#capturedpercentdiv',   'Percent of CIs in current run that capture &mu;',               { skin: 'esci', size: 'medium', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
 
     //8.Capture of next mean
-    Tipped.create('#capturenextmeanlabel', 'When the mean heap is not displayed: Explore capture by CIs of the next mean, which is the mean just above a CI in the dance. When the checkbox is clicked on, then cases where the next mean falls outside the CI are indicated by a pink diagonal line joining the closer limit of the CI to that next mean just above. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
-    Tipped.create('#numberofnextmeansdiv', 'The number of means that is being tested for capture. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
-    Tipped.create('#numbercapturingnextmeandiv', 'Number of samples in the current set of samples for which the CI captures the next mean, which is the mean just above it in the dance. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
-    Tipped.create('#percentcapturingnextmeandiv', 'When the mean heap is not displayed: Click to show a pink diagonal line joining the  closer limit of the CI to the next mean, which is the mean just above, in all cases in which the CI does not capture that next mean. In the long run, we expect about 83% of 95% CIs to capture the next mean. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
+    Tipped.create('.capturenextmeantip', 'Explore capture by CIs of the next mean, which is the mean just above a CI in the dance. When a CI does NOT capture, a pink diagonal line joins a limit of the CI up to the mean just above', { skin: 'esci', size: 'medium', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+
+    Tipped.create('#numberofnextmeansdiv',        'Number of means available for capture, one less than number of samples in current run', { skin: 'esci', size: 'medium', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+    Tipped.create('#numbercapturingnextmeandiv',  'Number of CIs that capture next mean in current run',    { skin: 'esci', size: 'medium', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+    Tipped.create('#percentcapturingnextmeandiv', 'Percent of CIs in current run that capture next mean',   { skin: 'esci', size: 'medium', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
     
     //9. p values
-    Tipped.create('#pvaluelabel', 'Show the dance of the p values. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
-    Tipped.create('#pvaluesoundlabel', 'Turn on the music! to enhance the dance of the p values! ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
-    Tipped.create('#nullhypothesislabel', 'The null hypothesis.', { skin: 'esci', size: 'xlarge', showDelay: 750 });
-    Tipped.create('#cohensdlabel', "Cohen's d statistic for effect size.", { skin: 'esci', size: 'xlarge', showDelay: 750 });
-    
-    //footer
-    Tipped.create('#footerlink', 'Return to the New Statistics website. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
+    Tipped.create('.danceptip',                   'Display dance of the p values',                          { skin: 'esci', size: 'medium', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+    Tipped.create('.psound',                      'Turn on sounds, may need a slow sampling rate to hear every sound', { skin: 'esci', size: 'medium', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+    Tipped.create('.volumetip',                   'Set volume',                                             { skin: 'esci', size: 'medium', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
 
-    //display section
-    Tipped.create('#displaypdf', 'This section displays the population curve. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
-    Tipped.create('#displaysample', 'This section displays the dance of the means and the mean heap. ', { skin: 'esci', size: 'xlarge', showDelay: 750 });
+    Tipped.create('#nullhypothesislabel',         '&mu;0=50: Fixed null hypothesis value, marked by vertical line', { skin: 'esci', size: 'medium', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+    Tipped.create('#cohensdlabel',                "Cohen’s &delta;<x>: Population effect size in units of &sigma;, so &delta; = (&mu; – &mu;0) / &sigma; ", { skin: 'esci', size: 'medium', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
     
-    //  
-    //Tipped.create('#', ' ', { skin: 'esci', size: 'xlarge' });
-    //Tipped.create('#', ' ', { skin: 'esci', size: 'xlarge' });
 
     //get all tooltips with a data-tooltip attribute
     Tipped.disable('[data-tooltip]');

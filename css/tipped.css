@@ -567,10 +567,12 @@
   height: 18px;
 }
 
+
+/*GM BIG NOTE: have changed padding here - if a different text sizerequired then will have to change it there as well
 /* medium (default) */
 .tpd-size-medium .tpd-content,
 .tpd-size-medium .tpd-title {
-  padding: 10px;
+  padding: 3px; /*was 10*/
   font-size: 11px;
   line-height: 16px;
 }

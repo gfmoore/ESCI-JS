@@ -287,8 +287,6 @@ span {
   padding: 0.3rem;
 }
 
-
-
 #captured {
   color: firebrick;
 }
@@ -412,12 +410,6 @@ text {
   font: 14px sans-serif; 
 }
 
-/* .popnbubble {
-  stroke: blue;
-  stroke-width: 0.5;
-  fill: lightyellow;
-} */
-
 .pdf {
   fill: none;
   stroke: blue;
@@ -511,32 +503,5 @@ text {
 
 /*-----------------------------------------------------------------------------------------------------------------------------*/
 
-/* #test {
-  margin-top: 0.8rem;
-  width: 5rem;
-  height: 3rem;
-}
 
-#tooltip {
-  position: absolute;
-  border: 1px solid darkgray;
-  border-radius: 0.5rem;
-  padding: 0.2rem;
-  max-width: 15rem;
-  font-size: 1.0rem;
-  background-color: lightgray;
-  color: blue;
-}
-
-/*get the triangle*/
-/* #tooltip::after {
-  content: " ";
-  position: absolute;
-  bottom: 100%;  
-  left: 50%;
-  margin-left: -5px;
-  border-width: 5px;
-  border-style: solid;
-  border-color: transparent transparent darkgray transparent;
-} */
 

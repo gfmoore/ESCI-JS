@@ -122,8 +122,10 @@ Start using version history now to record changes and fixes
 /*
 0.9.0 Beta  2020-07-22 Beta version
 0.9.1       2020-07-23 Edited tooltips, added P value options
+0.9.2       2020-07-23 Dances#15 New sound library - Howler - used.
+0.9.3
 */
-let version = '0.9.1 Beta';
+let version = '0.9.2 Beta';
  
 
 'use strict';
@@ -382,13 +384,23 @@ $(function() {
 
   let z, t, pvz;                  //p-value calculations
 
-  let audiolow        = new Audio('./audio/trom1.wav');
-  let audiolowmiddle  = new Audio('./audio/trom2.wav');
-  let audiomiddle     = new Audio('./audio/clarry1.wav');
-  let audiomiddlehigh = new Audio('./audio/clarry2.wav');
-  let audiohigh       = new Audio('./audio/trumpet1.wav');
+  // let audiolow        = new Audio('./audio/trom1.wav');
+  // let audiolowmiddle  = new Audio('./audio/trom2.wav');
+  // let audiomiddle     = new Audio('./audio/clarry1.wav');
+  // let audiomiddlehigh = new Audio('./audio/clarry2.wav');
+  // let audiohigh       = new Audio('./audio/trumpet1.wav');
+  
 
 
+  let audiolow        = new Howl({src: ['./audio/trom1.wav'],    preload: true});
+  let audiolowmiddle  = new Howl({src: ['./audio/trom2.wav'],    preload: true});
+  let audiomiddle     = new Howl({src: ['./audio/clarry1.wav'],  preload: true});
+  let audiomiddlehigh = new Howl({src: ['./audio/clarry2.wav'],  preload: true});
+  let audiohigh       = new Howl({src: ['./audio/trumpet1.wav'], preload: true});
+
+  Howler.volume(volume);
+
+  
 
   let nobuckets;                   //the accurate value for number of buckets as a decimal
   
@@ -399,6 +411,8 @@ $(function() {
   let mu0 = 50;
   let cohensd = 0;
   //#endregion
+
+
 
   initialise();
 
@@ -3034,11 +3048,7 @@ $(function() {
 
   $('#volslider').on('change', function() {
     volume = parseFloat($('#volslider').val()/100);
-    audiolow.volume = volume;
-    audiolowmiddle.volume = volume;
-    audiomiddle.volume = volume;
-    audiomiddlehigh.volume = volume;
-    audiohigh.volume = volume;
+    Howler.volume(volume);
   })
 
   /*---------------------------------------------Footer ---------------------------------*/

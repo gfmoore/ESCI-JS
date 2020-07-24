@@ -128,8 +128,9 @@ Start using version history now to record changes and fixes
 0.9.5       2020-07-24 Dances #3 Fixed error in tooltips, made tip font and space slightly larger
 0.9.6       2020-07-24 Dances #15 Tweaks to p values.
 0.9.7       2020-07-24 Dances #27 Added population density text
+0.9.8
 */
-let version = '0.9.7 Beta';
+let version = '0.9.8 Beta';
  
 
 'use strict';
@@ -2011,7 +2012,7 @@ $(function() {
     }
     if (pvt >= 0.01 && pvt < 0.05) {
       svgS.append('rect').attr('class', 'pvaluet').attr('id', 'pvaluet' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'lemonchiffon').attr('visibility', 'hidden');
-      svgS.append('text').text('     \u2022' + (pvt.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextt').attr('id', 'pvtextt' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
+      svgS.append('text').text('     *' + (pvt.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextt').attr('id', 'pvtextt' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
       if (pvaluesound) audiomiddle.play();
     }
     if (pvt >= 0.05 && pvt < 0.1) {

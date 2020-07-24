@@ -43,7 +43,7 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
 /*
 0.9.0 Beta  2020-07-22 Beta version  
 0.9.1       2020-07-23 Some tooltip fixes
-0.9.3
+0.9.4       
 */
 
 
@@ -408,9 +408,9 @@ text {
   stroke-width: 1px;
 }
 
-.axis { 
+/* .axis { 
   font: 14px sans-serif; 
-}
+} */
 
 .pdf {
   fill: none;
@@ -434,7 +434,7 @@ text {
 }
 
 .mutext {
-  font-size: 1.2rem;
+  font-size: 2.0rem;
   fill: black;
   stroke: black;
   stroke-width: 1;
@@ -446,7 +446,7 @@ text {
 }
 
 .mu0text {
-  font-size: 1.2rem;
+  font-size: 2.0rem;
   fill: black;
   stroke: black;
   stroke-width: 1;

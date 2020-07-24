@@ -124,8 +124,10 @@ Start using version history now to record changes and fixes
 0.9.1       2020-07-23 Edited tooltips, added P value options
 0.9.2       2020-07-23 Dances#15 New sound library - Howler - used.
 0.9.3       2020-07-23 Tooltip font size increase slightly, looked far too small
+0.9.4       2020-07-24 Dances #27 Fixed sizes and bold for axis labels, added Population, fixed rectangular fill - I hope
+
 */
-let version = '0.9.3 Beta';
+let version = '0.9.4 Beta';
  
 
 'use strict';
@@ -552,11 +554,12 @@ $(function() {
     xAxisB = d3.axisBottom(x);
 
     //display axes
-    //top
-    svgP.append('g').attr('class', 'axis x').attr( 'transform', 'translate(0, 20)' ).call(xAxis);
+    //top  //note style for both should be the same, but for the top it didn't look right
+    svgP.append('g').attr('class', 'axisx').attr( 'transform', 'translate(0, 22)' ).style('font', '1.55rem sans-serif').style('font-weight', 'bold').call(xAxis);
+    svgP.append('text').text('Population').attr('class', 'pdfdisplaytext').style('font', '2.0rem sans-serif').style('font-weight', 'bold').style('fill', 'blue').attr('x', 40).attr('y', 50);
 
     //bottom
-    svgS.append('g').attr('class', 'axis x').attr( 'transform', `translate(0, ${heightS - dropLimit} )` ).call(xAxisB);
+    svgS.append('g').attr('class', 'axisx').attr( 'transform', `translate(0, ${heightS - dropLimit} )` ).style('font', '1.5rem sans-serif').style('font-weight', 'bold').style('font-weight', 'bold').call(xAxisB);
     
     //just draw a vertical line    //svgP.append('g').attr('class', 'axis y').attr('transform', 'translate(10,20)').call(yAxis);
     svgP.append('line').attr('class', 'axisline').attr('x1', 5).attr('y1', 25).attr('x2', 5).attr('y2', heightP );
@@ -667,10 +670,11 @@ $(function() {
   }
 
   function drawRectangularCurve() {
-    let l, h, c, t;
+    let l, r, c, t;
+    let rise = false;
+    let fall = false;
 
     enableMuSigmaSliders();
-
 
     pdf = [];
 
@@ -681,26 +685,27 @@ $(function() {
     }
 
     l = mu-sigma * Math.sqrt(3);
-    h = mu+sigma * Math.sqrt(3);
+    r = mu+sigma * Math.sqrt(3);
 
     c = 10 * heightP / sigma;
     if (c > heightP) c = heightP;
     c = c / heightP * pdfDisplayAreaHeight;
 
-    let rise = false;
-    let fall = false;
-    for (let x = 0; x < 100; x += 1) { 
+
+
+    for (let x = 0; x < 100; x += 0.1) { 
+
       if (x <= l) pdf.push( {x: x, y: 0} ); 
 
-      if (x >= l && x <= h) {
+      if (x >= l && x <= r) {
         if (!rise) {
-          pdf.push( {x: x-1, y: c} ); 
+          pdf.push( {x: x-0.1, y: c} ); 
           rise = true;
         }
         pdf.push( {x: x, y: c} );
       }
 
-      if (x >= h ) {
+      if (x >= r ) {
         if (!fall) {
           pdf.push( {x: x, y: c} );
           fall = true; 
@@ -1140,7 +1145,7 @@ $(function() {
     removeMuLine(); //remove any previous one
     if (!isNaN(mu)) {
       svgS.append('line').attr('class', 'muline').attr('x1', x(mu)).attr('y1', 25).attr('x2', x(mu)).attr('y2', heightS-dropLimit);  
-      svgS.append('text').text('\u00B5').attr('class', 'mutext').attr('x', x(mu)-4).attr('y', heightS-10);
+      svgS.append('text').text('\u00B5').attr('class', 'mutext').attr('x', x(mu)-4).attr('y', heightS-6);
     }
   }
 
@@ -1153,7 +1158,7 @@ $(function() {
     removeMu0Line(); //remove any previous one
     if (!isNaN(mu0)) {
       svgS.append('line').attr('class', 'mu0line').attr('x1', x(mu0)).attr('y1', 25).attr('x2', x(mu0)).attr('y2', heightS-dropLimit);  
-      svgS.append('text').text('\u00B5'+'0').attr('class', 'mu0text').attr('x', x(mu0)-4).attr('y', heightS-10);
+      svgS.append('text').text('\u00B5'+'0').attr('class', 'mu0text').attr('x', x(mu0)-4).attr('y', heightS-6);
     }
   }
 
@@ -1165,7 +1170,7 @@ $(function() {
  
   function fillPopnBubbles() {
     //fill the distribution curve with sample bubbles
-      let ah;   
+    let ah;   
     let minxpdf, maxxpdf;
     let minypdf, maxypdf;
     let minx, maxx, miny, maxy;
@@ -1185,9 +1190,9 @@ $(function() {
       maxxpdf = mu + sigma * Math.sqrt(3);
 
       minypdf = 0;
-      maxypdf = 10 * heightP / sigma;
+      //maxypdf = 10 * heightP / sigma; //why this?
+      maxypdf = d3.max(pdf, function(d) { return d.y });
       if (maxypdf > pdfDisplayAreaHeight) maxypdf = pdfDisplayAreaHeight;
-  
     }
 
     //create array of bubbles, not all may be drawn, but array will be used for random sampling (except for normal)
@@ -1257,33 +1262,31 @@ $(function() {
     //Main routine - basic idea. For every bubble, go through the entire pdf looking to see if any coordinate is inside the bubble by ytahgoras' theorem
     //this could conceivably take a long long tiem,but is not!!! guaranteed to work!
     //Have to do it in pixels as using real just doesn't work.
-   
-
     for (let b = 0; b < popnBubbles.length; b += 1) {
       drawit = true; // draw it unless we have reason not to
 
       bx = x(popnBubbles[b].x);
       by = y(popnBubbles[b].y);
 
-      for (let p = 0; p < pdf.length; p += 1) {
+      if (normal || skew || custom) {
+        for (let p = 0; p < pdf.length; p += 1) {
 
-        px = x(pdf[p].x);
-        py = y(pdf[p].y);
-        d2 = ((bx - px) * (bx - px)) + ((by - py) * (by - py));
+          px = x(pdf[p].x);
+          py = y(pdf[p].y);
+          d2 = ((bx - px) * (bx - px)) + ((by - py) * (by - py));
 
-        if (d2 <= s2) {  //inside bubble 
-          drawit = false;
-          break; //we're done
-        } 
-
-
+          if (d2 <= s2) {  //inside bubble 
+            drawit = false;
+            break; //we're done
+          } 
+        }
+        //break to here
       }
-      //break to here
 
       //sort out left and right bubbles on either side of vertical. Tweak of 1 pixel
-      if (custom || rectangular) {
-        if (bx < l + sampleMeanSize + 1) drawit = false;
-        if (bx > r - sampleMeanSize - 1) drawit = false;
+      if (custom || rectangular) {        
+        if (bx < l + sampleMeanSize) drawit = false;
+        if (bx > r - sampleMeanSize) drawit = false;
       }
 
       //extra check for rectangle as algorithm doesn't work for bubbles above line and I don't know why?

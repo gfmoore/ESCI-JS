@@ -127,8 +127,9 @@ Start using version history now to record changes and fixes
 0.9.4       2020-07-24 Dances #27 Fixed sizes and bold for axis labels, added Population, fixed rectangular fill - I hope
 0.9.5       2020-07-24 Dances #3 Fixed error in tooltips, made tip font and space slightly larger
 0.9.6       2020-07-24 Dances #15 Tweaks to p values.
+0.9.7       2020-07-24 Dances #27 Added population density text
 */
-let version = '0.9.6 Beta';
+let version = '0.9.7 Beta';
  
 
 'use strict';
@@ -557,7 +558,8 @@ $(function() {
     //display axes
     //top  //note style for both should be the same, but for the top it didn't look right
     svgP.append('g').attr('class', 'axisx').attr( 'transform', 'translate(0, 22)' ).style('font', '1.55rem sans-serif').style('font-weight', 'bold').call(xAxis);
-    svgP.append('text').text('Population').attr('class', 'pdfdisplaytext').style('font', '2.0rem sans-serif').style('font-weight', 'bold').style('fill', 'blue').attr('x', 40).attr('y', 50);
+    svgP.append('text').text('Population').attr('class', 'pdfdisplaytext').style('font', '2.0rem sans-serif').style('font-weight', 'bold').style('fill', 'blue').attr('x', 70).attr('y', 50);
+    svgP.append('text').text('Probability density').attr('class', 'pdfdisplaytext').style('font', '1.4rem sans-serif').style('fill', 'black').attr('x', 17).attr('y', 150).attr('transform', 'rotate(-90 17 150)');
 
     //bottom
     svgS.append('g').attr('class', 'axisx').attr( 'transform', `translate(0, ${heightS - dropLimit} )` ).style('font', '1.5rem sans-serif').style('font-weight', 'bold').style('font-weight', 'bold').call(xAxisB);

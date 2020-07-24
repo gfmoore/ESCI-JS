@@ -126,8 +126,9 @@ Start using version history now to record changes and fixes
 0.9.3       2020-07-23 Tooltip font size increase slightly, looked far too small
 0.9.4       2020-07-24 Dances #27 Fixed sizes and bold for axis labels, added Population, fixed rectangular fill - I hope
 0.9.5       2020-07-24 Dances #3 Fixed error in tooltips, made tip font and space slightly larger
+0.9.6       2020-07-24 Dances #15 Tweaks to p values.
 */
-let version = '0.9.5 Beta';
+let version = '0.9.6 Beta';
  
 
 'use strict';
@@ -1587,7 +1588,6 @@ $(function() {
   }
 
 
-
   function displaySampleAppearanceAll() {
     //hide all wings
     d3.selectAll('.pmoe, .smoe').attr('visibility', 'hidden');
@@ -1825,7 +1825,6 @@ $(function() {
 
   }
 
-
   //calculate statistics in samples[]
   function sampleStatistics() {
     //get stats from jStat
@@ -1973,54 +1972,54 @@ $(function() {
     //pmoe
     if (pvz < 0.001) {
       svgS.append('rect').attr('class', 'pvaluez').attr('id', 'pvaluez' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'red').attr('visibility', 'hidden');
-      svgS.append('text').text('   ***' + (pvz.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextz').attr('id', 'pvtextz' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').attr('fill', 'black').attr('visibility', 'hidden');
+      svgS.append('text').text('   ***' + (pvz.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextz').attr('id', 'pvtextz' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
       if (pvaluesound) audiohigh.play();
     }
     if (pvz >= 0.001 && pvz < 0.01) {
       svgS.append('rect').attr('class', 'pvaluez').attr('id', 'pvaluez' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'orange').attr('visibility', 'hidden');
-      svgS.append('text').text('    **'+ (pvz.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextz').attr('id', 'pvtextz' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').attr('fill', 'black').attr('visibility', 'hidden');
+      svgS.append('text').text('    **'+ (pvz.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextz').attr('id', 'pvtextz' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
       if (pvaluesound) audiomiddlehigh.play();
     }
     if (pvz >= 0.01 && pvz < 0.05) {
       svgS.append('rect').attr('class', 'pvaluez').attr('id', 'pvaluez' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'lemonchiffon').attr('visibility', 'hidden');
-      svgS.append('text').text('     \u2022' + (pvz.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextz').attr('id', 'pvtextz' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').attr('fill', 'black').attr('visibility', 'hidden');
+      svgS.append('text').text('     *' + (pvz.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextz').attr('id', 'pvtextz' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
       if (pvaluesound) audiomiddle.play();
     }
     if (pvz >= 0.05 && pvz < 0.1) {
       svgS.append('rect').attr('class', 'pvaluez').attr('id', 'pvaluez' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'lightskyblue').attr('visibility', 'hidden');
-      svgS.append('text').text('     ?' + (pvz.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextz').attr('id', 'pvtextz' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').attr('fill', 'black').attr('visibility', 'hidden');
+      svgS.append('text').text('     ?' + (pvz.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextz').attr('id', 'pvtextz' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
       if (pvaluesound) audiolowmiddle.play();
     }
     if (pvz >= 0.1) {
       svgS.append('rect').attr('class', 'pvaluez').attr('id', 'pvaluez' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'blue').attr('visibility', 'hidden');
-      svgS.append('text').text('      ' + (pvz.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextz').attr('id', 'pvtextz' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').attr('fill', 'black').attr('visibility', 'hidden');
+      svgS.append('text').text('      ' + (pvz.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextz').attr('id', 'pvtextz' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
       if (pvaluesound) audiolow.play();
     }
    
     //smoe
     if (pvt < 0.001) {
       svgS.append('rect').attr('class', 'pvaluet').attr('id', 'pvaluet' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'red').attr('visibility', 'hidden');
-      svgS.append('text').text('   ***' + (pvt.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextt').attr('id', 'pvtextt' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').attr('fill', 'black').attr('visibility', 'hidden');
+      svgS.append('text').text('   ***' + (pvt.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextt').attr('id', 'pvtextt' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
       if (pvaluesound) audiohigh.play();
     }
     if (pvt >= 0.001 && pvt < 0.01) {
       svgS.append('rect').attr('class', 'pvaluet').attr('id', 'pvaluet' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'orange').attr('visibility', 'hidden');
-      svgS.append('text').text('    **'+ (pvt.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextt').attr('id', 'pvtextt' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').attr('fill', 'black').attr('visibility', 'hidden');
+      svgS.append('text').text('    **'+ (pvt.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextt').attr('id', 'pvtextt' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
       if (pvaluesound) audiomiddlehigh.play();
     }
     if (pvt >= 0.01 && pvt < 0.05) {
       svgS.append('rect').attr('class', 'pvaluet').attr('id', 'pvaluet' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'lemonchiffon').attr('visibility', 'hidden');
-      svgS.append('text').text('     \u2022' + (pvt.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextt').attr('id', 'pvtextt' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').attr('fill', 'black').attr('visibility', 'hidden');
+      svgS.append('text').text('     \u2022' + (pvt.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextt').attr('id', 'pvtextt' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
       if (pvaluesound) audiomiddle.play();
     }
     if (pvt >= 0.05 && pvt < 0.1) {
       svgS.append('rect').attr('class', 'pvaluet').attr('id', 'pvaluet' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'lightskyblue').attr('visibility', 'hidden');
-      svgS.append('text').text('     ?' + (pvt.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextt').attr('id', 'pvtextt' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').attr('fill', 'black').attr('visibility', 'hidden');
+      svgS.append('text').text('     ?' + (pvt.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextt').attr('id', 'pvtextt' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
       if (pvaluesound) audiolowmiddle.play();
     }
     if (pvt >= 0.1) {
       svgS.append('rect').attr('class', 'pvaluet').attr('id', 'pvaluet' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'blue').attr('visibility', 'hidden');
-      svgS.append('text').text('      ' + (pvt.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextt').attr('id', 'pvtextt' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').attr('fill', 'black').attr('visibility', 'hidden');
+      svgS.append('text').text('      ' + (pvt.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextt').attr('id', 'pvtextt' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
       if (pvaluesound) audiolow.play();
     }
 
@@ -2985,6 +2984,8 @@ $(function() {
 
       $plusminusmoe.prop('checked', false);
       plusminusmoe = false;
+      removePlusMinusMoe();
+
 
       $ci.val('0.05');  //95% CI
       alpha = 0.05;

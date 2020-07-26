@@ -128,7 +128,7 @@ Start using version history now to record changes and fixes
 0.9.5       2020-07-24 Dances #3 Fixed error in tooltips, made tip font and space slightly larger
 0.9.6       2020-07-24 Dances #15 Tweaks to p values.
 0.9.7       2020-07-24 Dances #27 Added population density text
-0.9.8
+0.9.8       2020-07-26 Stopped duplicate of sounds for p-values
 */
 let version = '0.9.8 Beta';
  
@@ -389,23 +389,12 @@ $(function() {
 
   let z, t, pvz;                  //p-value calculations
 
-  // let audiolow        = new Audio('./audio/trom1.wav');
-  // let audiolowmiddle  = new Audio('./audio/trom2.wav');
-  // let audiomiddle     = new Audio('./audio/clarry1.wav');
-  // let audiomiddlehigh = new Audio('./audio/clarry2.wav');
-  // let audiohigh       = new Audio('./audio/trumpet1.wav');
-  
+  let audiolow;      
+  let audiolowmiddle; 
+  let audiomiddle;    
+  let audiomiddlehigh;
+  let audiohigh;       
 
-
-  let audiolow        = new Howl({src: ['./audio/trom1.wav'],    preload: true});
-  let audiolowmiddle  = new Howl({src: ['./audio/trom2.wav'],    preload: true});
-  let audiomiddle     = new Howl({src: ['./audio/clarry1.wav'],  preload: true});
-  let audiomiddlehigh = new Howl({src: ['./audio/clarry2.wav'],  preload: true});
-  let audiohigh       = new Howl({src: ['./audio/trumpet1.wav'], preload: true});
-
-  Howler.volume(volume);
-
-  
 
   let nobuckets;                   //the accurate value for number of buckets as a decimal
   
@@ -490,11 +479,13 @@ $(function() {
 
     //if (showPopulationCurve) drawPopulationCurve();  //includes call to drawPDF and fillPopnBubbles
 
-    audiolow.volume = volume;
-    audiolowmiddle.volume = volume;
-    audiomiddle.volume = volume;
-    audiomiddlehigh.volume = volume;
-    audiohigh.volume = volume;
+    audiolow        = new Howl({src: ['./audio/wav/trom1.wav'],    preload: true});
+    audiolowmiddle  = new Howl({src: ['./audio/wav/trom2.wav'],    preload: true});
+    audiomiddle     = new Howl({src: ['./audio/wav/clarry1.wav'],  preload: true});
+    audiomiddlehigh = new Howl({src: ['./audio/wav/clarry2.wav'],  preload: true});
+    audiohigh       = new Howl({src: ['./audio/wav/trumpet1.wav'], preload: true});
+
+    Howler.volume(volume);
 
   }
 
@@ -1976,54 +1967,54 @@ $(function() {
     if (pvz < 0.001) {
       svgS.append('rect').attr('class', 'pvaluez').attr('id', 'pvaluez' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'red').attr('visibility', 'hidden');
       svgS.append('text').text('   ***' + (pvz.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextz').attr('id', 'pvtextz' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
-      if (pvaluesound) audiohigh.play();
+      if (pvaluesound && showPmoe) audiohigh.play();
     }
     if (pvz >= 0.001 && pvz < 0.01) {
       svgS.append('rect').attr('class', 'pvaluez').attr('id', 'pvaluez' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'orange').attr('visibility', 'hidden');
       svgS.append('text').text('    **'+ (pvz.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextz').attr('id', 'pvtextz' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
-      if (pvaluesound) audiomiddlehigh.play();
+      if (pvaluesound && showPmoe) audiomiddlehigh.play();
     }
     if (pvz >= 0.01 && pvz < 0.05) {
       svgS.append('rect').attr('class', 'pvaluez').attr('id', 'pvaluez' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'lemonchiffon').attr('visibility', 'hidden');
       svgS.append('text').text('     *' + (pvz.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextz').attr('id', 'pvtextz' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
-      if (pvaluesound) audiomiddle.play();
+      if (pvaluesound && showPmoe) audiomiddle.play();
     }
     if (pvz >= 0.05 && pvz < 0.1) {
       svgS.append('rect').attr('class', 'pvaluez').attr('id', 'pvaluez' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'lightskyblue').attr('visibility', 'hidden');
       svgS.append('text').text('     ?' + (pvz.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextz').attr('id', 'pvtextz' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
-      if (pvaluesound) audiolowmiddle.play();
+      if (pvaluesound && showPmoe) audiolowmiddle.play();
     }
     if (pvz >= 0.1) {
       svgS.append('rect').attr('class', 'pvaluez').attr('id', 'pvaluez' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'blue').attr('visibility', 'hidden');
       svgS.append('text').text('      ' + (pvz.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextz').attr('id', 'pvtextz' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
-      if (pvaluesound) audiolow.play();
+      if (pvaluesound && showPmoe) audiolow.play();
     }
    
     //smoe
     if (pvt < 0.001) {
       svgS.append('rect').attr('class', 'pvaluet').attr('id', 'pvaluet' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'red').attr('visibility', 'hidden');
       svgS.append('text').text('   ***' + (pvt.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextt').attr('id', 'pvtextt' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
-      if (pvaluesound) audiohigh.play();
+      if (pvaluesound && showSmoe) audiohigh.play();
     }
     if (pvt >= 0.001 && pvt < 0.01) {
       svgS.append('rect').attr('class', 'pvaluet').attr('id', 'pvaluet' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'orange').attr('visibility', 'hidden');
       svgS.append('text').text('    **'+ (pvt.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextt').attr('id', 'pvtextt' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
-      if (pvaluesound) audiomiddlehigh.play();
+      if (pvaluesound && showSmoe) audiomiddlehigh.play();
     }
     if (pvt >= 0.01 && pvt < 0.05) {
       svgS.append('rect').attr('class', 'pvaluet').attr('id', 'pvaluet' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'lemonchiffon').attr('visibility', 'hidden');
       svgS.append('text').text('     *' + (pvt.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextt').attr('id', 'pvtextt' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
-      if (pvaluesound) audiomiddle.play();
+      if (pvaluesound && showSmoe) audiomiddle.play();
     }
     if (pvt >= 0.05 && pvt < 0.1) {
       svgS.append('rect').attr('class', 'pvaluet').attr('id', 'pvaluet' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'lightskyblue').attr('visibility', 'hidden');
       svgS.append('text').text('     ?' + (pvt.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextt').attr('id', 'pvtextt' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
-      if (pvaluesound) audiolowmiddle.play();
+      if (pvaluesound && showSmoe) audiolowmiddle.play();
     }
     if (pvt >= 0.1) {
       svgS.append('rect').attr('class', 'pvaluet').attr('id', 'pvaluet' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'blue').attr('visibility', 'hidden');
       svgS.append('text').text('      ' + (pvt.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextt').attr('id', 'pvtextt' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
-      if (pvaluesound) audiolow.play();
+      if (pvaluesound && showSmoe) audiolow.play();
     }
 
   }

@@ -129,8 +129,9 @@ Start using version history now to record changes and fixes
 0.9.6       2020-07-24 Dances #15 Tweaks to p values.
 0.9.7       2020-07-24 Dances #27 Added population density text
 0.9.8       2020-07-26 Stopped duplicate of sounds for p-values
+0.9.9       2020-07-31 Replaced cdn links with direct links to js libraries to make portable
 */
-let version = '0.9.8 Beta';
+let version = '0.9.9 Beta';
  
 
 'use strict';

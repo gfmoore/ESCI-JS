@@ -130,8 +130,9 @@ Start using version history now to record changes and fixes
 0.9.7       2020-07-24 Dances #27 Added population density text
 0.9.8       2020-07-26 Stopped duplicate of sounds for p-values
 0.9.9       2020-07-31 Replaced cdn links with direct links to js libraries to make portable
+0.9.10      2020-08-02 #28 Allow display of sample stats if showSampleMean and not dropSampleMeans.
 */
-let version = '0.9.9 Beta';
+let version = '0.9.10 Beta';
  
 
 'use strict';
@@ -1498,6 +1499,10 @@ $(function() {
 
       })
     }
+    //#28 remove dropping sample means but don't clear as in resetSamples
+    else if (showSampleMeans) {
+      resetSamples2();
+    }
     else {
       //just hide or remove dropping means including old ones - I think removing makes more sense
       resetSamples();
@@ -2350,22 +2355,6 @@ $(function() {
 
   /*-------------------------------------------clear, show, hide UI values--------------------------*/
 
-  // #region  panels 
-  //Panel 4 Samples
-  //Number of samples               $N, $N2
-  //Latest sample M and s           $xbar $ssd
-  //MoE population MoE sample       $pmoe $smoe
-  
-  //Panel 5 Mean heap 
-  //Mean heap M and SE              $heapxbar  $heapse
-  //Number of means in the heap     $noInHeap
-  
-  //Panel 7:
-  //Number capturing mu             $captured 
-  //Samples taken                   $N2
-  //Percent capturing mu            $capturedpercent
-  //#endregion
-
   function resetSamples() {
     //remove sample means and moes (blobs) from DOM
     d3.selectAll('.smean').remove();
@@ -2382,6 +2371,20 @@ $(function() {
     $ssd.text(0);
     $pmoe.text(0);
     $smoe.text(0);
+  }
+
+  function resetSamples2() {
+    //this is almost resetSamples
+    //remove sample means and moes (blobs) from DOM
+    d3.selectAll('.smean').remove();
+    d3.selectAll('.pmoe').remove();
+    d3.selectAll('.smoe').remove();
+
+    id = 0;  //the id of the mean and moes for the svg element
+
+    N = 0;   //the number of taken samples
+    $N.text(0);
+    $N2.text(0);
   }
 
   function resetCaptureStats() {

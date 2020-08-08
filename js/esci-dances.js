@@ -131,17 +131,19 @@ Start using version history now to record changes and fixes
 0.9.8       2020-07-26 Stopped duplicate of sounds for p-values
 0.9.9       2020-07-31 Replaced cdn links with direct links to js libraries to make portable
 0.9.10      2020-08-02 #28 Allow display of sample stats if showSampleMean and not dropSampleMeans.
+0.9.11      2020-08-09 #29 Added breadcrumbs
 */
-let version = '0.9.10 Beta';
+let version = '0.9.11 Beta';
  
 
 'use strict';
 
-  // #region touchable
+
 //$(window).load(function () { //doesn't work anyway need to wait for everything to load, not just jquery, though I didn't experience any problems?
 $(function() {
   console.log('jQuery here!');  //just to make sure everything is working
 
+  // #region touchable
   //am I on a touchable device? If so probably mobile or touch laptop display for laptop - add a scroll bar
   let deviceType = (('ontouchstart' in window)
     || (navigator.maxTouchPoints > 0)
@@ -150,7 +152,7 @@ $(function() {
  
   if (deviceType === 'touchable') {
     //add a scroll bar to left hand panel?
-    //$('#control').css('overflow-y', 'scroll');
+    //$('#leftpanel').css('overflow-y', 'scroll');
   }
   else {
   }
@@ -408,7 +410,10 @@ $(function() {
   let cohensd = 0;
   //#endregion
 
-
+  //breadcrumbs
+  $('#homecrumb').on('click', function() {
+    window.location.href = "https://www.esci.thenewstatistics.com/";
+  })
 
   initialise();
 
@@ -495,7 +500,7 @@ $(function() {
 
     //responsive height
     let displaysectionht = $(window).height() -0;  //causes issues was 50
-    let controlht = $('#control').height();
+    let controlht = $('#leftpanel').height();
     if ( displaysectionht > controlht ) $('#displaysection').height(controlht);
     else $('#displaysection').height( displaysectionht -10);  
 
@@ -504,7 +509,7 @@ $(function() {
     //xmax  = $('#displaypdf').width();       //width of viewing window for displayPDF and displaysample
     //try this work around. It looks like $().width is not working properly on narrowing the browser, async problem?
     //oldwidth = width;
-    xmax = window.innerWidth - $('#control').width() - 28;
+    xmax = window.innerWidth - $('#leftpanel').width() - 28;
 
     let sectionwidth = $('#displaysection').css('max-width');
     sectionwidth = sectionwidth.substring( 0, sectionwidth.indexOf( "px" ) );

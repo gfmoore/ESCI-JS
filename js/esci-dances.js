@@ -132,12 +132,12 @@ Start using version history now to record changes and fixes
 0.9.9       2020-07-31 Replaced cdn links with direct links to js libraries to make portable
 0.9.10      2020-08-02 #28 Allow display of sample stats if showSampleMean and not dropSampleMeans.
 0.9.11      2020-08-09 #29 Added breadcrumbs
+0.9.12      2020-08-14 #30 Tweaks to display - left margin shifted in a bit etc.         
+
 */
-let version = '0.9.11 Beta';
+let version = '0.9.12 Beta';
  
-
 'use strict';
-
 
 //$(window).load(function () { //doesn't work anyway need to wait for everything to load, not just jquery, though I didn't experience any problems?
 $(function() {
@@ -521,7 +521,7 @@ $(function() {
     ymaxS = $('#displaysection').height() - ymaxP;
 
     //what margin do we want - not used,but the "standard" way of doing things 
-    margin = {top: 0, right: 0, bottom: 0, left: 0};  //pixels
+    margin = {top: 0, right: 0, bottom: 0, left: 20};  //pixels
     width = xmax - margin.left - margin.right;
     heightP = ymaxP - margin.top - margin.bottom;
     heightS = ymaxS - margin.top - margin.bottom;
@@ -540,7 +540,7 @@ $(function() {
             .attr('width', width).attr('height', heightS);  
 
     //set up scales for displaypdf and displaysample
-    x  = d3.scaleLinear().domain([ 0, 100 ]).range([5, width]);  //common to both viewports
+    x  = d3.scaleLinear().domain([ 0, 100 ]).range([25, width]);  //common to both viewports
     yp = d3.scaleLinear().domain([ 0, d3.max(pdf, function(d) { return d.y}) ]).range([heightP, 10]);
 
     ys = d3.scaleLinear().domain([ 0, 500 ]).range([0, heightS]);  //go from y = 500 at bottom to 0 at top, beacuse samplemeans increase as they drop!
@@ -559,12 +559,15 @@ $(function() {
     svgP.append('g').attr('class', 'axisx').attr( 'transform', 'translate(0, 22)' ).style('font', '1.55rem sans-serif').style('font-weight', 'bold').call(xAxis);
     svgP.append('text').text('Population').attr('class', 'pdfdisplaytext').style('font', '2.0rem sans-serif').style('font-weight', 'bold').style('fill', 'blue').attr('x', 70).attr('y', 50);
     svgP.append('text').text('Probability density').attr('class', 'pdfdisplaytext').style('font', '1.4rem sans-serif').style('fill', 'black').attr('x', 17).attr('y', 150).attr('transform', 'rotate(-90 17 150)');
+    svgP.append('text').text('X').attr('class', 'pdfdisplaytext').style('font', '1.8rem sans-serif').style('fill', 'black').attr('x', width/2 - 20).attr('y', 15).style('font-weight', 'bold').style('font-style', 'italic');
 
     //bottom
-    svgS.append('g').attr('class', 'axisx').attr( 'transform', `translate(0, ${heightS - dropLimit} )` ).style('font', '1.5rem sans-serif').style('font-weight', 'bold').style('font-weight', 'bold').call(xAxisB);
+    svgS.append('g').attr('class', 'axisx').attr( 'transform', `translate(0, ${heightS - dropLimit} )` ).style('font', '1.5rem sans-serif').style('font-weight', 'bold').call(xAxisB);
+    svgS.append('text').text('X').attr('class', 'pdfdisplaytext').style('font', '1.8rem sans-serif').style('fill', 'black').attr('x', width/2 - 20).attr('y', heightS - 22).style('font-weight', 'bold').style('font-style', 'italic');
+
     
     //just draw a vertical line    //svgP.append('g').attr('class', 'axis y').attr('transform', 'translate(10,20)').call(yAxis);
-    svgP.append('line').attr('class', 'axisline').attr('x1', 5).attr('y1', 25).attr('x2', 5).attr('y2', heightP );
+    svgP.append('line').attr('class', 'axisline').attr('x1', 25).attr('y1', 25).attr('x2', 25).attr('y2', heightP );
 
     //draw a horizontal line under the curve on the sample display section
     svgS.append('line').attr('class', 'horizline').attr('x1', 5).attr('y1', ys(0)).attr('x2', xmax-5).attr('y2', ys(0)). attr('stroke', 'gray').attr('stroke-width', '2');
@@ -573,8 +576,8 @@ $(function() {
     document.getElementsByClassName("tick")[10].children[0].setAttributeNS(null, 'transform', `translate(${-2},0)`);
     document.getElementsByClassName("tick")[21].children[0].setAttributeNS(null, 'transform', `translate(${-2},0)`);
     //move the text 5 pixels left
-    document.getElementsByClassName("tick")[10].children[1].setAttributeNS(null, 'transform', `translate(${-12},0)`);
-    document.getElementsByClassName("tick")[21].children[1].setAttributeNS(null, 'transform', `translate(${-12},0)`);
+    document.getElementsByClassName("tick")[10].children[1].setAttributeNS(null, 'transform', `translate(${-15},0)`);
+    document.getElementsByClassName("tick")[21].children[1].setAttributeNS(null, 'transform', `translate(${-15},0)`);
   }
 
   //clear button
@@ -810,7 +813,7 @@ $(function() {
     drawPDF();
   }
 
-
+  
   function drawCustomCurve() {
     //#region draw the custom curve
 
@@ -1977,54 +1980,54 @@ $(function() {
     //pmoe
     if (pvz < 0.001) {
       svgS.append('rect').attr('class', 'pvaluez').attr('id', 'pvaluez' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'red').attr('visibility', 'hidden');
-      svgS.append('text').text('   ***' + (pvz.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextz').attr('id', 'pvtextz' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
+      svgS.append('text').text('   ***' + (pvz.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextz').attr('id', 'pvtextz' + +id).attr('x', x( 4 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
       if (pvaluesound && showPmoe) audiohigh.play();
     }
     if (pvz >= 0.001 && pvz < 0.01) {
       svgS.append('rect').attr('class', 'pvaluez').attr('id', 'pvaluez' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'orange').attr('visibility', 'hidden');
-      svgS.append('text').text('    **'+ (pvz.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextz').attr('id', 'pvtextz' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
+      svgS.append('text').text('    **'+ (pvz.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextz').attr('id', 'pvtextz' + +id).attr('x', x( 4 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
       if (pvaluesound && showPmoe) audiomiddlehigh.play();
     }
     if (pvz >= 0.01 && pvz < 0.05) {
       svgS.append('rect').attr('class', 'pvaluez').attr('id', 'pvaluez' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'lemonchiffon').attr('visibility', 'hidden');
-      svgS.append('text').text('     *' + (pvz.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextz').attr('id', 'pvtextz' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
+      svgS.append('text').text('     *' + (pvz.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextz').attr('id', 'pvtextz' + +id).attr('x', x( 4 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
       if (pvaluesound && showPmoe) audiomiddle.play();
     }
     if (pvz >= 0.05 && pvz < 0.1) {
       svgS.append('rect').attr('class', 'pvaluez').attr('id', 'pvaluez' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'lightskyblue').attr('visibility', 'hidden');
-      svgS.append('text').text('     ?' + (pvz.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextz').attr('id', 'pvtextz' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
+      svgS.append('text').text('     ?' + (pvz.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextz').attr('id', 'pvtextz' + +id).attr('x', x( 4 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
       if (pvaluesound && showPmoe) audiolowmiddle.play();
     }
     if (pvz >= 0.1) {
       svgS.append('rect').attr('class', 'pvaluez').attr('id', 'pvaluez' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'blue').attr('visibility', 'hidden');
-      svgS.append('text').text('      ' + (pvz.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextz').attr('id', 'pvtextz' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
+      svgS.append('text').text('      ' + (pvz.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextz').attr('id', 'pvtextz' + +id).attr('x', x( 4 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
       if (pvaluesound && showPmoe) audiolow.play();
     }
    
     //smoe
     if (pvt < 0.001) {
       svgS.append('rect').attr('class', 'pvaluet').attr('id', 'pvaluet' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'red').attr('visibility', 'hidden');
-      svgS.append('text').text('   ***' + (pvt.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextt').attr('id', 'pvtextt' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
+      svgS.append('text').text('   ***' + (pvt.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextt').attr('id', 'pvtextt' + +id).attr('x', x( 4 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
       if (pvaluesound && showSmoe) audiohigh.play();
     }
     if (pvt >= 0.001 && pvt < 0.01) {
       svgS.append('rect').attr('class', 'pvaluet').attr('id', 'pvaluet' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'orange').attr('visibility', 'hidden');
-      svgS.append('text').text('    **'+ (pvt.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextt').attr('id', 'pvtextt' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
+      svgS.append('text').text('    **'+ (pvt.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextt').attr('id', 'pvtextt' + +id).attr('x', x( 4 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
       if (pvaluesound && showSmoe) audiomiddlehigh.play();
     }
     if (pvt >= 0.01 && pvt < 0.05) {
       svgS.append('rect').attr('class', 'pvaluet').attr('id', 'pvaluet' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'lemonchiffon').attr('visibility', 'hidden');
-      svgS.append('text').text('     *' + (pvt.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextt').attr('id', 'pvtextt' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
+      svgS.append('text').text('     *' + (pvt.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextt').attr('id', 'pvtextt' + +id).attr('x', x( 4 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
       if (pvaluesound && showSmoe) audiomiddle.play();
     }
     if (pvt >= 0.05 && pvt < 0.1) {
       svgS.append('rect').attr('class', 'pvaluet').attr('id', 'pvaluet' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'lightskyblue').attr('visibility', 'hidden');
-      svgS.append('text').text('     ?' + (pvt.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextt').attr('id', 'pvtextt' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
+      svgS.append('text').text('     ?' + (pvt.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextt').attr('id', 'pvtextt' + +id).attr('x', x( 4 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
       if (pvaluesound && showSmoe) audiolowmiddle.play();
     }
     if (pvt >= 0.1) {
       svgS.append('rect').attr('class', 'pvaluet').attr('id', 'pvaluet' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'blue').attr('visibility', 'hidden');
-      svgS.append('text').text('      ' + (pvt.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextt').attr('id', 'pvtextt' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
+      svgS.append('text').text('      ' + (pvt.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextt').attr('id', 'pvtextt' + +id).attr('x', x( 4 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
       if (pvaluesound && showSmoe) audiolow.play();
     }
 
@@ -2955,8 +2958,6 @@ $(function() {
       custom = false;
       changedDistribution = true;
 
-      changedDistribution = true;
-
       //make sure these are on
       $showPopulationCurve.prop('checked', true);
       showPopulationCurve = true;
@@ -3033,6 +3034,21 @@ $(function() {
     else {
       $('#pvaluesoundblock').hide();
       $('#pvaluehypothesisblock').hide();
+
+      mu = 50;
+      setMuSigmaSliderVal(mu, sigma);
+      stop();
+      setOldMu();
+
+      normal = true
+      rectangular = false;
+      skew = false;
+      custom = false;
+      changedDistribution = true;
+
+      //make sure these are on
+      $showPopulationCurve.prop('checked', true);
+      showPopulationCurve = true;
 
       stop();
       clearAll();

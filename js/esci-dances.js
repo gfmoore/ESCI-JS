@@ -132,10 +132,11 @@ Start using version history now to record changes and fixes
 0.9.9       2020-07-31 Replaced cdn links with direct links to js libraries to make portable
 0.9.10      2020-08-02 #28 Allow display of sample stats if showSampleMean and not dropSampleMeans.
 0.9.11      2020-08-09 #29 Added breadcrumbs
-0.9.12      2020-08-14 #30 Tweaks to display - left margin shifted in a bit etc.         
+0.9.12      2020-08-14 #30 Tweaks to display - left margin shifted in a bit etc. 
+0.9.13      2020-08-18 #32 Fix to capture of mu exceeding 100% - in recolour() there was additional count?        
 
 */
-let version = '0.9.12 Beta';
+let version = '0.9.13 Beta';
  
 'use strict';
 
@@ -1646,8 +1647,8 @@ $(function() {
       mblob.attr('smissed', 'true');
     }
     else {
-      capturedS += 1;
       mblob.attr('smissed', 'false');
+      capturedS += 1;
     }
 
     //now decide what to display; showPmoe and showSoe mutually exclusive
@@ -2142,6 +2143,7 @@ $(function() {
       pci = jStat.normalci( xbar, alpha, sigma, n );  //n is just the no of items in the sample, if that changes need to start counting again
       sci = jStat.tci( xbar, alpha, ssd, n );   
 
+/*    already done in recalculatesamplemeanstatistics
       //do the pmoe count
       pmissed = false;
       if (pci[0] > mu) pmissed = true;
@@ -2165,7 +2167,7 @@ $(function() {
         capturedS += 1;
         $(this).attr('smissed', 'false');
       }      
-
+*/
 
       //showMoe captureOfMu showCaptureMuLine conditions
 
@@ -2828,12 +2830,11 @@ $(function() {
     alpha = parseFloat($ci.val());   
     displaySampleAppearanceAll();
     recalculateSamplemeanStatistics();
+    recolourHeap();
 
     // //I know mu and sigma so I know pmoe so redisplay it
     pmoe = jStat.normal.inv( 1-alpha/2.0, 0, 1 ) * sigma/Math.sqrt(n);
     if (showPopulationCurve) $pmoe.text(pmoe.toFixed(2));
-
-    recolourHeap();
 
     if (plusminusmoe) drawPlusMinusMoe();
     if (showSELines) drawSELines();
@@ -2853,9 +2854,9 @@ $(function() {
     showCapturelines();
     displaySampleAppearanceAll();
     recalculateSamplemeanStatistics(); //which turns on display of captured stats
-    if (captureNextMean) displayCaptureOfNextMeanStats();
+    recolourHeap();  
 
-    recolourHeap();
+    if (captureNextMean) displayCaptureOfNextMeanStats();
   })
 
   //show moe wings for population
@@ -2879,6 +2880,7 @@ $(function() {
     displaySampleAppearanceAll();
     recalculateSamplemeanStatistics();
     recolourHeap();
+
     if (showpvalues) showpvalues();
   })
 
@@ -2897,8 +2899,9 @@ $(function() {
       removeMuLine();
     }
     recalculateSamplemeanStatistics(); //which turns on or off display of captured stats
-    displaySampleAppearanceAll();
     recolourHeap();
+
+    displaySampleAppearanceAll();
   })
 
   //show the mean as not captured if known, uknown checked

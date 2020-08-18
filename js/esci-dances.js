@@ -134,9 +134,9 @@ Start using version history now to record changes and fixes
 0.9.11      2020-08-09 #29 Added breadcrumbs
 0.9.12      2020-08-14 #30 Tweaks to display - left margin shifted in a bit etc. 
 0.9.13      2020-08-18 #32 Fix to capture of mu exceeding 100% - in recolour() there was additional count?        
-
+0.9.14      2020-08-19 #33 Fix to stop displaying any capture count when dropping means is off.
 */
-let version = '0.9.13 Beta';
+let version = '0.9.14 Beta';
  
 'use strict';
 
@@ -1340,7 +1340,8 @@ $(function() {
     let fssd;   //floating point cersion of sdd from dropping blob (passed to addtoheap)
     let barHeight;
 
-    N += 1; //increase the number of times I take a sample
+    //only allowed if dropping means is on issue #31
+    if (dropSampleMeans) N += 1; //increase the number of times I take a sample
 
     //make sure I've got correct parameters from distribution
     mu = parseFloat($mu.val());
@@ -1876,8 +1877,8 @@ $(function() {
   //display the percentage captured
   function displayCapturedRate() {
 
-    //only do this if CI on  Mu line on???  capture of mu on
-    if (showMoe && captureOfMu && showCaptureMuLine) {
+    //only do this if CI on  Mu line on???  capture of mu on  and #31 dropping means on 
+    if (showMoe && captureOfMu && showCaptureMuLine && dropSampleMeans) {
       //given that N is the number of samples
       $N.text(N);
       if (captureOfMu) $N2.text(N); else $N2.text(0);

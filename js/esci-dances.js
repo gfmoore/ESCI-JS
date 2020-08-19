@@ -137,10 +137,10 @@ Start using version history now to record changes and fixes
 0.9.14      2020-08-19 #31 Fix to stop displaying any capture count when dropping means is off.
 0.9.14      2020-08-19 #33 Changed breadcrumb to Dances
 0.9.15      2020-08-19 #32 Tried again to fix capture count. Added flag to displaySampleAppearance() + clear captureArray[] in resetCaptureStats()
-
+0.9.16      2020-08-19 #32 Dropping mean on or off stops and clear
 
 */
-let version = '0.9.15 Beta';
+let version = '0.9.16 Beta';
  
 'use strict';
 
@@ -2753,14 +2753,17 @@ $(function() {
       return;
     }
     dropSampleMeans = $dropSampleMeans.is(':checked');
-    if (dropSampleMeans) {
-      resetSamples();
-      resetCaptureStats();
-    }
-    else { //remove
-      stop();
-      clearAll();
-    }
+    stop();
+    clearAll();
+    // if (dropSampleMeans) {
+    //   resetSamples();
+    //   resetCaptureStats();
+
+    // }
+    // else { //remove
+    //   stop();
+    //   clearAll();
+    // }
   })
 
 /*-------------------------------------------------Panel 5 Mean Heap ----------------------- */

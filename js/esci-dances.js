@@ -134,9 +134,13 @@ Start using version history now to record changes and fixes
 0.9.11      2020-08-09 #29 Added breadcrumbs
 0.9.12      2020-08-14 #30 Tweaks to display - left margin shifted in a bit etc. 
 0.9.13      2020-08-18 #32 Fix to capture of mu exceeding 100% - in recolour() there was additional count?        
-0.9.14      2020-08-19 #33 Fix to stop displaying any capture count when dropping means is off.
+0.9.14      2020-08-19 #31 Fix to stop displaying any capture count when dropping means is off.
+0.9.14      2020-08-19 #33 Changed breadcrumb to Dances
+0.9.15      2020-08-19 #32 Tried again to fix capture count. Added flag to displaySampleAppearance() + clear captureArray[] in resetCaptureStats()
+
+
 */
-let version = '0.9.14 Beta';
+let version = '0.9.15 Beta';
  
 'use strict';
 
@@ -1587,7 +1591,7 @@ $(function() {
     oldsmoe = smoe;
 
     //just display the currently created sample appearance
-    displaySampleAppearance(id);
+    displaySampleAppearance(id, true); //increment captureP, captureS 
 
     //just display new captured stats
     displayCapturedRate();
@@ -1606,12 +1610,14 @@ $(function() {
     d3.selectAll('.smean').each(function() {
       //get the id
       blobId = parseInt($(this).attr('id').substring(5));
-      displaySampleAppearance(blobId);
+      displaySampleAppearance(blobId, false); //don't increment captureP captureS
     })
   }
 
   //decide what to display for dropping means blob and MoEs
-  function displaySampleAppearance(id) {
+  function displaySampleAppearance(id, increment) {
+    //only increment captureP and captureS if called from Take a sample, other recalculate SampleMeanStatistics takes care of it
+
     if (!showSampleMeans) return;  //if checkbox for show sample means not checked don't display
 
     mblob = d3.select('#smean'+id);
@@ -1637,7 +1643,7 @@ $(function() {
     }
     else {
       mblob.attr('pmissed', 'false'); 
-      capturedP += 1;
+      if (increment) capturedP += 1;
     }
 
     //smoe
@@ -1649,7 +1655,7 @@ $(function() {
     }
     else {
       mblob.attr('smissed', 'false');
-      capturedS += 1;
+      if (increment) capturedS += 1;
     }
 
     //now decide what to display; showPmoe and showSoe mutually exclusive
@@ -2399,8 +2405,11 @@ $(function() {
   }
 
   function resetCaptureStats() {
+    capturedArray = [];
+
     capturedP = 0;
     capturedS = 0;
+    
     $captured.text('0');
     $capturedpercent.text('0.0%');
   }
@@ -2422,7 +2431,6 @@ $(function() {
 
     //create a frequency distribution where the number of buckets is dependent on the width of the display area and the size of the sample mean
     heap = [];
-    capturedArray = [];
     xbardata = [];
 
     //reset the number of buckets in the heap
@@ -2725,7 +2733,7 @@ $(function() {
   $showSampleMeans.on('change', function() {
     showSampleMeans = $showSampleMeans.is(':checked');
     if (showSampleMeans) {
-      displaySampleAppearanceAll()
+      displaySampleAppearanceAll();
     }
     else {
       d3.selectAll('.smean').attr('visibility', 'hidden');
@@ -2899,10 +2907,10 @@ $(function() {
       captureOfMu = false;
       removeMuLine();
     }
+    displaySampleAppearanceAll();
     recalculateSamplemeanStatistics(); //which turns on or off display of captured stats
     recolourHeap();
 
-    displaySampleAppearanceAll();
   })
 
   //show the mean as not captured if known, uknown checked

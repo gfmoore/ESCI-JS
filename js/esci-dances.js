@@ -138,9 +138,10 @@ Start using version history now to record changes and fixes
 0.9.14      2020-08-19 #33 Changed breadcrumb to Dances
 0.9.15      2020-08-19 #32 Tried again to fix capture count. Added flag to displaySampleAppearance() + clear captureArray[] in resetCaptureStats()
 0.9.16      2020-08-19 #32 Dropping mean on or off stops and clear
+0.9.17      2020-08-20 #34 Add tooltip to breadcrumbs Home
 
 */
-let version = '0.9.16 Beta';
+let version = '0.9.17 Beta';
  
 'use strict';
 
@@ -3257,6 +3258,9 @@ $(function() {
 
 
     Tipped.create('.headingtip',           'https://thenewstatistics.com ',                                 { skin: 'esci', size: 'xlarge', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+
+    Tipped.create('.hometip',               'Click to return to esci Home',                                 { skin: 'esci', size: 'xlarge', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+
 
     //1. The population section
     Tipped.create('#populationdisplaydiv', 'The Population: Choose population parameters and shape',        { skin: 'esci', size: 'xlarge', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });

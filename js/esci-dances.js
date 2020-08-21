@@ -139,9 +139,10 @@ Start using version history now to record changes and fixes
 0.9.15      2020-08-19 #32 Tried again to fix capture count. Added flag to displaySampleAppearance() + clear captureArray[] in resetCaptureStats()
 0.9.16      2020-08-19 #32 Dropping mean on or off stops and clear
 0.9.17      2020-08-20 #34 Add tooltip to breadcrumbs Home
+0.9.18      2020-08-21 #32 Revert changes to inset margin and scale, restore code for recolour
 
 */
-let version = '0.9.17 Beta';
+let version = '0.9.18 Beta';
  
 'use strict';
 
@@ -527,7 +528,7 @@ $(function() {
     ymaxS = $('#displaysection').height() - ymaxP;
 
     //what margin do we want - not used,but the "standard" way of doing things 
-    margin = {top: 0, right: 0, bottom: 0, left: 20};  //pixels
+    margin = {top: 0, right: 0, bottom: 0, left: 5};  //pixels
     width = xmax - margin.left - margin.right;
     heightP = ymaxP - margin.top - margin.bottom;
     heightS = ymaxS - margin.top - margin.bottom;
@@ -546,7 +547,7 @@ $(function() {
             .attr('width', width).attr('height', heightS);  
 
     //set up scales for displaypdf and displaysample
-    x  = d3.scaleLinear().domain([ 0, 100 ]).range([25, width]);  //common to both viewports
+    x  = d3.scaleLinear().domain([ 0, 100 ]).range([5, width]);  //common to both viewports
     yp = d3.scaleLinear().domain([ 0, d3.max(pdf, function(d) { return d.y}) ]).range([heightP, 10]);
 
     ys = d3.scaleLinear().domain([ 0, 500 ]).range([0, heightS]);  //go from y = 500 at bottom to 0 at top, beacuse samplemeans increase as they drop!
@@ -565,15 +566,15 @@ $(function() {
     svgP.append('g').attr('class', 'axisx').attr( 'transform', 'translate(0, 22)' ).style('font', '1.55rem sans-serif').style('font-weight', 'bold').call(xAxis);
     svgP.append('text').text('Population').attr('class', 'pdfdisplaytext').style('font', '2.0rem sans-serif').style('font-weight', 'bold').style('fill', 'blue').attr('x', 70).attr('y', 50);
     svgP.append('text').text('Probability density').attr('class', 'pdfdisplaytext').style('font', '1.4rem sans-serif').style('fill', 'black').attr('x', 17).attr('y', 150).attr('transform', 'rotate(-90 17 150)');
-    svgP.append('text').text('X').attr('class', 'pdfdisplaytext').style('font', '1.8rem sans-serif').style('fill', 'black').attr('x', width/2 - 20).attr('y', 15).style('font-weight', 'bold').style('font-style', 'italic');
+    svgP.append('text').text('X').attr('class', 'pdfdisplaytext').style('font', '1.8rem sans-serif').style('fill', 'black').attr('x', width/2 - 40).attr('y', 15).style('font-weight', 'bold').style('font-style', 'italic');
 
     //bottom
     svgS.append('g').attr('class', 'axisx').attr( 'transform', `translate(0, ${heightS - dropLimit} )` ).style('font', '1.5rem sans-serif').style('font-weight', 'bold').call(xAxisB);
-    svgS.append('text').text('X').attr('class', 'pdfdisplaytext').style('font', '1.8rem sans-serif').style('fill', 'black').attr('x', width/2 - 20).attr('y', heightS - 22).style('font-weight', 'bold').style('font-style', 'italic');
+    svgS.append('text').text('X').attr('class', 'pdfdisplaytext').style('font', '1.8rem sans-serif').style('fill', 'black').attr('x', width/2 - 40).attr('y', heightS - 22).style('font-weight', 'bold').style('font-style', 'italic');
 
     
     //just draw a vertical line    //svgP.append('g').attr('class', 'axis y').attr('transform', 'translate(10,20)').call(yAxis);
-    svgP.append('line').attr('class', 'axisline').attr('x1', 25).attr('y1', 25).attr('x2', 25).attr('y2', heightP );
+    svgP.append('line').attr('class', 'axisline').attr('x1', 5).attr('y1', 25).attr('x2', 5).attr('y2', heightP );
 
     //draw a horizontal line under the curve on the sample display section
     svgS.append('line').attr('class', 'horizline').attr('x1', 5).attr('y1', ys(0)).attr('x2', xmax-5).attr('y2', ys(0)). attr('stroke', 'gray').attr('stroke-width', '2');
@@ -1989,54 +1990,54 @@ $(function() {
     //pmoe
     if (pvz < 0.001) {
       svgS.append('rect').attr('class', 'pvaluez').attr('id', 'pvaluez' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'red').attr('visibility', 'hidden');
-      svgS.append('text').text('   ***' + (pvz.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextz').attr('id', 'pvtextz' + +id).attr('x', x( 4 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
+      svgS.append('text').text('   ***' + (pvz.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextz').attr('id', 'pvtextz' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
       if (pvaluesound && showPmoe) audiohigh.play();
     }
     if (pvz >= 0.001 && pvz < 0.01) {
       svgS.append('rect').attr('class', 'pvaluez').attr('id', 'pvaluez' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'orange').attr('visibility', 'hidden');
-      svgS.append('text').text('    **'+ (pvz.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextz').attr('id', 'pvtextz' + +id).attr('x', x( 4 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
+      svgS.append('text').text('    **'+ (pvz.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextz').attr('id', 'pvtextz' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
       if (pvaluesound && showPmoe) audiomiddlehigh.play();
     }
     if (pvz >= 0.01 && pvz < 0.05) {
       svgS.append('rect').attr('class', 'pvaluez').attr('id', 'pvaluez' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'lemonchiffon').attr('visibility', 'hidden');
-      svgS.append('text').text('     *' + (pvz.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextz').attr('id', 'pvtextz' + +id).attr('x', x( 4 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
+      svgS.append('text').text('     *' + (pvz.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextz').attr('id', 'pvtextz' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
       if (pvaluesound && showPmoe) audiomiddle.play();
     }
     if (pvz >= 0.05 && pvz < 0.1) {
       svgS.append('rect').attr('class', 'pvaluez').attr('id', 'pvaluez' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'lightskyblue').attr('visibility', 'hidden');
-      svgS.append('text').text('     ?' + (pvz.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextz').attr('id', 'pvtextz' + +id).attr('x', x( 4 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
+      svgS.append('text').text('     ?' + (pvz.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextz').attr('id', 'pvtextz' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
       if (pvaluesound && showPmoe) audiolowmiddle.play();
     }
     if (pvz >= 0.1) {
       svgS.append('rect').attr('class', 'pvaluez').attr('id', 'pvaluez' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'blue').attr('visibility', 'hidden');
-      svgS.append('text').text('      ' + (pvz.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextz').attr('id', 'pvtextz' + +id).attr('x', x( 4 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
+      svgS.append('text').text('      ' + (pvz.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextz').attr('id', 'pvtextz' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
       if (pvaluesound && showPmoe) audiolow.play();
     }
    
     //smoe
     if (pvt < 0.001) {
       svgS.append('rect').attr('class', 'pvaluet').attr('id', 'pvaluet' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'red').attr('visibility', 'hidden');
-      svgS.append('text').text('   ***' + (pvt.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextt').attr('id', 'pvtextt' + +id).attr('x', x( 4 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
+      svgS.append('text').text('   ***' + (pvt.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextt').attr('id', 'pvtextt' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
       if (pvaluesound && showSmoe) audiohigh.play();
     }
     if (pvt >= 0.001 && pvt < 0.01) {
       svgS.append('rect').attr('class', 'pvaluet').attr('id', 'pvaluet' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'orange').attr('visibility', 'hidden');
-      svgS.append('text').text('    **'+ (pvt.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextt').attr('id', 'pvtextt' + +id).attr('x', x( 4 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
+      svgS.append('text').text('    **'+ (pvt.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextt').attr('id', 'pvtextt' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
       if (pvaluesound && showSmoe) audiomiddlehigh.play();
     }
     if (pvt >= 0.01 && pvt < 0.05) {
       svgS.append('rect').attr('class', 'pvaluet').attr('id', 'pvaluet' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'lemonchiffon').attr('visibility', 'hidden');
-      svgS.append('text').text('     *' + (pvt.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextt').attr('id', 'pvtextt' + +id).attr('x', x( 4 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
+      svgS.append('text').text('     *' + (pvt.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextt').attr('id', 'pvtextt' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
       if (pvaluesound && showSmoe) audiomiddle.play();
     }
     if (pvt >= 0.05 && pvt < 0.1) {
       svgS.append('rect').attr('class', 'pvaluet').attr('id', 'pvaluet' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'lightskyblue').attr('visibility', 'hidden');
-      svgS.append('text').text('     ?' + (pvt.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextt').attr('id', 'pvtextt' + +id).attr('x', x( 4 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
+      svgS.append('text').text('     ?' + (pvt.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextt').attr('id', 'pvtextt' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
       if (pvaluesound && showSmoe) audiolowmiddle.play();
     }
     if (pvt >= 0.1) {
       svgS.append('rect').attr('class', 'pvaluet').attr('id', 'pvaluet' + +id).attr('x', x( 0 )).attr('y', ypos-6).attr('width', x( 3  )).attr('height', droppingMeanGap-2).attr('fill', 'blue').attr('visibility', 'hidden');
-      svgS.append('text').text('      ' + (pvt.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextt').attr('id', 'pvtextt' + +id).attr('x', x( 4 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
+      svgS.append('text').text('      ' + (pvt.toFixed(3)).toString().replace('0.', '.')).attr('class', 'pvtextt').attr('id', 'pvtextt' + +id).attr('x', x( 2 )).attr('y', ypos+4).attr('text-anchor', 'start').style('font-weight', 'bold').attr('fill', 'black').attr('visibility', 'hidden');
       if (pvaluesound && showSmoe) audiolow.play();
     }
 
@@ -2094,8 +2095,6 @@ $(function() {
     let hx, hy;
     let h;
 
-    //if (!showMeanHeap  && !captureOfMu && !showCaptureMuLine) return;  //why?
-    
     if (fxbar >= 0 && fxbar <= 100) {
       //increase the heap frequency. Remember that 50 is the middle bar
       xint = parseInt( Math.floor(fxbar/100 * nobuckets )); //nobuckets might be a decimal
@@ -2103,7 +2102,8 @@ $(function() {
 
       //now draw a bubble at co-ords xint and heap(xint)
       //color code the drops and add attributes for when recoluring if C (alpha) changed later
-      hx = (heap[xint].x * 2* sampleMeanSize) + (sampleMeanSize  + 2);
+      hx = (heap[xint].x * 2 * sampleMeanSize) + (sampleMeanSize  + 2);
+
       hy = heightS - (heap[xint].f * sampleMeanSize * 2) - dropLimit + 3;
 
     //   //0 1 1 showMoe captureofmu showcapturemuline
@@ -2142,6 +2142,7 @@ $(function() {
     let xbar, sigma, ssd, pmoe, smoe;
     let pmissed, smissed;
     
+    //go through the heap.
     d3.selectAll('.heap').each( function(h) {
       xbar = parseFloat($(this).attr('xbar'));
       sigma = parseFloat($(this).attr('sigma'));
@@ -2151,7 +2152,6 @@ $(function() {
       pci = jStat.normalci( xbar, alpha, sigma, n );  //n is just the no of items in the sample, if that changes need to start counting again
       sci = jStat.tci( xbar, alpha, ssd, n );   
 
-/*    already done in recalculatesamplemeanstatistics
       //do the pmoe count
       pmissed = false;
       if (pci[0] > mu) pmissed = true;
@@ -2161,7 +2161,6 @@ $(function() {
       }
       else {
         $(this).attr('pmissed', 'false'); 
-        capturedP += 1;
       }
 
       //smoe
@@ -2172,10 +2171,9 @@ $(function() {
         $(this).attr('smissed', 'true');
       }
       else {
-        capturedS += 1;
         $(this).attr('smissed', 'false');
       }      
-*/
+
 
       //showMoe captureOfMu showCaptureMuLine conditions
 

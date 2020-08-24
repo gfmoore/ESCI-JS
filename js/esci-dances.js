@@ -140,9 +140,10 @@ Start using version history now to record changes and fixes
 0.9.16      2020-08-19 #32 Dropping mean on or off stops and clear
 0.9.17      2020-08-20 #34 Add tooltip to breadcrumbs Home
 0.9.18      2020-08-21 #32 Revert changes to inset margin and scale, restore code for recolour
+0.9.19      2020-08-24 #35 Dont allow mean heap if p values on + remove hyphen
 
 */
-let version = '0.9.18 Beta';
+let version = '0.9.19 Beta';
  
 'use strict';
 
@@ -454,7 +455,7 @@ $(function() {
 
     setTooltips();
 
-    $('#mainheading').text('esci-web'); //was D3
+    $('#mainheading').text('esci web'); //was D3
     $('#subheading').text('dances'); //was D3
 
     getInterfaceElements()     //get the jquery references to items on the user interface
@@ -546,6 +547,10 @@ $(function() {
             .append('svg')
             .attr('width', width).attr('height', heightS);  
 
+    svgM = d3.select('#middlesection')
+            .append('svg')
+            .attr('width', width).attr('height', heightS);  
+
     //set up scales for displaypdf and displaysample
     x  = d3.scaleLinear().domain([ 0, 100 ]).range([5, width]);  //common to both viewports
     yp = d3.scaleLinear().domain([ 0, d3.max(pdf, function(d) { return d.y}) ]).range([heightP, 10]);
@@ -565,12 +570,17 @@ $(function() {
     //top  //note style for both should be the same, but for the top it didn't look right
     svgP.append('g').attr('class', 'axisx').attr( 'transform', 'translate(0, 22)' ).style('font', '1.55rem sans-serif').style('font-weight', 'bold').call(xAxis);
     svgP.append('text').text('Population').attr('class', 'pdfdisplaytext').style('font', '2.0rem sans-serif').style('font-weight', 'bold').style('fill', 'blue').attr('x', 70).attr('y', 50);
+    //svgP.append('text').text('X').attr('class', 'pdfdisplaytext').style('font', '1.8rem sans-serif').style('fill', 'black').attr('x', width/2 - 40).attr('y', 15).style('font-weight', 'bold').style('font-style', 'italic');
+    svgP.append('text').text('X').attr('class', 'pdfdisplaytext').style('font', '1.8rem sans-serif').style('fill', 'black').attr('x', x(46)).attr('y', 15).style('font-weight', 'bold').style('font-style', 'italic');
+
+    //display axis label 
     svgP.append('text').text('Probability density').attr('class', 'pdfdisplaytext').style('font', '1.4rem sans-serif').style('fill', 'black').attr('x', 17).attr('y', 150).attr('transform', 'rotate(-90 17 150)');
-    svgP.append('text').text('X').attr('class', 'pdfdisplaytext').style('font', '1.8rem sans-serif').style('fill', 'black').attr('x', width/2 - 40).attr('y', 15).style('font-weight', 'bold').style('font-style', 'italic');
+
 
     //bottom
     svgS.append('g').attr('class', 'axisx').attr( 'transform', `translate(0, ${heightS - dropLimit} )` ).style('font', '1.5rem sans-serif').style('font-weight', 'bold').call(xAxisB);
-    svgS.append('text').text('X').attr('class', 'pdfdisplaytext').style('font', '1.8rem sans-serif').style('fill', 'black').attr('x', width/2 - 40).attr('y', heightS - 22).style('font-weight', 'bold').style('font-style', 'italic');
+    //svgS.append('text').text('X').attr('class', 'pdfdisplaytext').style('font', '1.8rem sans-serif').style('fill', 'black').attr('x', width/2 - 40).attr('y', heightS - 22).style('font-weight', 'bold').style('font-style', 'italic');
+    svgS.append('text').text('X').attr('class', 'pdfdisplaytext').style('font', '1.8rem sans-serif').style('fill', 'black').attr('x', x(46)).attr('y', heightS - 22).style('font-weight', 'bold').style('font-style', 'italic');
 
     
     //just draw a vertical line    //svgP.append('g').attr('class', 'axis y').attr('transform', 'translate(10,20)').call(yAxis);
@@ -2768,8 +2778,11 @@ $(function() {
 /*-------------------------------------------------Panel 5 Mean Heap ----------------------- */
 
   $showMeanHeap.on('change', function() {
+    if (pvalue) {  //don't allow mean heap
+      $showMeanHeap.prop('checked', false);
+      return;
+    }
     showMeanHeap = $showMeanHeap.is(':checked');
-
     clearAll();
     d3.selectAll('.selines').attr('visibility', 'visible');
     if (showMeanHeap) {
@@ -2935,6 +2948,10 @@ $(function() {
   
   //Number capturing next mean  
   $captureNextMean.on('change', function() {
+    if (pvalue) {  //don't allow capture of next mean
+      $captureNextMean.prop('checked', false);
+      return;
+    }
     captureNextMean = $captureNextMean.is(':checked');
     if (captureNextMean) {
       $('#capturenextmeangrid').show();
@@ -2954,6 +2971,10 @@ $(function() {
   
   //show the p-values
   $pvalue.on('change', function() {
+    if (captureNextMean) {  //don't allow capture of next mean
+      $pvalue.prop('checked', false);
+      return;
+    }
     pvalue = $pvalue.is(':checked');
     if (pvalue) {
       mu = 60;

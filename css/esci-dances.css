@@ -47,6 +47,7 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
 0.9.10
 0.9.11      2020-08-09 #29 Added breadcrumbs       
 0.9.19
+0.9.20      2020-08-25 #37 Red panel numbers
 
 */
 
@@ -60,6 +61,9 @@ span {
   font-size: 1.5rem;
 }
 
+.red {
+  color: red;
+}
 
 /*-------------------------------------------------The left hand control side---------------------------------------------------------------*/
 

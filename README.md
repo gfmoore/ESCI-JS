@@ -1,6 +1,6 @@
 # esci-dances
 
-## Current version 0.9.19 Beta 
+## Current version 0.9.20 Beta 
 
 You can see which version by hovering on the logo.
 

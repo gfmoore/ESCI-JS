@@ -43,7 +43,7 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
 0.9.10       
 0.9.11      2020-08-09 #29 Added breadcrumbs
 0.9.14      2020-08-19 #33 Changed breadcrumb to Dances
-0.9.19  
+0.9.20      2020-08-25 #37 Red panel numbers
 
 -->
 
@@ -118,7 +118,7 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
           <div id=controlblock>
             <!-------------------------------------------Section 1 The Population---------------------------------------------------->
             <div id=distribution>
-              <div id=populationdisplaydiv data-tooltip>1. The Population</div>
+              <div id=populationdisplaydiv data-tooltip><span class=red>1</span> The Population</div>
               <div id=musliderdiv>
                 <div id=muvaluediv class=mutip data-tooltip><span class=greek >&mu;</span></div>
                 <input type="range" min="20" max="80" value="50" class="slider mutip" id=muslider data-tooltip>
@@ -166,7 +166,7 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
 
             <!--------------------------------------Section 2 Click to Display Popn, sd lines, fill random------------------------>
             <div id=displayoptions>
-              <div id=displayoptionsdiv data-tooltip>2. Click to display</div>
+              <div id=displayoptionsdiv data-tooltip><span class=red>2</span> Click to display</div>
               <input type=checkbox id=popn name=popn value=popn class=popntip data-tooltip><label id=popnlabel for=popn class=popntip data-tooltip>Population</label>
               <input type=checkbox id=sdlines name=sdlines value=sdlines class=sdlinestip data-tooltip><label id=sdlineslabel for=sdlines class=sdlinestip data-tooltip>SD Lines</label>
               <input type=checkbox id=fillpopn name=fillpopn value=fillpopn class=fillpopntip data-tooltip><label id=fillpopnlabel for=fillpopn class=fillpopntip data-tooltip>Fill Random</label>
@@ -174,7 +174,7 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
 
             <!------------------------------------------Section 3 Controls Clear, Take Sample, Run Freely-------------------------------------------------------->
             <div id=runcontrols>
-              <div id=runcontrolsdiv data-tooltip>3. Controls</div>
+              <div id=runcontrolsdiv data-tooltip><span class=red>3</span> Controls</div>
               <div id=runstop> 
                 <div id=clearsample class=runbuttons data-tooltip>Clear </div>
                 <div id=takesample  class=runbuttons data-tooltip>Take Sample</div>
@@ -186,7 +186,7 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
             <!-------------------------------------------Section 4 Samples--------------------------------------------------------->
             <div id=samplessection>
               <div id=samples>
-                <div id=samplelabel data-tooltip>4. Samples: </div>
+                <div id=samplelabel data-tooltip><span class=red>4</span> Samples: </div>
                 <div id=Ndiv class=ntip data-tooltip><span class=italic>N</span></div>
                 <select id=samplesselected class=ntip data-tooltip>
                   <option value=1>1</option>
@@ -246,7 +246,7 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
 
             <!-----------------------------------------5. Mean Heap Section---------------------------------------------------------------->
             <div id=heapsection>
-              <span id=heapsectionspan data-tooltip>5. Mean Heap</span>
+              <span id=heapsectionspan data-tooltip><span class=red>5</span> Mean Heap</span>
               <div id=meanheapdiv>
                 <span class=meanheaptip data-tooltip>
                   <input type=checkbox id=meanheap name=meanheap value=meanheap>
@@ -283,7 +283,7 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
 
             <!----------------------------------------6. Confidence Intervals----------------------------------------------------------->
             <div id=CIsection >
-              <span id=confidenceintervalsdiv data-tooltip >6. Confidence Intervals</span>
+              <span id=confidenceintervalsdiv data-tooltip ><span class=red>6</span> Confidence Intervals</span>
               <div id=cipcntdiv class=cipcnttip data-tooltip><span>CI%  <span class=italic>C</span></span>
                 <select id=CI class=copcnttip data-tooltip>
                   <option value=0.5>50%</option>
@@ -315,7 +315,7 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
 
             <!---------------------------------------7. Capture of mean-------------------------------------------------->
             <div id=captureofmean>
-              <div id=captureofmupanel data-tooltip>7. Capture of <span class=greek>&mu;</span></div>
+              <div id=captureofmupanel data-tooltip><span class=red>7</span> Capture of <span class=greek>&mu;</span></div>
         
               <div class=capturemulinetip data-tooltip><input type=checkbox id=capturemuline name=capturemuline value=capturemuline><label id=captureofmulinelabel for=capturemuline><span class=greek>&mu;</span> line</label></div>
               <div class=capturemutip data-tooltip><input type=checkbox id=captureofmu name=captureofmu value=captureofmu><label id=captureofmulabel for=captureofmu>Capture of <span class=greek>&mu;</span></label></div>
@@ -329,7 +329,7 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
 
             <!---------------------------------------8. Capture of next mean--------------------------------------------->
             <div id=capturesection> 
-              <div class=capturenextmeantip data-tooltip><label id=capturenextmeanlabel for=capturenextmean>8. Capture of next mean</label><input type=checkbox id=capturenextmean name=capturenextmean value=capturenextmean></div>
+              <div class=capturenextmeantip data-tooltip><label id=capturenextmeanlabel for=capturenextmean><span class=red>8</span> Capture of next mean</label><input type=checkbox id=capturenextmean name=capturenextmean value=capturenextmean></div>
               <div id=capturenextmeangrid>
                 <div id=numberofnextmeansdiv        data-tooltip><span>Number of next means : </span></div><div id=noofnextmeans>0</div>                
                 <div id=numbercapturingnextmeandiv  data-tooltip><span>Number capturing next mean : </span></div><div id=nocapturingnextmean>0</div>
@@ -340,7 +340,7 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
             <!----------------------------------------9. p-values ---------------------------------------------------------->
             <div id=pvaluesection>
               <div id=pvaluesectiondiv>
-                <div class=danceptip data-tooltip><label id=pvaluelabel for=pvalue>9. Dance of the <span class=italic>p</span> values</label><input type=checkbox id=pvalue name=pvalue value=pvalue></div>
+                <div class=danceptip data-tooltip><label id=pvaluelabel for=pvalue><span class=red>9</span> Dance of the <span class=italic>p</span> values</label><input type=checkbox id=pvalue name=pvalue value=pvalue></div>
                 <div id=pvaluesoundblock>
                   <div class=psound data-tooltip><label id=pvaluesoundlabel for=pvaluesound> Sound</label><input type=checkbox id=pvaluesound name=pvaluesound value=pvaluesound></div>              
                   <div id=vollabel class=volumetip data-tooltip>Vol</div>

@@ -141,9 +141,10 @@ Start using version history now to record changes and fixes
 0.9.17      2020-08-20 #34 Add tooltip to breadcrumbs Home
 0.9.18      2020-08-21 #32 Revert changes to inset margin and scale, restore code for recolour
 0.9.19      2020-08-24 #35 Dont allow mean heap if p values on + remove hyphen
+0.9.20      2020-08-25 #37 Red panel numbers
 
 */
-let version = '0.9.19 Beta';
+let version = '0.9.20 Beta';
  
 'use strict';
 

@@ -143,8 +143,9 @@ Start using version history now to record changes and fixes
 0.9.19      2020-08-24 #35 Dont allow mean heap if p values on + remove hyphen
 0.9.20      2020-08-25 #37 Red panel numbers
 
+1.0.0       2020-09-03 Version 1.0.0
 */
-let version = '0.9.20 Beta';
+let version = '1.0.0';
  
 'use strict';
 
